@@ -65,7 +65,7 @@ class VerseSession(vrs.Session):
         self.my_password = ''
 
     
-    def receive_node_create(self, node_id, parent_id, user_id, type):
+    def _receive_node_create(self, node_id, parent_id, user_id, type):
         """
         receive_node_create(node_id, parent_id, user_id, type) -> None
         """
@@ -85,7 +85,7 @@ class VerseSession(vrs.Session):
             self.send_taggroup_create(prio=vrs.DEFAULT_PRIORITY, node_id=self.avatar_id, custom_type=53)
         
     
-    def receive_node_destroy(self, node_id):
+    def _receive_node_destroy(self, node_id):
         """
         receive_node_destroy(node_id) -> None
         """
@@ -97,7 +97,7 @@ class VerseSession(vrs.Session):
             pass
         
     
-    def receive_connect_terminate(self, error):
+    def _receive_connect_terminate(self, error):
         """
         receive_connect_terminate(error) -> none
         """
@@ -111,7 +111,7 @@ class VerseSession(vrs.Session):
         # TODO: stop timer
   
     
-    def receive_connect_accept(self, user_id, avatar_id):
+    def _receive_connect_accept(self, user_id, avatar_id):
         """
         receive_connect_accept(user_id, avatar_id) -> None
         """
@@ -132,7 +132,7 @@ class VerseSession(vrs.Session):
         self.scene.name = self.hostname
  
     
-    def receive_user_authenticate(self, username, methods):
+    def _receive_user_authenticate(self, username, methods):
         """
         receive_user_authenticate(username, methods) -> None
         Callback function for user authenticate
