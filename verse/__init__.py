@@ -2,7 +2,7 @@ bl_info = {
     "name": "Verse Client",
     "author": "Jiri Hnidek",
     "version": (0, 1),
-    "blender": (2, 6, 4),
+    "blender": (2, 6, 5),
     "location": "File > Verse",
     "description": "Adds integration of Verse protocol",
     "warning": "Alpha quality, Works only at Linux OS, Requires verse module",
@@ -55,7 +55,7 @@ class VerseSession(vrs.Session):
         __init__(hostname, service, flag) -> None
         """
         # Call __init__ from parent class to connect to Verse server
-        vrs.Session.__init__(self, hostname, service, flag)
+        super(VerseSession, self).__init__(hostname, service, flag)
         __class__.__state = 'CONNECTING'
         __class__.__instance = self
         self.fps = 60 # TODO: get current FPS
@@ -64,6 +64,12 @@ class VerseSession(vrs.Session):
         self.my_username = ''
         self.my_password = ''
 
+    def __del__(self):
+        """
+        __del__() -> None
+        """
+        __class__.__state = 'DISCONNECTED'
+        __class__.__instance = None
     
     def _receive_node_create(self, node_id, parent_id, user_id, type):
         """
@@ -182,7 +188,11 @@ class ModalTimerOperator(bpy.types.Operator):
         if event.type == 'TIMER':
             vrs_session = VerseSession.instance()
             if vrs_session is not None:
-                vrs_session.callback_update()
+                try:
+                    vrs_session.callback_update()
+                except vrs.VerseError:
+                    del vrs_session
+                    return {'CANCELLED'}
         return {'PASS_THROUGH'}
 
     def execute(self, context):
