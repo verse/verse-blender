@@ -1,3 +1,21 @@
+# ##### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
+
 bl_info = {
     "name": "Verse Client",
     "author": "Jiri Hnidek",
@@ -10,25 +28,76 @@ bl_info = {
     "tracker_url": "",
     "category": "System"}
 
+if "bpy" in locals():
+    import imp
+    imp.reload(camera)
+else:
+    import bpy
+    import verse as vrs
+    from . import camera
 
-import bpy
-import verse as vrs
+
+# VerseTag class
+class MyTag():
+    """
+    Class representing Tag
+    """
+    
+    def __init__(self, tg, tag_id, custom_type, data_type):
+        """
+        Constructor of MyTag
+        """
+        self.tg = tg
+        self.id = tag_id
+        self.custom_type = custom_type
+        self.data_type = data_type
+   
+    def set_value(self, value):
+        """
+        Setter of tag value
+        """
+        self.value = value
+
+
+# VerseTagGroup class
+class MyTagGroup():
+    """
+    Class representing TagGroup
+    """
+
+    def __init__(self, node, tg_id, custom_type):
+        """
+        Constructor of MyTagGroup
+        """
+        self.id = tg_id
+        self.node = node
+        self.custom_type = custom_type
+        self.tags = {}
 
 
 # VerseNode class
 class MyNode():
-    def __init__(self, node_id, parent, user_id, type):
+    """
+    Class representing Node
+    """
+    
+    def __init__(self, node_id, parent, user_id, custom_type):
+        """
+        Constructor of MyNode
+        """
         self.id = node_id
         self.parent = parent
         self.user_id = user_id
-        self.type = type
+        self.custom_type = custom_type
         self.taggroups = {}
         self.layers = {}
 
 
 # VerseSession class
 class VerseSession(vrs.Session):
-    '''Class Session for this Python client'''
+    """
+    Class Session for this Python client
+    """
     
     # State of connection
     __state = 'DISCONNECTED'
@@ -77,7 +146,7 @@ class VerseSession(vrs.Session):
         """
         print('receive_node_create()', node_id, parent_id, user_id, type)
         # Automatically subscribe to all nodes
-        self.send_node_subscribe(vrs.DEFAULT_PRIORITY, node_id, 0)
+        self.send_node_subscribe(vrs.DEFAULT_PRIORITY, node_id, 0, 0)
         # Try to find parent node
         try:
             parent_node = self.nodes[parent_id]
@@ -127,7 +196,7 @@ class VerseSession(vrs.Session):
         self.avatar_id = avatar_id
         
         # Subscribe to the root node (ID of this node is always 0)
-        self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=0, version=0)
+        self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=0, version=0, crc32=0)
         # Add root node to the dictionary of nodes
         self.nodes[0] = MyNode(0, None, 0, 0)
         
@@ -324,6 +393,8 @@ def register():
     # Register all classes listed in the tuple classes
     for c in classes:
         bpy.utils.register_class(c)
+    
+    camera.register()
 
     # Adds Verse submenu to the File menu
     bpy.types.INFO_MT_file.append(draw_item)
@@ -334,6 +405,9 @@ def unregister():
     # Unregister all classes listed in the tuple classes
     for c in classes:
         bpy.utils.unregister_class(c)
+    
+    camera.unregister()
+    
     # Removes verse submenu from File menu
     bpy.types.INFO_MT_file.remove(draw_item)
 
