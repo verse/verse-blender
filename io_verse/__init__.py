@@ -28,19 +28,15 @@ bl_info = {
     "tracker_url": "",
     "category": "System"}
 
+
 if "bpy" in locals():
-    print("second import")
     import imp
     imp.reload(camera)
 else:
-    print("first import")
     import bpy
     import verse as vrs
-    print(dir(vrs))
     from . import camera
-    print(dir(camera))
 
-print("running ...")
 
 # VerseTag class
 class MyTag():
@@ -395,8 +391,6 @@ classes = (
 
 
 def register():
-
-    print("register ...")
 
     # Register all classes listed in the tuple classes
     for c in classes:
