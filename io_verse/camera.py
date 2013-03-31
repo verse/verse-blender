@@ -17,6 +17,13 @@
 # ##### END GPL LICENSE BLOCK #####
 
 
+#
+# This file contain methods and classes for visualization of current
+# view to active 3DView. Other Blender users sharing data at verse
+# server can see, where you are and what you do.
+#
+
+
 import bpy
 import bgl
 import mathutils
@@ -420,7 +427,7 @@ class VerseAvatarStatus(bpy.types.Operator):
      
     def cancel(self, context):
         """
-        TODO: add documentation
+        This method is called, when operator is canceled.
         """
         print('cancel()')
         if context.window_manager.verse_avatar_capture is True:
@@ -465,7 +472,7 @@ def init_properties():
 
 def register():
     """
-    Register classes with panel
+    Register classes with panel and init properties
     """
     init_properties()
     bpy.utils.register_class(VerseAvatarPanel)

@@ -200,12 +200,11 @@ class VerseSession(vrs.Session):
         self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=0, version=0, crc32=0)
         # Add root node to the dictionary of nodes
         self.nodes[0] = MyNode(0, None, 0, 0)
+
+        # TODO: Create tag groups with views to the scene
         
-        # Create new empty scene
-        bpy.ops.scene.new(type='EMPTY')
-        # Name scene
-        self.scene = bpy.context.scene
-        self.scene.name = self.hostname
+        # Subscribe to the root of scene node
+        self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=3, version=0, crc32=0)
  
     
     def _receive_user_authenticate(self, username, methods):
