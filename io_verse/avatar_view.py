@@ -391,13 +391,14 @@ class VerseAvatarStatus(bpy.types.Operator):
     
     def modal(self, context, event):
         """
-        TODO: add documentation
+        This method is executed on events
         """
         return {'PASS_THROUGH'}
     
     def invoke(self, context, event):
         """
-        TODO: add documentation
+        This method is used, when Blender check, if this operator can be
+        executed
         """
         if context.area.type == 'VIEW_3D':
             if context.window_manager.verse_avatar_capture is False:
