@@ -75,11 +75,18 @@ class VerseSession(vrs.Session):
         """
         __class__.__state = 'DISCONNECTED'
         __class__.__instance = None
+
+
+    def _receive_node_link(self, parent_node_id, child_node_id):
+        """
+         _receive_node_link(self, parent_node_id, child_node_id) -> None
+        """
+        print('receive_node_link()', parent_node_id, child_node_id)
     
 
     def _receive_node_create(self, node_id, parent_id, user_id, custom_type):
         """
-        receive_node_create(node_id, parent_id, user_id, type) -> None
+        _receive_node_create(node_id, parent_id, user_id, type) -> None
         """
         print('receive_node_create()', node_id, parent_id, user_id, custom_type)
         # Automatically subscribe to all nodes
@@ -89,13 +96,14 @@ class VerseSession(vrs.Session):
             parent_node = MyNode.nodes[parent_id]
         except KeyError:
             parent_node = None
+        
         # Add node to the dictionary of nodes
-        self.nodes[node_id] = MyNode(node_id, parent_node, user_id, custom_type)
+        MyNode(node_id, parent_node, user_id, custom_type)
         
     
     def _receive_node_destroy(self, node_id):
         """
-        receive_node_destroy(node_id) -> None
+        _receive_node_destroy(node_id) -> None
         """
         print('receive_node_destroy()', node_id)
 
@@ -137,9 +145,9 @@ class VerseSession(vrs.Session):
         # Subscribe to the root node (ID of this node is always 0)
         self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=0, version=0, crc32=0)
         # Add root node to the dictionary of nodes
-        self.nodes[0] = MyNode(node_id=0, parent=None, user_id=0, custom_type=0)
+        MyNode(node_id=0, parent=None, user_id=0, custom_type=0)
 
-        # TODO: Create tag groups with views to the scene
+        # TODO: Create nodes with views to the scene
         
         # Subscribe to the root of scene node
         self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=3, version=0, crc32=0)
