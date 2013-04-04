@@ -38,6 +38,7 @@ class VerseSession(vrs.Session):
     # Blender could be connected only to one Verse server
     __instance = None
     
+
     def state():
         """
         state() -> string
@@ -45,6 +46,7 @@ class VerseSession(vrs.Session):
         """
         return __class__.__state
     
+
     def instance():
         """
         instance() -> object
@@ -52,6 +54,7 @@ class VerseSession(vrs.Session):
         """
         return __class__.__instance
     
+
     def __init__(self, hostname, service, flag):
         """
         __init__(hostname, service, flag) -> None
@@ -62,9 +65,9 @@ class VerseSession(vrs.Session):
         __class__.__instance = self
         self.fps = 60 # TODO: get current FPS
         # Create empty dictionary of nodes
-        self.nodes = {}
         self.my_username = ''
         self.my_password = ''
+
 
     def __del__(self):
         """
@@ -73,24 +76,21 @@ class VerseSession(vrs.Session):
         __class__.__state = 'DISCONNECTED'
         __class__.__instance = None
     
-    def _receive_node_create(self, node_id, parent_id, user_id, type):
+
+    def _receive_node_create(self, node_id, parent_id, user_id, custom_type):
         """
         receive_node_create(node_id, parent_id, user_id, type) -> None
         """
-        print('receive_node_create()', node_id, parent_id, user_id, type)
+        print('receive_node_create()', node_id, parent_id, user_id, custom_type)
         # Automatically subscribe to all nodes
         self.send_node_subscribe(vrs.DEFAULT_PRIORITY, node_id, 0, 0)
         # Try to find parent node
         try:
-            parent_node = self.nodes[parent_id]
+            parent_node = MyNode.nodes[parent_id]
         except KeyError:
             parent_node = None
         # Add node to the dictionary of nodes
-        self.nodes[node_id] = MyNode(node_id, parent_node, user_id, type)
-        
-        if node_id == self.avatar_id :
-            # Create TagGroup in Avatar node representing current view to the 3d View
-            self.send_taggroup_create(prio=vrs.DEFAULT_PRIORITY, node_id=self.avatar_id, custom_type=53)
+        self.nodes[node_id] = MyNode(node_id, parent_node, user_id, custom_type)
         
     
     def _receive_node_destroy(self, node_id):
@@ -98,11 +98,17 @@ class VerseSession(vrs.Session):
         receive_node_destroy(node_id) -> None
         """
         print('receive_node_destroy()', node_id)
-        # Try to remove node from dictionary of nodes
+
+        node = None
+        # Try to find node in dict of nodes
         try:
-            self.nodes.pop(node_id)
+            node = MyNode.nodes.[node_id]
         except KeyError:
-            pass
+            return
+
+        # Delete node
+        if node is not None:
+            del node
         
     
     def _receive_connect_terminate(self, error):
@@ -115,7 +121,7 @@ class VerseSession(vrs.Session):
         # Print error message
         bpy.ops.wm.verse_error('INVOKE_DEFAULT', error_string="Disconnected")
         # Clear dictionary of nodes
-        self.nodes.clear()
+        MyNode.nodes.clear()
         # TODO: stop timer
   
     
@@ -131,7 +137,7 @@ class VerseSession(vrs.Session):
         # Subscribe to the root node (ID of this node is always 0)
         self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=0, version=0, crc32=0)
         # Add root node to the dictionary of nodes
-        self.nodes[0] = MyNode(0, None, 0, 0)
+        self.nodes[0] = MyNode(node_id=0, parent=None, user_id=0, custom_type=0)
 
         # TODO: Create tag groups with views to the scene
         

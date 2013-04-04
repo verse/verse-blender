@@ -18,16 +18,25 @@
 
 
 #
-# This file contain methods and classes for visualization of current
-# view to active 3DView. Other Blender users sharing data at verse
-# server can see, where you are and what you do.
+# This file contain methods and classes for visualization of other
+# users connected to Verse server. It visualize their position and
+# current view to active 3DView. Other Blender users sharing data at
+# Verse server can also see, where you are and what you do.
 #
 
 
-import bpy
-import bgl
-import mathutils
-import math
+if "bpy" in locals():
+    import imp
+    imp.reload(model)
+    imp.reload(session)
+else:
+    import bpy
+    import bgl
+    import mathutils
+    import math
+    import verse as vrs
+    from . import model
+    from . import session
 
 
 def draw_cb(self, context):
@@ -83,6 +92,16 @@ class AvatarView():
         self.lens = None
         self.cur_screen = None
         self.cur_area = None
+        # Verse objects
+        self.node_id = None
+        self.tg_id = None
+        self.tag_pos = None
+        self.tag_rot = None
+        self.tag_dist = None
+        self.tag_persp = None
+        self.tag_lens = None
+        self.tag_width = None
+        self.tag_height = None
 
 
     def update(self, context):
@@ -437,6 +456,23 @@ class VerseAvatarStatus(bpy.types.Operator):
             return {'CANCELLED'}
 
 
+class VerseShowAvatars(bpy.types.Operator):
+    """
+    Operator for show/hide other avatars
+    """
+    bl_idname = "view3d.verse_show_avatars"
+    bl_label = "Show Avatars"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+    def __init__(self):
+        """
+        Constructor of VerseShowAvatars
+        """
+
+
+
+
 class VerseAvatarPanel(bpy.types.Panel):
     """
     Panel with widgets
@@ -453,39 +489,50 @@ class VerseAvatarPanel(bpy.types.Panel):
         
         wm = context.window_manager
         layout = self.layout
-        
-        if not wm.verse_avatar_capture:
-            layout.operator("view3d.verse_avatar", text="Start Capture",
-                icon = "PLAY")
-        else:
-            layout.operator("view3d.verse_avatar", text="Pause Capture",
-                icon = "PAUSE")
+        layout.operator("view3d.verse_show_avatars")
+
+        # if not wm.verse_avatar_capture:
+        #     layout.operator("view3d.verse_avatar", text="Start Capture",
+        #         icon = "PLAY")
+        # else:
+        #     layout.operator("view3d.verse_avatar", text="Pause Capture",
+        #         icon = "PAUSE")
 
 
 def init_properties():
     """
-    Initialize properties used by this addon
+    Initialize properties used by this module
     """
     wm = bpy.types.WindowManager
-    
     wm.verse_avatar_capture = bpy.props.BoolProperty(default=False)
+    wm.verse_show_avatars = bpy.props.BoolProperty(default=False)
+
+
+def reset_properties():
+    """
+    Reset properties used by this module
+    """
+    wm = bpy.types.WindowManager
+    wm.verse_avatar_capture = False
+    wm.verse_show_avatars = False
 
 
 def register():
     """
     Register classes with panel and init properties
     """
-    init_properties()
     bpy.utils.register_class(VerseAvatarPanel)
     bpy.utils.register_class(VerseAvatarStatus)
+    init_properties()
 
 
 def umregister():
     """
-    Unregister classes with panel
+    Unregister classes with panel and reset properties
     """
     bpy.utils.unregister_class(VerseAvatarPanel)
     bpy.utils.unregister_class(VerseAvatarStatus)
+    reset_properties()
 
 if __name__ == '__main__':
     register()
