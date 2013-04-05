@@ -131,14 +131,26 @@ class MyTagGroup():
             self.node.taggroups[tg_id] = self
         else:
             self.node.tg_queue[custom_type] = self
-        # TODO: send create command to Verse server
+        # Send create command to Verse server
+        if session is not None:
+            session.send_taggroup_create(node.id, custom_type)
 
 
     def __del__(self):
         """
         Destructor of MyTagGroup
         """
+        pass
+
+
+    def destroy(self):
+        """
+        Method for destroying tag group
+        """
         self.node.taggroups.pop(self.id)
+        # Send destroy command to Verse server
+        if session is not None and self.id is not None:
+            session.send_taggroup_destroy(node.id, seld.id)
 
 
 
