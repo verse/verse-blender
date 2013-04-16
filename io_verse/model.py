@@ -23,6 +23,23 @@ import verse as vrs
 session = None
 
 
+class MyCustomTypeError(Exception):
+    """
+    Exception for invalid custom types
+    """
+    def __init__(self, value):
+        """
+        Constructor of exception
+        """
+        self.value = value
+
+    def __str__(self):
+        """
+        Method for printing content of exception
+        """
+        return repr(self.value)
+
+
 class MyLayer():
     """
     Class representing Verse layer
@@ -130,7 +147,13 @@ class MyTagGroup():
         if tg_id is not None:
             self.node.taggroups[tg_id] = self
         else:
-            self.node.tg_queue[custom_type] = self
+            tg = None
+            try:
+                tg = self.node.tg_queue[custom_type]
+            except KeyError:
+                self.node.tg_queue[custom_type] = self
+            if tg is not None:
+                raise MyCustomTypeError(custom_type)
         # Send create command to Verse server
         if session is not None:
             session.send_taggroup_create(node.id, custom_type)
