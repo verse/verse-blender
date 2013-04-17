@@ -94,14 +94,23 @@ class MyTag():
 
         if tag_id is not None:
             self.tg.tags[tag_id] = self
-        else:
             self.tg.tag_queue[custom_type] = self
+        else:
+            tag = None
+            try:
+                tag = self.tg.tag_queue[custom_type]
+            except KeyError:
+                self.tg.tag_queue[custom_type] = self
+            if tag is not None:
+                raise MyCustomTypeError(custom_type)
 
-    def __del__(self):
+    def destroy(self):
         """
         Destructor of MyTag
         """
-        self.tg.tags.pop(self.id)
+        if self.id is not None:
+            self.tg.tags.pop(self.id)
+        self.tg.tag_queue.pop(self.custom_type)
         # TODO: Send destroy command to Verse server
 
     @property
@@ -146,6 +155,7 @@ class MyTagGroup():
         # Set bindings
         if tg_id is not None:
             self.node.taggroups[tg_id] = self
+            self.node.tg_queue[custom_type] = self
         else:
             tg = None
             try:
@@ -170,7 +180,9 @@ class MyTagGroup():
         """
         Method for destroying tag group
         """
-        self.node.taggroups.pop(self.id)
+        if self.id is not None:
+            self.node.taggroups.pop(self.id)
+        self.node.tg_queue.pop(self.custom_type)
         # Send destroy command to Verse server
         if session is not None and self.id is not None:
             session.send_taggroup_destroy(node.id, seld.id)
@@ -258,5 +270,5 @@ class MyNode():
             node_queue = __class__.my_node_queues[custom_type]
         except KeyError:
             return
-        node = node_queue.pop()
+        node = node_queue.popitem()
         __class__.nodes[node_id] = node

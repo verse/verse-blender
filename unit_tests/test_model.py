@@ -17,8 +17,53 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import unittest
-
 import model
+import verse as vrs
+
+class TestTag(unittest.TestCase):
+    """
+    Test case of tag
+    """
+
+    def seUp(self):
+        """
+        Execute before each test (clear dictionary of nodes)
+        """
+        model.MyNode.nodes = {}
+        model.MyNode.my_node_queues = {}
+
+
+    def test_create_new_tag(self):
+        """
+        Test of creating new tag
+        """
+        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
+        tag = model.MyTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
+        self.assertEqual(tag, tg.tag_queue[5])
+ 
+
+    def test_exception_tag(self):
+        """
+        Test of raising exception, when client wants to create two tags
+        with the same custom type inside the same tag group
+        """
+        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
+        tag = model.MyTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
+        self.assertRaises(model.MyCustomTypeError, model.MyTag, tg, None, vrs.VALUE_TYPE_UINT8, 1, 5)
+
+
+    def test_destroy_tag(self):
+        """
+        Test of destroying of tag
+        """
+        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
+        tag = model.MyTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
+        tag.destroy()
+        self.assertEqual(len(tg.tags), 0)
+        self.assertEqual(len(tg.tag_queue), 0)
 
 
 class TestTagGroup(unittest.TestCase):
@@ -26,13 +71,22 @@ class TestTagGroup(unittest.TestCase):
     Test case of tag group
     """
 
-    def test_create_taggroup(self):
+    def setUp(self):
+        """
+        Execute before each test (clear dictionary of nodes)
+        """
+        model.MyNode.nodes = {}
+        model.MyNode.my_node_queues = {}
+
+
+    def test_create_new_taggroup(self):
         """
         Test of creating new tag group
         """
         node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
         tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
         self.assertEqual(tg, node.tg_queue[32])
+
 
     def test_exception_taggroup(self):
         """
@@ -44,6 +98,25 @@ class TestTagGroup(unittest.TestCase):
         self.assertRaises(model.MyCustomTypeError, model.MyTagGroup, node, None, 32)
 
 
+    def test_create_taggroup(self):
+        """
+        Test of creating tag group that was received from verse server (tg ID is known)
+        """
+        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.MyTagGroup(node=node, tg_id=3, custom_type=32)
+        self.assertEqual(tg, node.taggroups[3])
+
+
+    def test_destroy_taggroup(self):
+        """
+        Test of creating tag group that was received from verse server (tg ID is known)
+        """
+        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.MyTagGroup(node=node, tg_id=3, custom_type=32)
+        tg.destroy()
+        self.assertEqual(len(node.taggroups), 0)
+        self.assertEqual(len(node.tg_queue), 0)
+
 
 class TestNode(unittest.TestCase):
     """
@@ -53,10 +126,11 @@ class TestNode(unittest.TestCase):
     
     def setUp(self):
         """
-        Execute before each test
+        Execute before each test (clear dictionary of all nodes)
         """
         model.MyNode.nodes = {}
         model.MyNode.my_node_queues = {}
+
 
     def test_create_node(self):
         """
