@@ -160,6 +160,10 @@ class MyTagGroup():
         self.custom_type = custom_type
         self.tags = {}
         self.tag_queue = {}
+        self.version = 0
+        self.crc32 = 0
+        self.subscribed = False
+        self.created = False
         # Set bindings
         if tg_id is not None:
             self.node.taggroups[tg_id] = self
@@ -174,7 +178,11 @@ class MyTagGroup():
                 raise MyCustomTypeError(custom_type)
         # Send create command to Verse server
         if session is not None and node.id is not None:
-            session.send_taggroup_create(node.id, custom_type)
+            if tg_id is None:
+                session.send_taggroup_create(node.id, custom_type)
+            else:
+                session.send_taggroup_subscribe(node.prio, node_id, tg_id, tg.version, tg.crc32)
+                this.subscribed = True
 
 
     def __del__(self):
@@ -207,13 +215,17 @@ class MyTagGroup():
             node = MyNode.nodes[node_id]
         except KeyError:
             return
+        # Is it tag group created by this client?
         try:
             tg = node.tg_queue[custom_type]
+            tg.id = tg_id
         except KeyError:
-            return
+            tg = MyTagGroup(node, tg_id, custom_type)
         node.taggroups[tg_id] = tg
         # Subscribe to tag group
-        session.send_taggroup_subscribe(node.prio, node_id, tg_id, 0, 0)
+        if tg.subscribed == False:
+            session.send_taggroup_subscribe(node.prio, node_id, tg_id, tg.version, tg.crc32)
+            tg.subscribed = True
         # Send tag_create commands for pending tags
         for custom_type, tag in tg.tag_queue.items():
             session.send_tag_create(node.prio, node.id, tg.id, tag.data_typ, tag.count, custom_type)
@@ -240,14 +252,22 @@ class MyNode():
         self.taggroups = {}
         self.tg_queue = {}
         self.layers = {}
+        self.version = 0
+        self.crc32 = 0
         self.layer_queue = {}
         self.prio = vrs.DEFAULT_PRIORITY
+        self.subscribed = False
+        self.created = False
 
         # When node_id is not set, then:
         if node_id is None:
-            # Send node_create command to the server
+            # Send node_create command to the server, when 
             if session is not None:
-                session.send_node_create(self.prio, custom_type)
+                if node_id is None:
+                    session.send_node_create(self.prio, custom_type)
+                else:
+                    session.send_node_subscribe(self.prio, self.id, self.version, self.crc32)
+                    self.subscribed = True
             # Try to find queue of custom_type of node or create new one
             try:
                 node_queue = __class__.my_node_queues[custom_type]
@@ -290,20 +310,34 @@ class MyNode():
 
 
     @staticmethod
-    def node_created(node_id, custom_type):
+    def node_created(node_id, parent_id, user_id, custom_type):
         """
         Static method of class that move object from queue to
         the dictionary of nodes and send pending commands
         """
+        # Is it node created by this client?
         node_queue = None
         try:
             node_queue = __class__.my_node_queues[custom_type]
         except KeyError:
-            return
-        node = node_queue.popitem()
-        __class__.nodes[node_id] = node
-        session.send_node_subscribe()
+            pass
+        # Try to find parent node
+        try:
+            parent_node = __class__.nodes[parent_id]
+        except KeyError:
+            parent_node = None
+        # If this is node created by this client, then add it to
+        # dictionary of nodes
+        if node_queue is not None:
+            node = node_queue.popitem()
+            __class__.nodes[node_id] = node
+        else:
+            node = MyNode(node_id, parent_node, user_id, custom_type)
+        # When this node is not subscribed, then subscribe
+        if node.subscribed == False:
+            session.send_node_subscribe(node.prio, node.id, node.version, node.crc32)
+            node.subscribed = True
         # Send tag group create for pending tag groups
         for custom_type in node.tg_queue.keys():
             session.send_taggroup_create(node.prio, node.id, custom_type)
-        # TODO: send node_prioroty, node_link, node_subscribe, layer_create
+        # TODO: send node_prioroty, node_link, layer_create

@@ -21,9 +21,31 @@ import model
 import verse as vrs
 import time
 
+class TestNode(unittest.TestCase):
+    """
+    Test case of TestNode
+    """
+
+    def test_create_node(self):
+        """
+        Test of creating new node
+        """
+        node = model.MyNode(node_id=None, parent=None, user_id=None, custom_type=16)
+        time.sleep(0.2)
+        self.assertEqual(node.created, True)
+
+    def tearDown(self):
+        model.session.send_connect_terminate()
+
 class MySession(vrs.Session):
+    """
+    Class with session used in this client
+    """
+
     def _receive_user_authenticate(self, username, methods):
-        """Callback function for user authenticate"""
+        """
+        Callback function for user authenticate
+        """
         print("MY user_authenticate(): ",
               "username: ", username,
               ", methods: ", methods)
@@ -44,26 +66,45 @@ class MySession(vrs.Session):
                 print("Unsuported authenticate method")
 
     def _receive_connect_accept(self, user_id, avatar_id):
-        """Custom callback function for connect accept"""
-        # Subscribe to node that is root of node tree
+        """
+        Custom callback function for connect accept
+        """
+        self.user_id = user_id
+        self.avatar_id = avatar_id
+        # Subscribe to node of avatar
         self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=0, version=0)
+        # Create root node
+        model.MyNode(0, None, 100, 0)
+        self.state = "CONNECTED"
 
     def _receive_node_create(self, node_id, parent_id, user_id, type):
         """Custom callback function that is called, when client received"""
         """command node_create"""
-        self.send_node_subscribe(vrs.DEFAULT_PRIORITY, node_id, 0)
+        model.MyNode.node_created(node_id, parent_id, user_id, type)
+        if node_id == self.avatar_id:
+            # Start unitesting, when avatar node is created
+            #unittest.main()
+            print("avatar_id: ", self.avatar_id)
+            test_node = TestNode()
+            test_node.run()
+
+    def _recive_connect_terminate(self, error):
+        """
+        """
+        self.state = "DISCONNECTED"
 
 def main(hostname, username, password):
     """
     Function with main never ending verse loop
     """
-    session = MySession(hostname, "12345", vrs.DGRAM_SEC_DTLS)
-    session.username = username
-    session.password = password
+    model.session = MySession(hostname, "12345", vrs.DGRAM_SEC_DTLS)
+    model.session.username = username
+    model.session.password = password
+    model.session.state = 'CONNECTING'
 
-    while(True):
-        session.callback_update()
-        time.sleep(1)
+    while(model.session.state != 'DISCONNECTED'):
+        model.session.callback_update()
+        time.sleep(0.05)
 
 if __name__ == '__main__':
     import argparse
