@@ -66,6 +66,17 @@ class TestTag(unittest.TestCase):
         self.assertEqual(len(tg.tag_queue), 0)
 
 
+    def test_setter_getter_tag(self):
+        """
+        Test of creating new tag
+        """
+        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
+        tag = model.MyTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
+        tag.value = 5
+        self.assertEqual(tag.value, 5)
+
+
 class TestTagGroup(unittest.TestCase):
     """
     Test case of tag group

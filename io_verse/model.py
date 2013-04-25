@@ -66,7 +66,7 @@ class MyLayer():
             if layer_id is not None:
                 self.parent_layer.childs[layer_id] = self
 
-    def __del__(self):
+    def destroy(self):
         """
         Destructor of MyLayer
         """
@@ -103,6 +103,8 @@ class MyTag():
                 self.tg.tag_queue[custom_type] = self
             if tag is not None:
                 raise MyCustomTypeError(custom_type)
+        if session is not None and tg.id is not None:
+            session.send_tag_create(tg.node.prio, tg.node.id, tg.id, data_type, count, custom_type)
 
     def destroy(self):
         """
@@ -111,7 +113,9 @@ class MyTag():
         if self.id is not None:
             self.tg.tags.pop(self.id)
         self.tg.tag_queue.pop(self.custom_type)
-        # TODO: Send destroy command to Verse server
+        # Send destroy command to Verse server
+        if session is not None and self.id is not None:
+            session.send_tag_destroy(self.tg.node.id, self.tg.id, self.id)
 
     @property
     def value(self):
@@ -126,7 +130,9 @@ class MyTag():
         The setter of value
         """
         self._value = val
-        # TODO: Send value to Verse server
+        # Send value to Verse server
+        if session is not None and self.id is not None:
+            session.send_tag_(self.tg.node.id, self.tg.id, self.id)
 
     @value.deleter
     def value(self):
@@ -134,7 +140,9 @@ class MyTag():
         The deleter of value
         """
         del self._value
-        # TODO: Send destroy command to Verse server
+        # Send destroy command to Verse server
+        if session is not None and self.id is not None:
+            session.send_tag_destroy(self.tg.node.id, self.tg.id, self.id)
 
 
 # VerseTagGroup class
@@ -165,7 +173,7 @@ class MyTagGroup():
             if tg is not None:
                 raise MyCustomTypeError(custom_type)
         # Send create command to Verse server
-        if session is not None:
+        if session is not None and node.id is not None:
             session.send_taggroup_create(node.id, custom_type)
 
 
@@ -185,8 +193,30 @@ class MyTagGroup():
         self.node.tg_queue.pop(self.custom_type)
         # Send destroy command to Verse server
         if session is not None and self.id is not None:
-            session.send_taggroup_destroy(node.id, seld.id)
+            session.send_taggroup_destroy(node.prio, node.id, self.id)
 
+    @staticmethod
+    def tg_created(node_id, tg_id, custom_type):
+        """
+        Static method of class that add reference to the
+        the dictionary of tag groups and send pending tag_create
+        commands
+        """
+        node = None
+        try:
+            node = MyNode.nodes[node_id]
+        except KeyError:
+            return
+        try:
+            tg = node.tg_queue[custom_type]
+        except KeyError:
+            return
+        node.taggroups[tg_id] = tg
+        # Subscribe to tag group
+        session.send_taggroup_subscribe(node.prio, node_id, tg_id, 0, 0)
+        # Send tag_create commands for pending tags
+        for custom_type, tag in tg.tag_queue.items():
+            session.send_tag_create(node.prio, node.id, tg.id, tag.data_typ, tag.count, custom_type)
 
 
 # VerseNode class
@@ -260,10 +290,10 @@ class MyNode():
 
 
     @staticmethod
-    def node_creation_confirmed(node_id, custom_type):
+    def node_created(node_id, custom_type):
         """
         Static method of class that move object from queue to
-        the dictionary of nodes
+        the dictionary of nodes and send pending commands
         """
         node_queue = None
         try:
@@ -272,3 +302,8 @@ class MyNode():
             return
         node = node_queue.popitem()
         __class__.nodes[node_id] = node
+        session.send_node_subscribe()
+        # Send tag group create for pending tag groups
+        for custom_type in node.tg_queue.keys():
+            session.send_taggroup_create(node.prio, node.id, custom_type)
+        # TODO: send node_prioroty, node_link, node_subscribe, layer_create
