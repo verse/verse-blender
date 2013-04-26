@@ -257,10 +257,11 @@ class MyNode():
         self.layer_queue = {}
         self.prio = vrs.DEFAULT_PRIORITY
         self.subscribed = False
-        self.created = False
 
         # When node_id is not set, then:
         if node_id is None:
+            # Node has not been created at Verse server
+            self.created = False
             # Send node_create command to the server, when 
             if session is not None:
                 if node_id is None:
@@ -277,6 +278,9 @@ class MyNode():
             # Add this object to the queue
             node_queue.insert(0, self)
         else:
+            # When node_id is known, then it is assumed that node is
+            # created at verse
+            self.created = True
             __class__.nodes[node_id] = self
             if self.parent is not None:
                 self.parent.child_nodes[node_id] = self
@@ -299,7 +303,7 @@ class MyNode():
             node.destroy()
         self.child_nodes.clear()
         if self.id is not None:
-            # Send destroy command to verse server
+            # Send destroy command to Cerse server
             if session is not None:
                 session.send_node_destroy(self.prio, self.id)
             # Remove this node from dict of child nodes
@@ -310,9 +314,10 @@ class MyNode():
 
 
     @staticmethod
-    def node_created(node_id, parent_id, user_id, custom_type):
+    def _receive_node_create(node_id, parent_id, user_id, custom_type):
         """
-        Static method of class that move object from queue to
+        Static method of class that should be called, when coresponding callback
+        method of class is called. This method moves node from queue to
         the dictionary of nodes and send pending commands
         """
         # Is it node created by this client?
@@ -329,8 +334,10 @@ class MyNode():
         # If this is node created by this client, then add it to
         # dictionary of nodes
         if node_queue is not None:
-            node = node_queue.popitem()
+            node = node_queue.pop()
             __class__.nodes[node_id] = node
+            node.id = node_id
+            node.created = True
         else:
             node = MyNode(node_id, parent_node, user_id, custom_type)
         # When this node is not subscribed, then subscribe
@@ -340,4 +347,13 @@ class MyNode():
         # Send tag group create for pending tag groups
         for custom_type in node.tg_queue.keys():
             session.send_taggroup_create(node.prio, node.id, custom_type)
-        # TODO: send node_prioroty, node_link, layer_create
+        # When node priority is different from default node priority
+        if node.prio != vrs.DEFAULT_PRIORITY:
+            session.send_node_prio(node.prio, node.id, node.prio)
+        # TODO: send layer_create, node_link
+
+    @staticmethod
+    def _receive_node_destroy(node_id):
+        """
+        """
+        pass

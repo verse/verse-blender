@@ -16,25 +16,46 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+"""
+Module for testing verse module and verse model
+"""
+
 import unittest
 import model
 import verse as vrs
 import time
 
-class TestNode(unittest.TestCase):
+class TestNewNodeCase(unittest.TestCase):
     """
     Test case of TestNode
     """
 
-    def test_create_node(self):
+    node = None
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        This method is called before any test is performed
+        """
+        __class__.node = model.MyNode(node_id=None, parent=None, user_id=None, custom_type=16)
+
+    def test_node_not_created(self):
         """
         Test of creating new node
-        """
-        node = model.MyNode(node_id=None, parent=None, user_id=None, custom_type=16)
-        time.sleep(0.2)
-        self.assertEqual(node.created, True)
+        """      
+        self.assertEqual(__class__.node.created, False)
 
-    def tearDown(self):
+    def test_node_not_subscribed(self):
+        """
+        Test of creating new node
+        """      
+        self.assertEqual(__class__.node.subscribed, False)
+
+    @classmethod
+    def tearDownClass(cls):
+        """
+        This method is called, when all method has been performed
+        """
         model.session.send_connect_terminate()
 
 class MySession(vrs.Session):
@@ -44,7 +65,7 @@ class MySession(vrs.Session):
 
     def _receive_user_authenticate(self, username, methods):
         """
-        Callback function for user authenticate
+        Callback method for user authenticate
         """
         print("MY user_authenticate(): ",
               "username: ", username,
@@ -67,7 +88,7 @@ class MySession(vrs.Session):
 
     def _receive_connect_accept(self, user_id, avatar_id):
         """
-        Custom callback function for connect accept
+        Custom callback method for connect accept
         """
         self.user_id = user_id
         self.avatar_id = avatar_id
@@ -75,23 +96,24 @@ class MySession(vrs.Session):
         self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=0, version=0)
         # Create root node
         model.MyNode(0, None, 100, 0)
-        self.state = "CONNECTED"
+        self.state = 'CONNECTED'
 
-    def _receive_node_create(self, node_id, parent_id, user_id, type):
-        """Custom callback function that is called, when client received"""
+    def _receive_node_create(self, node_id, parent_id, user_id, custom_type):
+        """Custom callback method that is called, when client received"""
         """command node_create"""
-        model.MyNode.node_created(node_id, parent_id, user_id, type)
+        super(MySession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)
+        model.MyNode._receive_node_create(node_id, parent_id, user_id, type)
         if node_id == self.avatar_id:
             # Start unitesting, when avatar node is created
-            #unittest.main()
             print("avatar_id: ", self.avatar_id)
-            test_node = TestNode()
-            test_node.run()
+            suite = unittest.TestLoader().loadTestsFromTestCase(TestNewNodeCase)
+            unittest.TextTestRunner(verbosity=1).run(suite)
 
-    def _recive_connect_terminate(self, error):
+    def _receive_connect_terminate(self, error):
         """
+        Custom callback method for fake connect terminate command
         """
-        self.state = "DISCONNECTED"
+        self.state = 'DISCONNECTED'
 
 def main(hostname, username, password):
     """
@@ -104,6 +126,7 @@ def main(hostname, username, password):
 
     while(model.session.state != 'DISCONNECTED'):
         model.session.callback_update()
+        print('.')
         time.sleep(0.05)
 
 if __name__ == '__main__':
