@@ -29,17 +29,17 @@ class TestTag(unittest.TestCase):
         """
         Execute before each test (clear dictionary of nodes)
         """
-        model.MyNode.nodes = {}
-        model.MyNode.my_node_queues = {}
+        model.VerseNode.nodes = {}
+        model.VerseNode.my_node_queues = {}
 
 
     def test_create_new_tag(self):
         """
         Test of creating new tag
         """
-        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
-        tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
-        tag = model.MyTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
+        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
         self.assertEqual(tag, tg.tag_queue[5])
  
 
@@ -48,19 +48,19 @@ class TestTag(unittest.TestCase):
         Test of raising exception, when client wants to create two tags
         with the same custom type inside the same tag group
         """
-        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
-        tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
-        tag = model.MyTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
-        self.assertRaises(model.MyCustomTypeError, model.MyTag, tg, None, vrs.VALUE_TYPE_UINT8, 1, 5)
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
+        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
+        self.assertRaises(model.VerseCustomTypeError, model.VerseTag, tg, None, vrs.VALUE_TYPE_UINT8, 1, 5)
 
 
     def test_destroy_tag(self):
         """
         Test of destroying of tag
         """
-        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
-        tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
-        tag = model.MyTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
+        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
         tag.destroy()
         self.assertEqual(len(tg.tags), 0)
         self.assertEqual(len(tg.tag_queue), 0)
@@ -70,9 +70,9 @@ class TestTag(unittest.TestCase):
         """
         Test of creating new tag
         """
-        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
-        tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
-        tag = model.MyTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
+        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
         tag.value = 5
         self.assertEqual(tag.value, 5)
 
@@ -86,16 +86,16 @@ class TestTagGroup(unittest.TestCase):
         """
         Execute before each test (clear dictionary of nodes)
         """
-        model.MyNode.nodes = {}
-        model.MyNode.my_node_queues = {}
+        model.VerseNode.nodes = {}
+        model.VerseNode.my_node_queues = {}
 
 
     def test_create_new_taggroup(self):
         """
         Test of creating new tag group
         """
-        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
-        tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
         self.assertEqual(tg, node.tg_queue[32])
 
 
@@ -104,17 +104,17 @@ class TestTagGroup(unittest.TestCase):
         Test of raising exception, when client wants to create two
         tag groups with the same custom type
         """
-        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
-        tg = model.MyTagGroup(node=node, tg_id=None, custom_type=32)
-        self.assertRaises(model.MyCustomTypeError, model.MyTagGroup, node, None, 32)
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
+        self.assertRaises(model.VerseCustomTypeError, model.VerseTagGroup, node, None, 32)
 
 
     def test_create_taggroup(self):
         """
         Test of creating tag group that was received from verse server (tg ID is known)
         """
-        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
-        tg = model.MyTagGroup(node=node, tg_id=3, custom_type=32)
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.VerseTagGroup(node=node, tg_id=3, custom_type=32)
         self.assertEqual(tg, node.taggroups[3])
 
 
@@ -122,8 +122,8 @@ class TestTagGroup(unittest.TestCase):
         """
         Test of creating tag group that was received from verse server (tg ID is known)
         """
-        node = model.MyNode(node_id=65536, parent=None, user_id=None, custom_type=16)
-        tg = model.MyTagGroup(node=node, tg_id=3, custom_type=32)
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.VerseTagGroup(node=node, tg_id=3, custom_type=32)
         tg.destroy()
         self.assertEqual(len(node.taggroups), 0)
         self.assertEqual(len(node.tg_queue), 0)
@@ -139,32 +139,32 @@ class TestNode(unittest.TestCase):
         """
         Execute before each test (clear dictionary of all nodes)
         """
-        model.MyNode.nodes = {}
-        model.MyNode.my_node_queues = {}
+        model.VerseNode.nodes = {}
+        model.VerseNode.my_node_queues = {}
 
 
     def test_create_node(self):
         """
         Test of creating new node
         """
-        node = model.MyNode(node_id=None, parent=None, user_id=None, custom_type=16)
-        self.assertEqual(node, model.MyNode.my_node_queues[16][0])
+        node = model.VerseNode(node_id=None, parent=None, user_id=None, custom_type=16)
+        self.assertEqual(node, model.VerseNode.my_node_queues[16][0])
 
 
     def test_create_root_node(self):
         """
         Test of creating new root node
         """
-        node = model.MyNode(node_id=0, parent=None, user_id=0, custom_type=0)
-        self.assertEqual(node, model.MyNode.nodes[0])
+        node = model.VerseNode(node_id=0, parent=None, user_id=0, custom_type=0)
+        self.assertEqual(node, model.VerseNode.nodes[0])
 
 
     def test_create_scene_node(self):
         """
         Test of creating new scene node that is child node of root node
         """
-        root_node = model.MyNode(node_id=0, parent=None, user_id=0, custom_type=0)
-        scene_node = model.MyNode(node_id=1, parent=root_node, user_id=0, custom_type=0)
+        root_node = model.VerseNode(node_id=0, parent=None, user_id=0, custom_type=0)
+        scene_node = model.VerseNode(node_id=1, parent=root_node, user_id=0, custom_type=0)
         self.assertEqual(scene_node, root_node.child_nodes[1])
 
 
@@ -172,29 +172,29 @@ class TestNode(unittest.TestCase):
         """
         Test of destroying node
         """
-        node = model.MyNode(node_id=65535, parent=None, user_id=None, custom_type=16)
+        node = model.VerseNode(node_id=None, parent=None, user_id=None, custom_type=16)
         node.destroy()
-        self.assertEqual(len(model.MyNode.nodes), 0)
+        self.assertEqual(len(model.VerseNode.nodes), 0)
 
 
     def test_destroy_child_node(self):
         """
         Test of destroying child node
         """
-        root_node = model.MyNode(node_id=0, parent=None, user_id=None, custom_type=0)
-        scene_node = model.MyNode(node_id=1, parent=root_node, user_id=0, custom_type=0)
+        root_node = model.VerseNode(node_id=0, parent=None, user_id=None, custom_type=0)
+        scene_node = model.VerseNode(node_id=1, parent=root_node, user_id=0, custom_type=0)
         scene_node.destroy()
-        self.assertEqual(len(model.MyNode.nodes), 1)
+        self.assertEqual(len(model.VerseNode.nodes), 1)
 
 
     def test_destroy_parent_node(self):
         """
         Test of destroying parent node
         """
-        root_node = model.MyNode(node_id=0, parent=None, user_id=None, custom_type=0)
-        scene_node = model.MyNode(node_id=1, parent=root_node, user_id=0, custom_type=0)
+        root_node = model.VerseNode(node_id=0, parent=None, user_id=None, custom_type=0)
+        scene_node = model.VerseNode(node_id=1, parent=root_node, user_id=0, custom_type=0)
         root_node.destroy()
-        self.assertEqual(len(model.MyNode.nodes), 0)
+        self.assertEqual(len(model.VerseNode.nodes), 0)
 
 if __name__ == '__main__':
     unittest.main()
