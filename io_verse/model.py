@@ -130,7 +130,7 @@ class VerseEntity(object):
         """
         This method switch entity state, when client wants to destroy entity
         """
-        if self.state == ENTITY_CREATED:
+        if self.state == ENTITY_CREATED or self.state == ENTITY_ASSUMED:
             self._send_destroy()
             self.state = ENTITY_DESTROYING
         elif self.state == ENTITY_CREATING:
