@@ -1,5 +1,5 @@
-Unit test for model module
-==========================
+Unit tests for model module
+===========================
 
 This directory contains unit tests for model module. To be able to run
 these test you have to set up PYTHONPATH system variable. This variable
