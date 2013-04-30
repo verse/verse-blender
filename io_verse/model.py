@@ -126,13 +126,14 @@ class VerseEntity(object):
         else:
             raise VerseStateError(self.state, "create")
 
-    def _destroy(self):
+    def _destroy(self, send_destroy_cmd=True):
         """
         This method switch entity state, when client wants to destroy entity
         """
         if self.state == ENTITY_CREATED or self.state == ENTITY_ASSUMED:
-            self._send_destroy()
-            self.state = ENTITY_DESTROYING
+            if send_destroy_cmd == True:
+                self._send_destroy()
+                self.state = ENTITY_DESTROYING
         elif self.state == ENTITY_CREATING:
             self.state = ENTITY_WANT_DESTROY
         else:
@@ -417,16 +418,18 @@ class VerseNode(VerseEntity):
                 self.parent.child_nodes[node_id] = self
 
 
-    def destroy(self):
+    def destroy(self, send_destroy_cmd=True):
         """
         This method destroy node 
         """
-        # Change state and send commands
-        self._destroy()
-        # Delete all child nodes
+        if self.state != ENTITY_DESTROYED:
+            # Change state and send commands
+            self._destroy(send_destroy_cmd)
+        # Delete all child nodes, but do not send destroy command
+        # for these nodes
         for node in self.child_nodes.values():
             node.parent = None
-            node.destroy()
+            node.destroy(send_destroy_cmd=False)
         self.child_nodes.clear()
         if self.id is not None:
             # Remove this node from dict of child nodes
@@ -500,7 +503,15 @@ class VerseNode(VerseEntity):
     @staticmethod
     def _receive_node_destroy(node_id):
         """
+        Static method of class that should be called, when destroy_node
+        callback method od Session class is called. This method removes
+        node from dictionary.
         """
-        # TODO
-        pass
+        
+        try:
+            node = __class__.node_id.pop(node_id)
+        except KeyError:
+            pass
+        node._receive_destroy()
+        node.destroy()
 
