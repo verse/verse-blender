@@ -25,9 +25,80 @@ import model
 import verse as vrs
 import time
 
-class TestNewNodeCase(unittest.TestCase):
+
+class TestCreatedTagGroupCase(unittest.TestCase):
     """
-    Test case of TestNode
+    Test case of VerseTagGroup
+    """
+
+    node = None
+    tg = None
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        This method is called before any test is performed
+        """
+        __class__.node = model.session.test_node
+        __class__.tg = model.session.test_node.test_tg
+
+    def test_tg_created(self):
+        """
+        Test of state of created tag group
+        """      
+        self.assertEqual(__class__.tg.state, model.ENTITY_CREATED)
+
+    def test_tg_id(self):
+        """
+        Test of tag group ID
+        """      
+        self.assertIsNotNone(__class__.tg.id)
+
+    def test_tg_subscribed(self):
+        """
+        Test of subscription of created tag group
+        """      
+        self.assertEqual(__class__.tg.subscribed, True)
+
+    @classmethod
+    def tearDownClass(cls):
+        """
+        This method is called, when all method has been performed
+        """
+        model.session.send_connect_terminate()
+
+class TestNewTagGroupCase(unittest.TestCase):
+    """
+    Test case of VerseTagGroup
+    """
+
+    node = None
+    tg = None
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        This method is called before any test is performed
+        """
+        __class__.node = model.session.test_node
+        __class__.tg = model.session.test_node.test_tg
+
+    def test_tg_not_created(self):
+        """
+        Test of creating new tag group
+        """      
+        self.assertEqual(__class__.tg.state, model.ENTITY_CREATING)
+
+    def test_tg_not_subscribed(self):
+        """
+        Test of subscription of new tag group
+        """      
+        self.assertEqual(__class__.tg.subscribed, False)
+
+
+class TestCreatedNodeCase(unittest.TestCase):
+    """
+    Test case of created VerseNode
     """
 
     node = None
@@ -37,7 +108,40 @@ class TestNewNodeCase(unittest.TestCase):
         """
         This method is called before any test is performed
         """
-        __class__.node = model.VerseNode(node_id=None, parent=None, user_id=None, custom_type=16)
+        __class__.node = model.session.test_node
+
+    def test_node_created(self):
+        """
+        Test of creating new node
+        """      
+        self.assertEqual(__class__.node.state, model.ENTITY_CREATED)
+
+    def test_node_id(self):
+        """
+        Test of node ID
+        """      
+        self.assertIsNotNone(__class__.node.id)
+
+    def test_node_subscribed(self):
+        """
+        Test of node subscribtion
+        """      
+        self.assertEqual(__class__.node.subscribed, True)
+
+
+class TestNewNodeCase(unittest.TestCase):
+    """
+    Test case of new VerseNode
+    """
+
+    node = None
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        This method is called before any test is performed
+        """
+        __class__.node = model.session.test_node
 
     def test_node_not_created(self):
         """
@@ -51,12 +155,6 @@ class TestNewNodeCase(unittest.TestCase):
         """      
         self.assertEqual(__class__.node.subscribed, False)
 
-    @classmethod
-    def tearDownClass(cls):
-        """
-        This method is called, when all method has been performed
-        """
-        model.session.send_connect_terminate()
 
 class MySession(vrs.Session):
     """
@@ -90,22 +188,92 @@ class MySession(vrs.Session):
         """
         Custom callback method for connect accept
         """
+        # Call parent method to print debug information
+        super(MySession, self)._receive_connect_accept(self, user_id, avatar_id)
+        # Save important informations
         self.user_id = user_id
         self.avatar_id = avatar_id
+        self.test_node = None
+        self.test_tg = None
+        self.test_tag = None
         # Create root node
-        model.VerseNode(0, None, 100, 0)
+        self.root_node = model.VerseNode(node_id=0, parent=None, user_id=100, custom_type=0)
         self.state = 'CONNECTED'
 
     def _receive_node_create(self, node_id, parent_id, user_id, custom_type):
-        """Custom callback method that is called, when client received"""
-        """command node_create"""
+        """
+        Custom callback method that is called, when client received
+        command node_create
+        """
+
+        # Call parent method to print debug information
         super(MySession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)
-        model.VerseNode._receive_node_create(node_id, parent_id, user_id, type)
+
+        # Call calback method of model
+        node = model.VerseNode._receive_node_create(node_id, parent_id, user_id, custom_type)
+
+        # Start unit testing of new node, tag group and tag, when avatar node is created
         if node_id == self.avatar_id:
-            # Start unitesting, when avatar node is created
-            print("avatar_id: ", self.avatar_id)
+
+            # Save reference at avatar node
+            self.avatar_node = node
+
+            # Create new test node
+            self.test_node = model.VerseNode(node_id=None, \
+                parent=self.avatar_node, \
+                user_id=None, \
+                custom_type=16)
+
+            # Create new test tag group
+            self.test_node.test_tg = model.VerseTagGroup(node=self.test_node, \
+                tg_id=None, \
+                custom_type=32)
+
+            # Create new test tag
+            self.test_node.test_tg.test_tag = model.VerseTag(tg=self.test_node.test_tg, \
+                tag_id=None, \
+                data_type=vrs.VALUE_TYPE_UINT8, \
+                count=1, \
+                custom_type=64)
+
+            # Test new Node
             suite = unittest.TestLoader().loadTestsFromTestCase(TestNewNodeCase)
             unittest.TextTestRunner(verbosity=1).run(suite)
+
+            # Test new TagGroup
+            suite = unittest.TestLoader().loadTestsFromTestCase(TestNewTagGroupCase)
+            unittest.TextTestRunner(verbosity=1).run(suite)
+
+            # TODO: test new tag
+
+        # Start unit testing of created node
+        if node == self.test_node:
+
+            # Test created Node
+            suite = unittest.TestLoader().loadTestsFromTestCase(TestCreatedNodeCase)
+            unittest.TextTestRunner(verbosity=1).run(suite)
+            pass
+
+
+    def _receive_taggroup_create(self, node_id, taggroup_id, custom_type):
+        """
+        Custom callback method that is called, when client received command
+        tag group create
+        """
+
+        # Call parent method to print debug information
+        super(MySession, self)._receive_taggroup_create(node_id, taggroup_id, custom_type)
+
+        # Call calback method of model
+        tg = model.VerseTagGroup._receive_tg_create(node_id, taggroup_id, custom_type)
+
+        # Start unit testing of created tag group
+        if tg == self.test_node.test_tg:
+
+            # Test created TagGroup
+            suite = unittest.TestLoader().loadTestsFromTestCase(TestCreatedTagGroupCase)
+            unittest.TextTestRunner(verbosity=1).run(suite)
+
 
     def _receive_connect_terminate(self, error):
         """

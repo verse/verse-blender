@@ -144,7 +144,6 @@ class VerseEntity(object):
         This method is called when client receive callback function about
         it creating on Verse server
         """
-
         if self.state == ENTITY_RESERVED or self.state == ENTITY_CREATING:
             self.state = ENTITY_CREATED
             self._send_subscribe()
@@ -161,7 +160,6 @@ class VerseEntity(object):
         This method is called when client receive callback function about
         it destroying on Verse server
         """
-
         if self.state == ENTITY_CREATED:
             self.state = ENTITY_DESTROYED
         elif self.state == ENTITY_DESTROYING:
@@ -220,8 +218,9 @@ class VerseTag():
         """
         self.tg = tg
         self.id = tag_id
-        self.custom_type = custom_type
         self.data_type = data_type
+        self.count = count
+        self.custom_type = custom_type
         self._value = None
 
         if tag_id is not None:
@@ -365,7 +364,9 @@ class VerseTagGroup(VerseEntity):
         tg._receive_create()
         # Send tag_create commands for pending tags
         for custom_type, tag in tg.tag_queue.items():
-            session.send_tag_create(node.prio, node.id, tg.id, tag.data_typ, tag.count, custom_type)
+            session.send_tag_create(node.prio, node.id, tg.id, tag.data_type, tag.count, custom_type)
+        # Return reference at tag group object
+        return tg
 
     @staticmethod
     def _receive_tg_destroy(node_id, tg_id):
@@ -441,10 +442,10 @@ class VerseNode(VerseEntity):
 
     def _send_create(self):
         """
-        This method send create command to Verse server
+        This method send node create command to Verse server
         """
-        if session is not None and self.id is not None:
-            session.send_node_create(self.prio, custom_type)
+        if session is not None and self.id is None:
+            session.send_node_create(self.prio, self.custom_type)
 
 
     def _send_destroy(self):
@@ -471,33 +472,38 @@ class VerseNode(VerseEntity):
         method of class is called. This method moves node from queue to
         the dictionary of nodes and send pending commands
         """
-        # Is it node created by this client?
-        node_queue = None
-        try:
-            node_queue = __class__.my_node_queues[custom_type]
-        except KeyError:
-            pass
+
         # Try to find parent node
         try:
             parent_node = __class__.nodes[parent_id]
         except KeyError:
             parent_node = None
-        # If this is node created by this client, then add it to
-        # dictionary of nodes
-        if node_queue is not None:
+
+        # Is it node created by this client?
+        if parent_id == session.avatar_id:
+            node_queue = __class__.my_node_queues[custom_type]
+            # If this is node created by this client, then add it to
+            # dictionary of nodes
             node = node_queue.pop()
             __class__.nodes[node_id] = node
             node.id = node_id
+            node.parent = parent_node
         else:
             node = VerseNode(node_id, parent_node, user_id, custom_type)
+
         # Chnage state of node
         node._receive_create()
+
         # Send tag group create for pending tag groups
         for custom_type in node.tg_queue.keys():
             session.send_taggroup_create(node.prio, node.id, custom_type)
+
         # When node priority is different from default node priority
         if node.prio != vrs.DEFAULT_PRIORITY:
             session.send_node_prio(node.prio, node.id, node.prio)
+
+        # Return reference at node
+        return node
         # TODO: send layer_create, node_link
 
     @staticmethod
