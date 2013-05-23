@@ -172,6 +172,48 @@ class TestNewTagGroupCase(unittest.TestCase):
         self.assertEqual(__class__.tg.subscribed, False)
 
 
+class TestLinkNodeCase(unittest.TestCase):
+    """
+    Test case of VerseNode with changed link to parent node
+    """
+
+    child_node = None
+    parent_node = None
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        This method is called before any test is performed
+        """
+        __class__.child_node = model.session.test_node
+        __class__.parent_node = model.session.test_scene_node
+        __class__.avatar_node = model.session.avatar_node
+
+    def test_child_node_link(self):
+        """
+        Test of node with changed link to parent node
+        """      
+        self.assertEqual(__class__.child_node.parent, __class__.parent_node)
+
+    def test_parent_node_link(self):
+        """
+        Test that new parent node include child node in
+        dictionary of child nodes
+        """
+        self.assertEqual(__class__.parent_node.child_nodes[__class__.child_node.id], __class__.child_node)
+
+    def test_avatar_child_nodes(self):
+        """
+        Test that original parent node (avatar node) does not include
+        reference at node anymore
+        """
+        try:
+            node = __class__.avatar_node.child_nodes[__class__.child_node.id]
+        except KeyError:
+            node = None
+        self.assertIsNone(node)
+
+
 class TestCreatedNodeCase(unittest.TestCase):
     """
     Test case of created VerseNode
@@ -293,9 +335,24 @@ class MySession(vrs.Session):
             # Save reference at avatar node
             self.avatar_node = node
 
+            # Try to find node representing parent node of scene nodes
+            try:
+                self.scene_node = model.VerseNode.nodes[3]
+            except KeyError:
+                self.scene_node = model.VerseNode(node_id=3, \
+                    parent=self.root_node, \
+                    user_id=100,
+                    custom_type=0)
+
+            # Create test scene node
+            self.test_scene_node = model.VerseNode(node_id=None, \
+                parent=self.scene_node, \
+                user_id=None,
+                custom_type=17)
+
             # Create new test node
             self.test_node = model.VerseNode(node_id=None, \
-                parent=self.avatar_node, \
+                parent=self.test_scene_node, \
                 user_id=None, \
                 custom_type=16)
 
@@ -330,7 +387,22 @@ class MySession(vrs.Session):
         if node == self.test_node:
             suite = unittest.TestLoader().loadTestsFromTestCase(TestCreatedNodeCase)
             unittest.TextTestRunner(verbosity=1).run(suite)
-            pass
+
+
+    def _receive_node_link(self, parent_node_id, child_node_id):
+        """
+        Custom callback method that is called, when client receive command changing
+        link between nodes
+        """
+        # Call parent method to print debug information
+        super(MySession, self)._receive_node_link(parent_node_id, child_node_id)
+        # Call calback method of model
+        child_node = model.VerseNode._receive_node_link(parent_node_id, child_node_id)
+
+        # Start unit testing of node with changed parent
+        if child_node == self.test_node:
+            suite = unittest.TestLoader().loadTestsFromTestCase(TestLinkNodeCase)
+            unittest.TextTestRunner(verbosity=1).run(suite)
 
 
     def _receive_taggroup_create(self, node_id, taggroup_id, custom_type):

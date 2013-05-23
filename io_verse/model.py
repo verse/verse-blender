@@ -607,7 +607,8 @@ class VerseNode(VerseEntity):
             node = node_queue.pop()
             __class__.nodes[node_id] = node
             node.id = node_id
-            node.parent = parent_node
+            if node.parent is None:
+                node.parent = parent_node
         else:
             node = VerseNode(node_id, parent_node, user_id, custom_type)
 
@@ -622,9 +623,18 @@ class VerseNode(VerseEntity):
         if node.prio != vrs.DEFAULT_PRIORITY:
             session.send_node_prio(node.prio, node.id, node.prio)
 
+        # When parent node is different then current parent, then send node_link
+        # command to Verse server
+        if node.parent is not None and parent_id != node.parent.id:
+            session.send_node_link(node.prio, node.parent.id, node.id)
+            # Add reference to list of child nodes to parent node now,
+            # because it is possible to do now (node id is known)
+            node.parent.child_nodes[node.id] = node
+
+        # TODO: send layer_create
+
         # Return reference at node
         return node
-        # TODO: send layer_create, node_link
 
     @staticmethod
     def _receive_node_destroy(node_id):
@@ -640,4 +650,33 @@ class VerseNode(VerseEntity):
             pass
         node._receive_destroy()
         node.destroy()
+
+    @staticmethod
+    def _receive_node_link(parent_node_id, child_node_id):
+        """
+        """
+        # Try to find parent node
+        try:
+            parent_node = __class__.nodes[parent_node_id]
+        except KeyError:
+            return
+        # Try to find child node
+        try:
+            child_node = __class__.nodes[child_node_id]
+        except KeyError:
+            return
+        # When current link between nodes is different, then
+        # set new link between nodes
+        if child_node.parent.id != parent_node.id:
+            # First remove child node from list of child nodes
+            # of current parent node
+            child.parent.child_nodes.pop(child_node_id)
+            # Set new parent of child node
+            child.parent = parent_node
+            # Add child node to the list of child node of new
+            # parent node
+            parent_node.child_nodes[child_node_id] = child_node
+
+        # Return reference at child node
+        return child_node
 
