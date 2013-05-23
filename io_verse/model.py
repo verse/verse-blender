@@ -207,7 +207,7 @@ class VerseLayer():
 
 
 # VerseTag class
-class VerseTag():
+class VerseTag(VerseEntity):
     """
     Class representing Verse tag
     """
@@ -216,12 +216,15 @@ class VerseTag():
         """
         Constructor of VerseTag
         """
+        super(VerseTag, self).__init__()
         self.tg = tg
         self.id = tag_id
         self.data_type = data_type
         self.count = count
         self.custom_type = custom_type
         self._value = None
+
+        self._create()
 
         if tag_id is not None:
             self.tg.tags[tag_id] = self
@@ -234,8 +237,7 @@ class VerseTag():
                 self.tg.tag_queue[custom_type] = self
             if tag is not None:
                 raise VerseCustomTypeError(custom_type)
-        if session is not None and tg.id is not None:
-            session.send_tag_create(tg.node.prio, tg.node.id, tg.id, data_type, count, custom_type)
+
 
     def destroy(self):
         """
@@ -245,8 +247,7 @@ class VerseTag():
             self.tg.tags.pop(self.id)
         self.tg.tag_queue.pop(self.custom_type)
         # Send destroy command to Verse server
-        if session is not None and self.id is not None:
-            session.send_tag_destroy(self.tg.node.id, self.tg.id, self.id)
+        self._destroy()
 
     @property
     def value(self):
@@ -263,7 +264,12 @@ class VerseTag():
         self._value = val
         # Send value to Verse server
         if session is not None and self.id is not None:
-            session.send_tag_(self.tg.node.id, self.tg.id, self.id)
+            session.send_tag_set_value(self.tg.node.prio, \
+                self.tg.node.id, \
+                self.tg.id, \
+                self.id, \
+                self.data_type, \
+                self._value)
 
     @value.deleter
     def value(self):
@@ -272,8 +278,110 @@ class VerseTag():
         """
         del self._value
         # Send destroy command to Verse server
+        self._send_destroy()
+
+    def _send_create(self):
+        """
+        Send tag create command to Verse server
+        """
+        if session is not None and self.tg.id is not None:
+            session.send_tag_create(self.tg.node.prio, \
+                self.tg.node.id, \
+                self.tg.id, \
+                self.data_type, \
+                self.count, \
+                self.custom_type)
+
+    def _send_destroy(self):
+        """
+        Send tag group destroy command to Verse server
+        """
         if session is not None and self.id is not None:
-            session.send_tag_destroy(self.tg.node.id, self.tg.id, self.id)
+            session.send_taggroup_destroy(self.node.prio, \
+                self.node.id, \
+                self.id)
+
+
+    @staticmethod
+    def _receive_tag_create(node_id, tg_id, tag_id, data_type, count, custom_type):
+        """
+        Static method of class that should be called when
+        coresponding callback function is called
+        """
+        # Try to find node
+        try:
+            node = VerseNode.nodes[node_id]
+        except KeyError:
+            return
+        # Try to find tag group
+        try:
+            tg = node.taggroups[tg_id]
+        except KeyError:
+            return
+        # Was this tag created by this client?
+        try:
+            tag = tg.tag_queue[custom_type]
+            # Add reference to dictionary of tags to tag group
+            tg.tags[tag_id] = tag
+            tag.id = tag_id
+        except KeyError:
+            tag = VerseTag(node, tg, tag_id, data_type, count, custom_type)
+        # Update state
+        tag._receive_create()
+        # Send tag value
+        tag.value = tag._value
+        # Return reference at tag object
+        return tag
+
+    @staticmethod
+    def _receive_tag_set_value(node_id, tg_id, tag_id, value):
+        """
+        Static method of class that should be called when
+        coresponding callback function is called
+        """
+        # Try to find node
+        try:
+            node = VerseNode.nodes[node_id]
+        except KeyError:
+            return
+        # Try to find tag group
+        try:
+            tg = node.taggroups[tg_id]
+        except KeyError:
+            return
+        # Try to find tag
+        try:
+            tag = tg.tags[tag_id]
+        except KeyError:
+            return
+        # Set value, but don't send set_value command
+        tag._value = value
+        # Return reference at this tag
+        return tag
+
+    @staticmethod
+    def _receive_tag_destroy(node_id, tg_id, tag_id):
+        """
+        Static method of class that should be called when
+        destroy callback session method is called
+        """
+        # Try to find node
+        try:
+            node = VerseNode.nodes[node_id]
+        except KeyError:
+            return
+        # Try to find tag group
+        try:
+            tg = node.taggroups[tg_id]
+        except KeyError:
+            return
+        # Try to find tag
+        try:
+            tag = tg.tag_queue[custom_type]
+        except KeyError:
+            return
+        # Destroy tag
+        tag.destroy()
 
 
 # VerseTagGroup class
@@ -371,9 +479,21 @@ class VerseTagGroup(VerseEntity):
     @staticmethod
     def _receive_tg_destroy(node_id, tg_id):
         """
-        TODO
+        Static method of class that should be called when
+        destroy callback session method is called
         """
-        pass
+        # Try to find node
+        try:
+            node = VerseNode.nodes[node_id]
+        except KeyError:
+            return
+        # Try to find tag group
+        try:
+            tg = node.taggroups[tg_id]
+        except KeyError:
+            return
+        # Destroy tag group
+        tg.destroy()
 
 # VerseNode class
 class VerseNode(VerseEntity):
