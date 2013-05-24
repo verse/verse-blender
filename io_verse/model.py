@@ -126,14 +126,13 @@ class VerseEntity(object):
         else:
             raise VerseStateError(self.state, "create")
 
-    def _destroy(self, send_destroy_cmd=True):
+    def _destroy(self):
         """
         This method switch entity state, when client wants to destroy entity
         """
         if self.state == ENTITY_CREATED or self.state == ENTITY_ASSUMED:
-            if send_destroy_cmd == True:
-                self._send_destroy()
-                self.state = ENTITY_DESTROYING
+            self._send_destroy()
+            self.state = ENTITY_DESTROYING
         elif self.state == ENTITY_CREATING:
             self.state = ENTITY_WANT_DESTROY
         else:
@@ -164,8 +163,16 @@ class VerseEntity(object):
             self.state = ENTITY_DESTROYED
         elif self.state == ENTITY_DESTROYING:
             self.state = ENTITY_DESTROYED
+            self._clean()
         else:
             raise VerseStateError(self.state, "rcv_destroy")
+
+    def _clean(self):
+        """
+        This method is called, when entity is switched to destroy state
+        and it is required to clean all data in this entity
+        """
+        pass
 
 
 class VerseLayer():
@@ -241,12 +248,9 @@ class VerseTag(VerseEntity):
 
     def destroy(self):
         """
-        Destructor of VerseTag
+        Send destroy command of VerseTag
         """
-        if self.id is not None:
-            self.tg.tags.pop(self.id)
-        self.tg.tag_queue.pop(self.custom_type)
-        # Send destroy command to Verse server
+        # Change state and send destroy command to Verse server
         self._destroy()
 
     @property
@@ -276,7 +280,6 @@ class VerseTag(VerseEntity):
         """
         The deleter of value
         """
-        del self._value
         # Send destroy command to Verse server
         self._send_destroy()
 
@@ -301,6 +304,16 @@ class VerseTag(VerseEntity):
                 self.node.id, \
                 self.id)
 
+    def _clean(self):
+        """
+        This method try to clean content (value) of this tag
+        """
+        # Remove references on this tag from tag group
+        if self.id is not None:
+            self.tg.tags.pop(self.id)
+        self.tg.tag_queue.pop(self.custom_type)
+        # Remove value
+        del self._value
 
     @staticmethod
     def _receive_tag_create(node_id, tg_id, tag_id, data_type, count, custom_type):
@@ -380,8 +393,10 @@ class VerseTag(VerseEntity):
             tag = tg.tag_queue[custom_type]
         except KeyError:
             return
-        # Destroy tag
-        tag.destroy()
+        # Change state and call clen method
+        tag._receive_destroy()
+        # Return reference at this destroyed tag
+        return tag
 
 
 # VerseTagGroup class
@@ -438,16 +453,24 @@ class VerseTagGroup(VerseEntity):
             session.send_taggroup_subscribe(self.node.prio, self.node.id, self.id, self.version, self.crc32)
             self.subscribed = True
 
+    def _clean(self):
+        """
+        This method clean all data from this tag group
+        """
+        # Remove references at all this taggroup
+        if self.id is not None:
+            self.node.taggroups.pop(self.id)
+        self.node.tg_queue.pop(self.custom_type)
+        # Clean all tags and queue of tags
+        self.tags.clear()
+        self.tag_queue.clear()
+
     def destroy(self):
         """
         Method for destroying tag group
         """
-        # Change state and send commands
+        # Change state and send destroy command to Verse server
         self._destroy()
-        if self.id is not None:
-            self.node.taggroups.pop(self.id)
-        self.node.tg_queue.pop(self.custom_type)
-            
 
     @staticmethod
     def _receive_tg_create(node_id, tg_id, custom_type):
@@ -493,7 +516,9 @@ class VerseTagGroup(VerseEntity):
         except KeyError:
             return
         # Destroy tag group
-        tg.destroy()
+        tg._receive_destroy()
+        # Return reference at this object
+        return tg
 
 # VerseNode class
 class VerseNode(VerseEntity):
@@ -541,23 +566,39 @@ class VerseNode(VerseEntity):
 
     def destroy(self, send_destroy_cmd=True):
         """
-        This method destroy node 
+        This method try to send destroy command
         """
-        if self.state != ENTITY_DESTROYED:
-            # Change state and send commands
-            self._destroy(send_destroy_cmd)
+        # Change state and send commands
+        self._destroy()
+
+
+    def _clean(self):
+        """
+        This method try to destroy all data in this object
+        """
         # Delete all child nodes, but do not send destroy command
         # for these nodes
-        for node in self.child_nodes.values():
-            node.parent = None
-            node.destroy(send_destroy_cmd=False)
+        for child_node in self.child_nodes.values():
+            child_node.parent = None
+            child_node._clean()
         self.child_nodes.clear()
+        # Remove reference on this node
         if self.id is not None:
-            # Remove this node from dict of child nodes
+            # Remove this node from dictionary of nodes
             __class__.nodes.pop(self.id)
-            # Remove node from dictionar of nodes in class
+            # Remove this node from dictionar of child nodes
             if self.parent is not None:
-                self.parent.child_nodes.pop(self.id)
+                try:
+                    self.parent.child_nodes.pop(self.id)
+                except KeyError:
+                    pass
+                self.parent = None
+        # Clear tag groups
+        self.taggroups.clear()
+        self.tg_queue.clear()
+        # Clear layers
+        self.layers.clear()
+        self.layer_queue.clear()
 
 
     def _send_create(self):
@@ -605,8 +646,8 @@ class VerseNode(VerseEntity):
             # If this is node created by this client, then add it to
             # dictionary of nodes
             node = node_queue.pop()
-            __class__.nodes[node_id] = node
             node.id = node_id
+            __class__.nodes[node_id] = node
             if node.parent is None:
                 node.parent = parent_node
         else:
@@ -640,16 +681,18 @@ class VerseNode(VerseEntity):
     def _receive_node_destroy(node_id):
         """
         Static method of class that should be called, when destroy_node
-        callback method od Session class is called. This method removes
-        node from dictionary.
+        callback method of Session class is called. This method removes
+        node from dictionary and node will be destroyed.
         """
-        
+        # Try to find node
         try:
-            node = __class__.node_id.pop(node_id)
+            node = __class__.nodes[node_id]
         except KeyError:
-            pass
+            return
+        # Set entity state and clean data in this node
         node._receive_destroy()
-        node.destroy()
+        # Return reference at this node
+        return node
 
     @staticmethod
     def _receive_node_link(parent_node_id, child_node_id):

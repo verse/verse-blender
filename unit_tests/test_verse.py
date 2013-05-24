@@ -197,7 +197,7 @@ class TestLinkNodeCase(unittest.TestCase):
 
     def test_parent_node_link(self):
         """
-        Test that new parent node include child node in
+        Test that new parent node includes child node in
         dictionary of child nodes
         """
         self.assertEqual(__class__.parent_node.child_nodes[__class__.child_node.id], __class__.child_node)
@@ -212,6 +212,48 @@ class TestLinkNodeCase(unittest.TestCase):
         except KeyError:
             node = None
         self.assertIsNone(node)
+
+
+class TestDestroyedNodeCase(unittest.TestCase):
+    """
+    Test case of destroying of VerseNode
+    """
+
+    node = None
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        This method is called before any test is performed
+        """
+        __class__.node = model.session.test_destroy_node
+
+    def test_node_destroying(self):
+        """
+        Test of creating new node
+        """      
+        self.assertEqual(__class__.node.state, model.ENTITY_DESTROYED)
+
+
+class TestDestroyNodeCase(unittest.TestCase):
+    """
+    Test case of destroying of VerseNode
+    """
+
+    node = None
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        This method is called before any test is performed
+        """
+        __class__.node = model.session.test_destroy_node
+
+    def test_node_destroying(self):
+        """
+        Test of creating new node
+        """      
+        self.assertEqual(__class__.node.state, model.ENTITY_DESTROYING)
 
 
 class TestCreatedNodeCase(unittest.TestCase):
@@ -314,8 +356,12 @@ class MySession(vrs.Session):
         self.test_node = None
         self.test_tg = None
         self.test_tag = None
+        self.test_destroy_node = None
+        self.test_scene_node = None
         # Create root node
         self.root_node = model.VerseNode(node_id=0, parent=None, user_id=100, custom_type=0)
+        # Scene node
+        self.scene_node = None
         self.state = 'CONNECTED'
 
     def _receive_node_create(self, node_id, parent_id, user_id, custom_type):
@@ -348,13 +394,21 @@ class MySession(vrs.Session):
             self.test_scene_node = model.VerseNode(node_id=None, \
                 parent=self.scene_node, \
                 user_id=None,
-                custom_type=17)
+                custom_type=16)
 
             # Create new test node
             self.test_node = model.VerseNode(node_id=None, \
                 parent=self.test_scene_node, \
                 user_id=None, \
-                custom_type=16)
+                custom_type=17)
+
+            # Create new nodes for testing of destroying nodes
+            self.test_destroy_node = model.VerseNode(node_id=None, \
+                parent=None, \
+                user_id=None,
+                custom_type=18)
+            # Destroy node immediately
+            self.test_destroy_node.destroy()
 
             # Create new test tag group
             self.test_node.test_tg = model.VerseTagGroup(node=self.test_node, \
@@ -386,6 +440,25 @@ class MySession(vrs.Session):
         # Start unit testing of created node
         if node == self.test_node:
             suite = unittest.TestLoader().loadTestsFromTestCase(TestCreatedNodeCase)
+            unittest.TextTestRunner(verbosity=1).run(suite)
+
+        # Start unit testing of destroying node
+        if node == self.test_destroy_node:
+            suite = unittest.TestLoader().loadTestsFromTestCase(TestDestroyNodeCase)
+            unittest.TextTestRunner(verbosity=1).run(suite)
+
+    def _receive_node_destroy(self, node_id):
+        """
+        Custom callback method for command node destroy
+        """
+        # Call parent method to print debug information
+        super(MySession, self)._receive_node_destroy(node_id)
+        # Call callback method of model
+        node = model.VerseNode._receive_node_destroy(node_id)
+
+        # Start unit testing of destroyed node
+        if node == self.test_destroy_node:
+            suite = unittest.TestLoader().loadTestsFromTestCase(TestDestroyedNodeCase)
             unittest.TextTestRunner(verbosity=1).run(suite)
 
 

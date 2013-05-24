@@ -61,7 +61,7 @@ class TestTag(unittest.TestCase):
         node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
         tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
         tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
-        tag.destroy()
+        tag._clean()
         self.assertEqual(len(tg.tags), 0)
         self.assertEqual(len(tg.tag_queue), 0)
 
@@ -124,7 +124,7 @@ class TestTagGroup(unittest.TestCase):
         """
         node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
         tg = model.VerseTagGroup(node=node, tg_id=3, custom_type=32)
-        tg.destroy()
+        tg._clean()
         self.assertEqual(len(node.taggroups), 0)
         self.assertEqual(len(node.tg_queue), 0)
 
@@ -173,7 +173,7 @@ class TestNode(unittest.TestCase):
         Test of destroying node
         """
         node = model.VerseNode(node_id=None, parent=None, user_id=None, custom_type=16)
-        node.destroy()
+        node._clean()
         self.assertEqual(len(model.VerseNode.nodes), 0)
 
 
@@ -183,7 +183,7 @@ class TestNode(unittest.TestCase):
         """
         root_node = model.VerseNode(node_id=0, parent=None, user_id=None, custom_type=0)
         scene_node = model.VerseNode(node_id=1, parent=root_node, user_id=0, custom_type=0)
-        scene_node.destroy()
+        scene_node._clean()
         self.assertEqual(len(model.VerseNode.nodes), 1)
 
 
@@ -193,7 +193,7 @@ class TestNode(unittest.TestCase):
         """
         root_node = model.VerseNode(node_id=0, parent=None, user_id=None, custom_type=0)
         scene_node = model.VerseNode(node_id=1, parent=root_node, user_id=0, custom_type=0)
-        root_node.destroy()
+        root_node._clean()
         self.assertEqual(len(model.VerseNode.nodes), 0)
 
 if __name__ == '__main__':
