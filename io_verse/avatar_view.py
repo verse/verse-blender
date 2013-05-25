@@ -71,7 +71,7 @@ def draw_cb(self, context):
                     area.tag_redraw()
 
 
-class AvatarView():
+class AvatarView(model.VerseNode):
     """
     Representation of avatar view to 3D View
     """

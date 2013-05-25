@@ -43,7 +43,7 @@ class TestTag(unittest.TestCase):
         self.assertEqual(tag, tg.tag_queue[5])
  
 
-    def test_exception_tag(self):
+    def test_exception_tag_same_custom_types(self):
         """
         Test of raising exception, when client wants to create two tags
         with the same custom type inside the same tag group
@@ -52,6 +52,25 @@ class TestTag(unittest.TestCase):
         tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
         tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, custom_type=5, value=(123,))
         self.assertRaises(model.VerseCustomTypeError, model.VerseTag, tg, None, vrs.VALUE_TYPE_UINT8, 5, (123,))
+
+
+    def test_exception_tag_wrong_taggroup(self):
+        """
+        Test of raising exception, when client wants to create tag
+        with wrong tag group (it has to be object of subclass VerseTagGroup)
+        """
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        self.assertRaises(TypeError, model.VerseTag, node, None, vrs.VALUE_TYPE_UINT8, 5, (123,))
+
+
+    def test_exception_tag_wrong_value_type(self):
+        """
+        Test of raising exception, when client wants to create tag
+        with wrong value type
+        """
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
+        self.assertRaises(TypeError, model.VerseTag, tg, None, None, 5, (node,))
 
 
     def test_destroy_tag(self):
@@ -119,6 +138,14 @@ class TestTagGroup(unittest.TestCase):
         self.assertRaises(model.VerseCustomTypeError, model.VerseTagGroup, node, None, 32)
 
 
+    def test_exception_wrong_node(self):
+        """
+        Test of raising exception, when client wants to create
+        tag groups with wrong "parent" node
+        """
+        self.assertRaises(TypeError, model.VerseTagGroup, None, None, 32)
+
+
     def test_create_taggroup(self):
         """
         Test of creating tag group that was received from verse server (tg ID is known)
@@ -143,7 +170,6 @@ class TestNode(unittest.TestCase):
     """
     Test case of TestNode
     """
-
     
     def setUp(self):
         """
@@ -205,6 +231,15 @@ class TestNode(unittest.TestCase):
         scene_node = model.VerseNode(node_id=1, parent=root_node, user_id=0, custom_type=0)
         root_node._clean()
         self.assertEqual(len(model.VerseNode.nodes), 0)
+
+
+    def test_exception_wrong_parent_node(self):
+        """
+        Test of raising exception, when client wants to create
+        node with wrong "parent" node (it is not subclass of VerseNode)
+        """
+        self.assertRaises(TypeError, model.VerseNode, None, 0, 0, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

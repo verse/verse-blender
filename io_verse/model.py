@@ -71,29 +71,13 @@ class VerseCustomTypeError(Exception):
         """
         return repr(self.value)
 
-class VerseDataTypeError(Exception):
-    """
-    Exception for invalid data type
-    """
-
-    def __init__(self, value):
-        """
-        Constructor of exception
-        """
-        self.value = value
-
-    def __str__(self):
-        """
-        Method for printing content of exception
-        """
-        return repr(self.value)
 
 class VerseEntity(object):
     """
     Parent class for VerseNode, Verse, VerseTagGroup and VerseLayer
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         """
         Constructor of VerseEntity
         """
@@ -102,6 +86,16 @@ class VerseEntity(object):
         self.crc32 = 0
         self.state = ENTITY_RESERVED
         self.subscribed = False
+        # When custom_type is not defined, then compute custom_type from
+        # class name as modulo 65535 of original cutom_type hash
+        custom_type = kwargs.get('custom_type', 0)
+        if custom_type is None:
+            self.custom_type = hash(self.__class__.__name__) % 65535
+        else:
+            if type(custom_type) == int:
+                self.custom_type = custom_type
+            else:
+                self.custom_type = hash(custom_type) % 65535
 
     def _send_create(self):
         """
@@ -191,21 +185,20 @@ class VerseEntity(object):
         pass
 
 
-class VerseLayer():
+class VerseLayer(VerseEntity):
     """
     Class representing Verse layer
     """
 
-    def __init__(self, node, parent_layer, layer_id, data_type, count, custom_type):
+    def __init__(self, node, parent_layer=None, layer_id=None, data_type=None, count=1, custom_type=None):
         """
         Constructor of VerseLayer
         """
-        super(VerseLayer, self).__init__()
+        super(VerseLayer, self).__init__(custom_type=custom_type)
         self.node = node
         self.id = layer_id
         self.data_type = data_type
         self.count = count
-        self.custom_type = custom_type
         self.childs = {}
         self.values = {}
 
@@ -229,36 +222,50 @@ class VerseLayer():
             self.parent_layer.childs.pop(self.id)
 
 
-# VerseTag class
 class VerseTag(VerseEntity):
     """
     Class representing Verse tag
     """
     
-    def __init__(self, tg=None, tag_id=None, data_type=None, custom_type=0, value=(0,)):
+    def __init__(self, tg, tag_id=None, data_type=None, custom_type=None, value=(0,)):
         """
         Constructor of VerseTag
         """
-        super(VerseTag, self).__init__()
-        self.tg = tg
+
+        # Call method of parent to initialize basic values
+        super(VerseTag, self).__init__(custom_type=custom_type)
+
+        # Tag can't exist without tag group
+        if issubclass(tg.__class__, VerseTagGroup) != True:
+            raise TypeError("Tag group is not subclass of model.VerseTagGroup")
+        else:
+            self.tg = tg
+
         self.id = tag_id
+
+        # If data type is not set, then try to estimate it. Only three
+        # Python data types are supported for Verse tags
         if data_type is None:
             if type(value[0]) == int:
-                self.data_type = vrs.VALUE_TYPE_INT32
+                self.data_type = vrs.VALUE_TYPE_UINT64
             elif type(value[0]) == float:
                 self.data_type = vrs.VALUE_TYPE_REAL64
             elif type(value[0]) == str:
                 self.data_type = vrs.VALUE_TYPE_STRING
             else:
-                raise VerseDataTypeError
+                raise TypeError("Unsupported data_type: ", type(value[0]))
         else:
+            # No need to do check of data_type, because Verse module do this
             self.data_type = data_type
-        self.count = len(value)
-        self.custom_type = custom_type
-        self._value = value
 
+        # No need to do check of values anc count of tuple items, because Verse module do this
+        self._value = value
+        self.count = len(value)
+
+        # Change state and send command, when it is possible
         self._create()
 
+        # Set bindings between tag group and this tag
         if tag_id is not None:
             self.tg.tags[tag_id] = self
             self.tg.tag_queue[custom_type] = self
@@ -268,6 +275,7 @@ class VerseTag(VerseEntity):
                 tag = self.tg.tag_queue[custom_type]
             except KeyError:
                 self.tg.tag_queue[custom_type] = self
+            # Check uniqueness of custom_type inside the tag group
             if tag is not None:
                 raise VerseCustomTypeError(custom_type)
 
@@ -431,14 +439,20 @@ class VerseTagGroup(VerseEntity):
     Class representing Verse tag group
     """
 
-    def __init__(self, node=None, tg_id=None, custom_type=0):
+    def __init__(self, node, tg_id=None, custom_type=None):
         """
         Constructor of VerseTagGroup
         """
-        super(VerseTagGroup, self).__init__()
+        super(VerseTagGroup, self).__init__(custom_type=custom_type)
+
+        # Tag group can't exist without node
+        if issubclass(node.__class__, VerseNode) != True:
+            raise TypeError("Node is not subclass of model.VerseNode")
+        else:
+            self.node = node
+
         self.id = tg_id
-        self.node = node
-        self.custom_type = custom_type
+
         self.tags = {}
         self.tag_queue = {}
 
@@ -555,15 +569,21 @@ class VerseNode(VerseEntity):
     nodes = {}
     my_node_queues = {}
     
-    def __init__(self, node_id=None, parent=None, user_id=None, custom_type=0):
+    def __init__(self, node_id=None, parent=None, user_id=None, custom_type=None):
         """
         Constructor of VerseNode
         """
-        super(VerseNode, self).__init__()
+        super(VerseNode, self).__init__(custom_type=custom_type)
+
         self.id = node_id
+
+        # When parent node is set, then it has to be subclass of VerseNode
+        if parent is not None:
+            if issubclass(parent.__class__, VerseNode) != True:
+                raise TypeError("Node is not subclass of model.VerseNode")
         self.parent = parent
+        
         self.user_id = user_id
-        self.custom_type = custom_type
         self.child_nodes = {}
         self.taggroups = {}
         self.tg_queue = {}
