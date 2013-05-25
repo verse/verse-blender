@@ -39,7 +39,7 @@ class TestTag(unittest.TestCase):
         """
         node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
         tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
-        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
+        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, custom_type=5, value=(123,))
         self.assertEqual(tag, tg.tag_queue[5])
  
 
@@ -50,8 +50,8 @@ class TestTag(unittest.TestCase):
         """
         node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
         tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
-        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
-        self.assertRaises(model.VerseCustomTypeError, model.VerseTag, tg, None, vrs.VALUE_TYPE_UINT8, 1, 5)
+        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, custom_type=5, value=(123,))
+        self.assertRaises(model.VerseCustomTypeError, model.VerseTag, tg, None, vrs.VALUE_TYPE_UINT8, 5, (123,))
 
 
     def test_destroy_tag(self):
@@ -60,21 +60,31 @@ class TestTag(unittest.TestCase):
         """
         node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
         tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
-        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
+        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, custom_type=5, value=(123,))
         tag._clean()
         self.assertEqual(len(tg.tags), 0)
         self.assertEqual(len(tg.tag_queue), 0)
 
 
-    def test_setter_getter_tag(self):
+    def test_getter_tag(self):
         """
-        Test of creating new tag
+        Test of VerseTag getter
         """
         node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
         tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
-        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, count=1, custom_type=5)
-        tag.value = 5
-        self.assertEqual(tag.value, 5)
+        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, custom_type=5, value=(123,))
+        self.assertEqual(tag.value, (123,))
+
+
+    def test_setter_tag(self):
+        """
+        Test of VerseTag setter
+        """
+        node = model.VerseNode(node_id=65536, parent=None, user_id=None, custom_type=16)
+        tg = model.VerseTagGroup(node=node, tg_id=None, custom_type=32)
+        tag = model.VerseTag(tg=tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT8, custom_type=5, value=(123,))
+        tag.value = (234,)
+        self.assertEqual(tag.value, (234,))
 
 
 class TestTagGroup(unittest.TestCase):

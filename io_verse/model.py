@@ -71,6 +71,22 @@ class VerseCustomTypeError(Exception):
         """
         return repr(self.value)
 
+class VerseDataTypeError(Exception):
+    """
+    Exception for invalid data type
+    """
+
+    def __init__(self, value):
+        """
+        Constructor of exception
+        """
+        self.value = value
+
+    def __str__(self):
+        """
+        Method for printing content of exception
+        """
+        return repr(self.value)
 
 class VerseEntity(object):
     """
@@ -219,17 +235,27 @@ class VerseTag(VerseEntity):
     Class representing Verse tag
     """
     
-    def __init__(self, tg, tag_id, data_type, count, custom_type):
+    def __init__(self, tg=None, tag_id=None, data_type=None, custom_type=0, value=(0,)):
         """
         Constructor of VerseTag
         """
         super(VerseTag, self).__init__()
         self.tg = tg
         self.id = tag_id
-        self.data_type = data_type
-        self.count = count
+        if data_type is None:
+            if type(value[0]) == int:
+                self.data_type = vrs.VALUE_TYPE_INT32
+            elif type(value[0]) == float:
+                self.data_type = vrs.VALUE_TYPE_REAL64
+            elif type(value[0]) == str:
+                self.data_type = vrs.VALUE_TYPE_STRING
+            else:
+                raise VerseDataTypeError
+        else:
+            self.data_type = data_type
+        self.count = len(value)
         self.custom_type = custom_type
-        self._value = None
+        self._value = value
 
         self._create()
 
@@ -405,7 +431,7 @@ class VerseTagGroup(VerseEntity):
     Class representing Verse tag group
     """
 
-    def __init__(self, node, tg_id, custom_type):
+    def __init__(self, node=None, tg_id=None, custom_type=0):
         """
         Constructor of VerseTagGroup
         """
@@ -529,7 +555,7 @@ class VerseNode(VerseEntity):
     nodes = {}
     my_node_queues = {}
     
-    def __init__(self, node_id, parent, user_id, custom_type):
+    def __init__(self, node_id=None, parent=None, user_id=None, custom_type=0):
         """
         Constructor of VerseNode
         """
@@ -722,4 +748,3 @@ class VerseNode(VerseEntity):
 
         # Return reference at child node
         return child_node
-

@@ -415,15 +415,12 @@ class MySession(vrs.Session):
                 tg_id=None, \
                 custom_type=32)
 
-            # Create new test tag
+            # Create new test tag and set it's value
             self.test_node.test_tg.test_tag = model.VerseTag(tg=self.test_node.test_tg, \
                 tag_id=None, \
                 data_type=vrs.VALUE_TYPE_UINT8, \
-                count=1, \
-                custom_type=64)
-
-            # Set value of tag
-            self.test_node.test_tg.test_tag.value = (123,)
+                custom_type=64,
+                value=(123,))
 
             # Test new Node
             suite = unittest.TestLoader().loadTestsFromTestCase(TestNewNodeCase)

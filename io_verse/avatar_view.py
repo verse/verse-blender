@@ -92,16 +92,6 @@ class AvatarView():
         self.lens = None
         self.cur_screen = None
         self.cur_area = None
-        # Verse objects
-        self.node_id = None
-        self.tg_id = None
-        self.tag_pos = None
-        self.tag_rot = None
-        self.tag_dist = None
-        self.tag_persp = None
-        self.tag_lens = None
-        self.tag_width = None
-        self.tag_height = None
 
 
     def update(self, context):
@@ -471,8 +461,6 @@ class VerseShowAvatars(bpy.types.Operator):
         """
 
 
-
-
 class VerseAvatarPanel(bpy.types.Panel):
     """
     Panel with widgets
@@ -490,13 +478,6 @@ class VerseAvatarPanel(bpy.types.Panel):
         wm = context.window_manager
         layout = self.layout
         layout.operator("view3d.verse_show_avatars")
-
-        # if not wm.verse_avatar_capture:
-        #     layout.operator("view3d.verse_avatar", text="Start Capture",
-        #         icon = "PLAY")
-        # else:
-        #     layout.operator("view3d.verse_avatar", text="Pause Capture",
-        #         icon = "PAUSE")
 
 
 def init_properties():
