@@ -48,50 +48,58 @@ def draw_cb(self, context):
     if context.area.type != 'VIEW_3D':
         return
     
-    # Try to find avatar's view, when it doesn't exist yet, then create new one
-    try:
-        avatar_view = self.avatar_views[context.area]
-    except KeyError:
-        avatar_view = AvatarView()
-        self.avatar_views[context.area] = avatar_view
+    # If avatar view of this client doesn't exist yet, then create new one
+    if self.avatar_view is None:
+        self.avatar_view = AvatarView(my_view=True)
     
     # Update information about avatar's view, when needed
-    changed = avatar_view.update(context)
-    
-    # Test of drawing avatar's view
-    for screen in bpy.data.screens:
-        for area in screen.areas:
-            if area.type=='VIEW_3D' and area != context.area:
-                try:
-                    view = self.avatar_views[area]
-                except KeyError:
-                    continue
-                view.draw(context.area, context.region_data, context.space_data)
-                if changed is True:
-                    area.tag_redraw()
+    self.avatar_view.update(context)
 
 
 class AvatarView(model.VerseNode):
     """
-    Representation of avatar view to 3D View
+    Verse node with representation of avatar view to 3D View
     """
     
-    __active_area = None
-    
-    def __init__(self):
+    def __init__(self, my_view=False):
         """
-        Constructor of AvatarView
+        Constructor of AvatarView node
         """
-        self.location = None
-        self.rotation = None
-        self.distance = None
-        self.perspective = None
-        self.width = None
-        self.height = None
-        self.persp = None
-        self.lens = None
-        self.cur_screen = None
-        self.cur_area = None
+
+        if my_view == True:
+            # Tag group
+            self.view_tg = model.VerseTagGroup(node=self)
+
+            # Tags
+            self.location = model.VerseTag(tg=self.view_tg, \
+                data_type=vrs.VALUE_TYPE_REAL32, \
+                value=(0.0, 0.0, 0.0) )
+            self.rotation = model.VerseTag(tg=self.view_tg, \
+                data_type=vrs.VALUE_TYPE_REAL32, \
+                value=(0.0, 0.0, 0.0, 0.0) )
+            self.distance = model.VerseTag(tg=self.view_tg, \
+                data_type=vrs.VALUE_TYPE_REAL32, \
+                value=(0.0,) )
+            self.perspective = model.VerseTag(tg=self.view_tg, \
+                data_type=vrs.VALUE_TYPE_REAL32, \
+                value=(0.0,) )
+            self.width = model.VerseTag(tg=self.view_tg, \
+                data_type=vrs.VALUE_TYPE_REAL32, \
+                value=(0.0,) )
+            self.height = model.VerseTag(tg=self.view_tg, \
+                data_type=vrs.VALUE_TYPE_REAL32, \
+                value=(0.0,) )
+            self.persp = model.VerseTag(tg=self.view_tg, \
+                data_type=vrs.VALUE_TYPE_REAL32, \
+                value=(0.0,) )
+            self.lens = model.VerseTag(tg=self.view_tg, \
+                data_type=vrs.VALUE_TYPE_REAL32, \
+                value=(0.0,) )
+
+            self.cur_screen = None
+            self.cur_area = None
+
+        self.my_view = my_view
 
 
     def update(self, context):
@@ -99,139 +107,115 @@ class AvatarView(model.VerseNode):
         This method tries to update members according context
         """
         
-        changed = False
-        
         self.cur_screen = context.screen
         self.cur_area = context.area
         
         # Location of avatar
-        if context.space_data.region_3d.view_location != self.location:
-            self.location = mathutils.Vector(context.space_data.region_3d.view_location)
-            changed = True
+        if tuple(context.space_data.region_3d.view_location) != self.location.value:
+            self.location.value = tuple(context.space_data.region_3d.view_location)
     
         # Rotation around location point
-        if context.space_data.region_3d.view_rotation != self.rotation:
-            self.rotation = mathutils.Quaternion(context.space_data.region_3d.view_rotation)
-            changed = True
+        if tuple(context.space_data.region_3d.view_rotation) != self.rotation.value:
+            self.rotation.value = tuple(context.space_data.region_3d.view_rotation)
     
         # Distance from location point
-        if context.space_data.region_3d.view_distance != self.distance:
-            self.distance = context.space_data.region_3d.view_distance
-            changed = True
+        if context.space_data.region_3d.view_distance != self.distance.value[0]:
+            self.distance.value = (context.space_data.region_3d.view_distance,)
         
         # Perspective/Ortho
-        if context.space_data.region_3d.view_perspective != self.persp:
-            self.persp = context.space_data.region_3d.view_perspective
-            changed = True
+        if context.space_data.region_3d.view_perspective != self.persp.value[0]:
+            self.persp.value = (context.space_data.region_3d.view_perspective,)
         
         # Lens
-        if context.space_data.lens != self.lens:
-            self.lens = context.space_data.lens
-            changed = True
-
-        # Was this view to 3D changed
-        if changed == True:
-            self.__class__.__active_area = context.area
+        if context.space_data.lens != self.lens.value[0]:
+            self.lens.value = (context.space_data.lens,)
                 
         # Width
-        if context.area.width != self.width:
-            self.width = context.area.width
-            changed = True
+        if context.area.width != self.width.value[0]:
+            self.width.value = (context.area.width,)
         
         # Height
-        if context.area.height != self.height:
-            self.height = context.area.height
-            changed = True
+        if context.area.height != self.height.value[0]:
+            self.height.value = (context.area.height,)    
 
-        return changed
-    
         
     def draw(self, area, region_data, space):
         """
         Draw avatar view in given context
         """
-        active = False
         
-        if bpy.context.screen == self.cur_screen:
-            if self.cur_area == self.__class__.__active_area:
-                active = True
-                color = (0.0, 0.0, 1.0, 1.0)
-            else:
-                color = (1.0, 1.0, 0.0, 0.5)
-        else:
-            color = (1.0, 1.0, 1.0, 0.5)
-
-        alpha = 2.0*math.atan((18.0/2.0)/self.lens)
+        color = (0.0, 0.0, 1.0, 1.0)
+        alpha = 2.0*math.atan((18.0/2.0)/self.lens.value[0])
         dist = 0.5/(math.tan(alpha/2.0))
         height = 1.0
-        width = self.width/self.height
+        width = self.width.value[0]/self.height.value[0]
                     
         points = {}
         points['border'] = [None, None, None, None]
         points['center'] = [None]
         
         # Points of face
-        if active is True:
-            points['right_eye'] = [mathutils.Vector((0.25, 0.25, self.distance - dist)), \
-                mathutils.Vector((0.3, 0.25, self.distance - dist)), \
-                mathutils.Vector((0.3, 0.0, self.distance - dist)), \
-                mathutils.Vector((0.25, 0.0, self.distance - dist)), \
-                mathutils.Vector((0.25, 0.25, self.distance - dist))]
-            points['left_eye'] = [mathutils.Vector((-0.25, 0.25, self.distance - dist)), \
-                mathutils.Vector((-0.3, 0.25, self.distance - dist)), \
-                mathutils.Vector((-0.3, 0.0, self.distance - dist)), \
-                mathutils.Vector((-0.25, 0.0, self.distance - dist)), \
-                mathutils.Vector((-0.25, 0.25, self.distance - dist))]
+        if self.active is True:
+            points['right_eye'] = [mathutils.Vector((0.25, 0.25, self.distance.value[0] - dist)), \
+                mathutils.Vector((0.3, 0.25, self.distance.value[0] - dist)), \
+                mathutils.Vector((0.3, 0.0, self.distance.value[0] - dist)), \
+                mathutils.Vector((0.25, 0.0, self.distance.value[0] - dist)), \
+                mathutils.Vector((0.25, 0.25, self.distance.value[0] - dist))]
+            points['left_eye'] = [mathutils.Vector((-0.25, 0.25, self.distance.value[0] - dist)), \
+                mathutils.Vector((-0.3, 0.25, self.distance.value[0] - dist)), \
+                mathutils.Vector((-0.3, 0.0, self.distance.value[0] - dist)), \
+                mathutils.Vector((-0.25, 0.0, self.distance.value[0] - dist)), \
+                mathutils.Vector((-0.25, 0.25, self.distance.value[0] - dist))]
         else:
-            points['right_eye'] = [mathutils.Vector((0.1569932997226715, 0.1604899913072586, self.distance - dist)), \
-                mathutils.Vector((0.19806477427482605, 0.14419437944889069, self.distance - dist)), \
-                mathutils.Vector((0.2499999850988388, 0.13702455163002014, self.distance - dist)), \
-                mathutils.Vector((0.30193519592285156, 0.1441943645477295, self.distance - dist)), \
-                mathutils.Vector((0.3430066704750061, 0.1604899764060974, self.distance - dist))]
-            points['left_eye'] = [mathutils.Vector((-0.1569932997226715, 0.1604899913072586, self.distance - dist)), \
-                mathutils.Vector((-0.19806477427482605, 0.14419437944889069, self.distance - dist)), \
-                mathutils.Vector((-0.2499999850988388, 0.13702455163002014, self.distance - dist)), \
-                mathutils.Vector((-0.30193519592285156, 0.1441943645477295, self.distance - dist)), \
-                mathutils.Vector((-0.3430066704750061, 0.1604899764060974, self.distance - dist))]
+            points['right_eye'] = [mathutils.Vector((0.1569932997226715, 0.1604899913072586, self.distance.value[0] - dist)), \
+                mathutils.Vector((0.19806477427482605, 0.14419437944889069, self.distance.value[0] - dist)), \
+                mathutils.Vector((0.2499999850988388, 0.13702455163002014, self.distance.value[0] - dist)), \
+                mathutils.Vector((0.30193519592285156, 0.1441943645477295, self.distance.value[0] - dist)), \
+                mathutils.Vector((0.3430066704750061, 0.1604899764060974, self.distance.value[0] - dist))]
+            points['left_eye'] = [mathutils.Vector((-0.1569932997226715, 0.1604899913072586, self.distance.value[0] - dist)), \
+                mathutils.Vector((-0.19806477427482605, 0.14419437944889069, self.distance.value[0] - dist)), \
+                mathutils.Vector((-0.2499999850988388, 0.13702455163002014, self.distance.value[0] - dist)), \
+                mathutils.Vector((-0.30193519592285156, 0.1441943645477295, self.distance.value[0] - dist)), \
+                mathutils.Vector((-0.3430066704750061, 0.1604899764060974, self.distance.value[0] - dist))]
         
-        points['mouth'] = [mathutils.Vector((-0.40912365913391113, -0.11777058243751526, self.distance - dist)), \
-            mathutils.Vector((-0.3441678285598755, -0.15873458981513977, self.distance - dist)), \
-            mathutils.Vector((-0.2563667893409729, -0.1998385488986969, self.distance - dist)), \
-            mathutils.Vector((-0.18191590905189514, -0.22385218739509583, self.distance - dist)), \
-            mathutils.Vector((-0.10375960171222687, -0.23957833647727966, self.distance - dist)), \
-            mathutils.Vector((0.0, -0.2464955747127533, self.distance - dist)), \
-            mathutils.Vector((0.10375960171222687, -0.23957833647727966, self.distance - dist)), \
-            mathutils.Vector((0.18191590905189514, -0.22385218739509583, self.distance - dist)), \
-            mathutils.Vector((0.2563667893409729, -0.1998385488986969, self.distance - dist)), \
-            mathutils.Vector((0.3441678285598755, -0.15873458981513977, self.distance - dist)), \
-            mathutils.Vector((0.40912365913391113, -0.11777058243751526, self.distance - dist))]            
+        points['mouth'] = [mathutils.Vector((-0.40912365913391113, -0.11777058243751526, self.distance.value[0] - dist)), \
+            mathutils.Vector((-0.3441678285598755, -0.15873458981513977, self.distance.value[0] - dist)), \
+            mathutils.Vector((-0.2563667893409729, -0.1998385488986969, self.distance.value[0] - dist)), \
+            mathutils.Vector((-0.18191590905189514, -0.22385218739509583, self.distance.value[0] - dist)), \
+            mathutils.Vector((-0.10375960171222687, -0.23957833647727966, self.distance.value[0] - dist)), \
+            mathutils.Vector((0.0, -0.2464955747127533, self.distance.value[0] - dist)), \
+            mathutils.Vector((0.10375960171222687, -0.23957833647727966, self.distance.value[0] - dist)), \
+            mathutils.Vector((0.18191590905189514, -0.22385218739509583, self.distance.value[0] - dist)), \
+            mathutils.Vector((0.2563667893409729, -0.1998385488986969, self.distance.value[0] - dist)), \
+            mathutils.Vector((0.3441678285598755, -0.15873458981513977, self.distance.value[0] - dist)), \
+            mathutils.Vector((0.40912365913391113, -0.11777058243751526, self.distance.value[0] - dist))]            
                 
         # Put border points of camera to basic position
         points['border'][0] = mathutils.Vector((-width/2.0, \
             -0.5, \
-            self.distance - dist,
+            self.distance.value[0] - dist,
             1.0))
         points['border'][1] = mathutils.Vector((width/2.0, \
             -0.5, \
-            self.distance - dist,
+            self.distance.value[0] - dist,
             1.0))
         points['border'][2] = mathutils.Vector((width/2.0, \
             0.5, \
-            self.distance - dist, \
+            self.distance.value[0] - dist, \
             1.0))
         points['border'][3] = mathutils.Vector((-width/2.0, \
             0.5, \
-            self.distance - dist, \
+            self.distance.value[0] - dist, \
             1.0))
         
         # Center of view
         points['center'][0] = mathutils.Vector((0.0, \
             0.0, \
-            self.distance, \
+            self.distance.value[0], \
             1.0))        
         
         # Create transformation (rotation) matrix
-        rot_matrix = self.rotation.to_matrix().to_4x4()
+        rot_matrix = mathutils.Quaternion(self.rotation.value).to_matrix().to_4x4()
         
         # Transform points in all point groups
         for point_group in points.values():
@@ -239,7 +223,7 @@ class AvatarView(model.VerseNode):
                 # Rotate points
                 point_group[index] = (rot_matrix*point_group[index]).to_3d()
                 # Move points
-                point_group[index] += self.location
+                point_group[index] += mathutils.Vector(self.location.value)
         
         # Get & convert the Perspective Matrix of the current view/region.
         perspMatrix = region_data.perspective_matrix
@@ -292,26 +276,26 @@ class AvatarView(model.VerseNode):
         bgl.glBegin(bgl.GL_LINES)
         bgl.glColor4f(color[0], color[1], color[2], color[3])
         
-        bgl.glVertex3f(self.location[0]+0.1, \
-            self.location[1], \
-            self.location[2])
-        bgl.glVertex3f(self.location[0]-0.1, \
-            self.location[1], \
-            self.location[2])
+        bgl.glVertex3f(self.location.value[0]+0.1, \
+            self.location.value[1], \
+            self.location.value[2])
+        bgl.glVertex3f(self.location.value[0]-0.1, \
+            self.location.value[1], \
+            self.location.value[2])
         
-        bgl.glVertex3f(self.location[0], \
-            self.location[1]+0.1, \
-            self.location[2])
-        bgl.glVertex3f(self.location[0], \
-            self.location[1]-0.1, \
-            self.location[2])
+        bgl.glVertex3f(self.location.value[0], \
+            self.location.value[1]+0.1, \
+            self.location.value[2])
+        bgl.glVertex3f(self.location.value[0], \
+            self.location.value[1]-0.1, \
+            self.location.value[2])
         
-        bgl.glVertex3f(self.location[0], \
-            self.location[1], \
-            self.location[2]+0.1)
-        bgl.glVertex3f(self.location[0], \
-            self.location[1], \
-            self.location[2]-0.1)
+        bgl.glVertex3f(self.location.value[0], \
+            self.location.value[1], \
+            self.location.value[2]+0.1)
+        bgl.glVertex3f(self.location.value[0], \
+            self.location.value[1], \
+            self.location.value[2]-0.1)
         
         bgl.glEnd()
         
@@ -396,7 +380,7 @@ class VerseAvatarStatus(bpy.types.Operator):
         """
         Constructor of this operator
         """
-        self.avatar_views = {}
+        self.avatar_view = None
     
     def modal(self, context, event):
         """
@@ -446,26 +430,11 @@ class VerseAvatarStatus(bpy.types.Operator):
             return {'CANCELLED'}
 
 
-class VerseShowAvatars(bpy.types.Operator):
-    """
-    Operator for show/hide other avatars
-    """
-    bl_idname = "view3d.verse_show_avatars"
-    bl_label = "Show Avatars"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-
-    def __init__(self):
-        """
-        Constructor of VerseShowAvatars
-        """
-
-
 class VerseAvatarPanel(bpy.types.Panel):
     """
     Panel with widgets
     """
-    bl_idname = "view3d.verse_avatar"
+    bl_idname = "view3d.verse_avatar_panel"
     bl_label = "Verse Avatar"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -474,10 +443,8 @@ class VerseAvatarPanel(bpy.types.Panel):
         """
         Define drawing of widgets
         """
-        
         wm = context.window_manager
         layout = self.layout
-        layout.operator("view3d.verse_show_avatars")
 
 
 def init_properties():
@@ -507,7 +474,7 @@ def register():
     init_properties()
 
 
-def umregister():
+def unregister():
     """
     Unregister classes with panel and reset properties
     """
@@ -517,4 +484,3 @@ def umregister():
 
 if __name__ == '__main__':
     register()
-

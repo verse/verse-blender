@@ -81,42 +81,30 @@ class VerseSession(vrs.Session):
         """
          _receive_node_link(self, parent_node_id, child_node_id) -> None
         """
-        print('receive_node_link()', parent_node_id, child_node_id)
+        # Call parent method to print debug information
+        super(MySession, self)._receive_node_link(parent_node_id, child_node_id)
+        # Call calback method of model
+        child_node = model.VerseNode._receive_node_link(parent_node_id, child_node_id)
     
 
     def _receive_node_create(self, node_id, parent_id, user_id, custom_type):
         """
         _receive_node_create(node_id, parent_id, user_id, type) -> None
         """
-        print('receive_node_create()', node_id, parent_id, user_id, custom_type)
-        # Automatically subscribe to all nodes
-        self.send_node_subscribe(vrs.DEFAULT_PRIORITY, node_id, 0, 0)
-        # Try to find parent node
-        try:
-            parent_node = MyNode.nodes[parent_id]
-        except KeyError:
-            parent_node = None
-        
-        # Add node to the dictionary of nodes
-        MyNode(node_id, parent_node, user_id, custom_type)
+        # Call parent method to print debug information
+        super(MySession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)
+        # Call calback method of model
+        node = model.VerseNode._receive_node_create(node_id, parent_id, user_id, custom_type)
         
     
     def _receive_node_destroy(self, node_id):
         """
         _receive_node_destroy(node_id) -> None
         """
-        print('receive_node_destroy()', node_id)
-
-        node = None
-        # Try to find node in dict of nodes
-        try:
-            node = MyNode.nodes.[node_id]
-        except KeyError:
-            return
-
-        # Delete node
-        if node is not None:
-            del node
+        # Call parent method to print debug information
+        super(MySession, self)._receive_node_destroy(node_id)
+        # Call callback method of model
+        node = model.VerseNode._receive_node_destroy(node_id)
         
     
     def _receive_connect_terminate(self, error):
@@ -129,7 +117,7 @@ class VerseSession(vrs.Session):
         # Print error message
         bpy.ops.wm.verse_error('INVOKE_DEFAULT', error_string="Disconnected")
         # Clear dictionary of nodes
-        MyNode.nodes.clear()
+        model.VerseNode.nodes.clear()
         # TODO: stop timer
   
     
@@ -142,15 +130,10 @@ class VerseSession(vrs.Session):
         self.user_id = user_id
         self.avatar_id = avatar_id
         
-        # Subscribe to the root node (ID of this node is always 0)
-        self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=0, version=0, crc32=0)
-        # Add root node to the dictionary of nodes
-        MyNode(node_id=0, parent=None, user_id=0, custom_type=0)
+        # Create root node
+        self.root_node = model.VerseNode(node_id=0, parent=None, user_id=100, custom_type=0)
 
         # TODO: Create nodes with views to the scene
-        
-        # Subscribe to the root of scene node
-        self.send_node_subscribe(prio=vrs.DEFAULT_PRIORITY, node_id=3, version=0, crc32=0)
  
     
     def _receive_user_authenticate(self, username, methods):

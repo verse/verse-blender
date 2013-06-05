@@ -316,40 +316,17 @@ class TestNewNodeCase(unittest.TestCase):
         self.assertEqual(__class__.node.subscribed, False)
 
 
-class MySession(vrs.Session):
+class TestSession(model.VerseSession):
     """
     Class with session used in this client
     """
-
-    def _receive_user_authenticate(self, username, methods):
-        """
-        Callback method for user authenticate
-        """
-        print("MY user_authenticate(): ",
-              "username: ", username,
-              ", methods: ", methods)
-        if username=="":
-            if self.username is None:
-                self.username = username = input('username: ')
-            else:
-                username = self.username
-            self.send_user_authenticate(username, vrs.UA_METHOD_NONE, "")
-        else:
-            if methods.count(vrs.UA_METHOD_PASSWORD)>=1:
-                if self.password is None:
-                    self.password = password = input('password: ')
-                else:
-                    password = self.password
-                self.send_user_authenticate(username, vrs.UA_METHOD_PASSWORD, password)
-            else:
-                print("Unsuported authenticate method")
 
     def _receive_connect_accept(self, user_id, avatar_id):
         """
         Custom callback method for connect accept
         """
-        # Call parent method to print debug information
-        super(MySession, self)._receive_connect_accept(self, user_id, avatar_id)
+        # Call parent method to change state of session
+        super(TestSession, self)._receive_connect_accept(user_id, avatar_id)
         # Save important informations
         self.user_id = user_id
         self.avatar_id = avatar_id
@@ -358,8 +335,6 @@ class MySession(vrs.Session):
         self.test_tag = None
         self.test_destroy_node = None
         self.test_scene_node = None
-        # Create root node
-        self.root_node = model.VerseNode(node_id=0, parent=None, user_id=100, custom_type=0)
         # Scene node
         self.scene_node = None
         self.state = 'CONNECTED'
@@ -369,11 +344,7 @@ class MySession(vrs.Session):
         Custom callback method that is called, when client received
         command node_create
         """
-
-        # Call parent method to print debug information
-        super(MySession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)
-        # Call calback method of model
-        node = model.VerseNode._receive_node_create(node_id, parent_id, user_id, custom_type)
+        node = super(TestSession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)
 
         # Start unit testing of new node, tag group and tag, when avatar node is created
         if node_id == self.avatar_id:
@@ -383,27 +354,31 @@ class MySession(vrs.Session):
 
             # Try to find node representing parent node of scene nodes
             try:
-                self.scene_node = model.VerseNode.nodes[3]
+                self.scene_node = self.nodes[3]
             except KeyError:
-                self.scene_node = model.VerseNode(node_id=3, \
+                self.scene_node = model.VerseNode(session=self, \
+                    node_id=3, \
                     parent=self.root_node, \
                     user_id=100,
                     custom_type=0)
 
             # Create test scene node
-            self.test_scene_node = model.VerseNode(node_id=None, \
+            self.test_scene_node = model.VerseNode(session=self, \
+                node_id=None, \
                 parent=self.scene_node, \
                 user_id=None,
                 custom_type=16)
 
             # Create new test node
-            self.test_node = model.VerseNode(node_id=None, \
+            self.test_node = model.VerseNode(session=self, \
+                node_id=None, \
                 parent=self.test_scene_node, \
                 user_id=None, \
                 custom_type=17)
 
             # Create new nodes for testing of destroying nodes
-            self.test_destroy_node = model.VerseNode(node_id=None, \
+            self.test_destroy_node = model.VerseNode(session=self, \
+                node_id=None, \
                 parent=None, \
                 user_id=None,
                 custom_type=18)
@@ -448,10 +423,7 @@ class MySession(vrs.Session):
         """
         Custom callback method for command node destroy
         """
-        # Call parent method to print debug information
-        super(MySession, self)._receive_node_destroy(node_id)
-        # Call callback method of model
-        node = model.VerseNode._receive_node_destroy(node_id)
+        node = super(TestSession, self)._receive_node_destroy(node_id)
 
         # Start unit testing of destroyed node
         if node == self.test_destroy_node:
@@ -464,10 +436,7 @@ class MySession(vrs.Session):
         Custom callback method that is called, when client receive command changing
         link between nodes
         """
-        # Call parent method to print debug information
-        super(MySession, self)._receive_node_link(parent_node_id, child_node_id)
-        # Call calback method of model
-        child_node = model.VerseNode._receive_node_link(parent_node_id, child_node_id)
+        child_node = super(TestSession, self)._receive_node_link(parent_node_id, child_node_id)
 
         # Start unit testing of node with changed parent
         if child_node == self.test_node:
@@ -480,11 +449,7 @@ class MySession(vrs.Session):
         Custom callback method that is called, when client received command
         tag group create
         """
-
-        # Call parent method to print debug information
-        super(MySession, self)._receive_taggroup_create(node_id, taggroup_id, custom_type)
-        # Call calback method of model
-        tg = model.VerseTagGroup._receive_tg_create(node_id, taggroup_id, custom_type)
+        tg = super(TestSession, self)._receive_taggroup_create(node_id, taggroup_id, custom_type)
 
         # Start unit testing of created tag group
         if tg == self.test_node.test_tg:
@@ -496,11 +461,7 @@ class MySession(vrs.Session):
         """
         Custom callback method that is called, when client receive command tag create
         """
-
-        # Call parent method to print debug information
-        super(MySession, self)._receive_tag_create(node_id, taggroup_id, tag_id, data_type, count, custom_type)
-        # Call calback method of model
-        tag = model.VerseTag._receive_tag_create(node_id, taggroup_id, tag_id, data_type, count, custom_type)
+        tag = super(TestSession, self)._receive_tag_create(node_id, taggroup_id, tag_id, data_type, count, custom_type)
 
         # Start unit testing of created tag
         if tag == self.test_node.test_tg.test_tag:
@@ -511,11 +472,7 @@ class MySession(vrs.Session):
         """
         Custom callback method that is called, when client reveive command tag set value
         """
-
-        # Call method of parent class
-        super(MySession, self)._receive_tag_set_value(node_id, taggroup_id, tag_id, value)
-        # Call callback method of model
-        tag = model.VerseTag._receive_tag_set_value(node_id, taggroup_id, tag_id, value)
+        tag = super(TestSession, self)._receive_tag_set_value(node_id, taggroup_id, tag_id, value)
 
         # Start unit testing of tag with changed value
         if tag == self.test_node.test_tg.test_tag:
@@ -533,10 +490,9 @@ def main(hostname, username, password):
     """
     Function with main never ending verse loop
     """
-    model.session = MySession(hostname, "12345", vrs.DGRAM_SEC_DTLS)
+    model.session = TestSession(hostname, "12345", vrs.DGRAM_SEC_DTLS)
     model.session.username = username
     model.session.password = password
-    model.session.state = 'CONNECTING'
 
     while(model.session.state != 'DISCONNECTED'):
         model.session.callback_update()

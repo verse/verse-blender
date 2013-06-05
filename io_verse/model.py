@@ -21,10 +21,9 @@ This module implements object model of data shared at Verse server. it
 provides classes for Node, TagGroup, Tag and Layer.
 """
 
+
 import verse as vrs
 
-
-session = None
 
 ENTITY_RESERVED     = 0
 ENTITY_CREATING     = 1
@@ -77,7 +76,7 @@ class VerseEntity(object):
     Parent class for VerseNode, Verse, VerseTagGroup and VerseLayer
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         Constructor of VerseEntity
         """
@@ -241,6 +240,11 @@ class VerseTag(VerseEntity):
         else:
             self.tg = tg
 
+        # Delete useless things
+        del self.version
+        del self.crc32
+
+        # Remember own ID
         self.id = tag_id
 
         # If data type is not set, then try to estimate it. Only three
@@ -258,7 +262,7 @@ class VerseTag(VerseEntity):
             # No need to do check of data_type, because Verse module do this
             self.data_type = data_type
 
-        # No need to do check of values anc count of tuple items, because Verse module do this
+        # No need to do check of values and count of tuple items, because Verse module do this
         self._value = value
         self.count = len(value)
 
@@ -301,8 +305,8 @@ class VerseTag(VerseEntity):
         """
         self._value = val
         # Send value to Verse server
-        if session is not None and self.id is not None:
-            session.send_tag_set_value(self.tg.node.prio, \
+        if self.tg.node.session is not None and self.id is not None:
+            self.tg.node.session.send_tag_set_value(self.tg.node.prio, \
                 self.tg.node.id, \
                 self.tg.id, \
                 self.id, \
@@ -321,8 +325,8 @@ class VerseTag(VerseEntity):
         """
         Send tag create command to Verse server
         """
-        if session is not None and self.tg.id is not None:
-            session.send_tag_create(self.tg.node.prio, \
+        if self.tg.node.session is not None and self.tg.id is not None:
+            self.tg.node.session.send_tag_create(self.tg.node.prio, \
                 self.tg.node.id, \
                 self.tg.id, \
                 self.data_type, \
@@ -331,11 +335,12 @@ class VerseTag(VerseEntity):
 
     def _send_destroy(self):
         """
-        Send tag group destroy command to Verse server
+        Send tag destroy command to Verse server
         """
-        if session is not None and self.id is not None:
-            session.send_taggroup_destroy(self.node.prio, \
-                self.node.id, \
+        if self.tg.node.session is not None and self.id is not None:
+            self.tg.node.session.send_tag_destroy(self.node.prio, \
+                self.tg.node.id, \
+                self.tg.id, \
                 self.id)
 
     def _clean(self):
@@ -350,14 +355,14 @@ class VerseTag(VerseEntity):
         del self._value
 
     @staticmethod
-    def _receive_tag_create(node_id, tg_id, tag_id, data_type, count, custom_type):
+    def _receive_tag_create(session, node_id, tg_id, tag_id, data_type, count, custom_type):
         """
         Static method of class that should be called when
         coresponding callback function is called
         """
         # Try to find node
         try:
-            node = VerseNode.nodes[node_id]
+            node = session.nodes[node_id]
         except KeyError:
             return
         # Try to find tag group
@@ -381,14 +386,14 @@ class VerseTag(VerseEntity):
         return tag
 
     @staticmethod
-    def _receive_tag_set_value(node_id, tg_id, tag_id, value):
+    def _receive_tag_set_value(session, node_id, tg_id, tag_id, value):
         """
         Static method of class that should be called when
         coresponding callback function is called
         """
         # Try to find node
         try:
-            node = VerseNode.nodes[node_id]
+            node = session.nodes[node_id]
         except KeyError:
             return
         # Try to find tag group
@@ -407,14 +412,14 @@ class VerseTag(VerseEntity):
         return tag
 
     @staticmethod
-    def _receive_tag_destroy(node_id, tg_id, tag_id):
+    def _receive_tag_destroy(session, node_id, tg_id, tag_id):
         """
         Static method of class that should be called when
         destroy callback session method is called
         """
         # Try to find node
         try:
-            node = VerseNode.nodes[node_id]
+            node = session.nodes[node_id]
         except KeyError:
             return
         # Try to find tag group
@@ -475,22 +480,22 @@ class VerseTagGroup(VerseEntity):
         """
         Send tag group create command to Verse server
         """
-        if session is not None and self.node.id is not None:
-            session.send_taggroup_create(self.node.id, custom_type)
+        if self.node.session is not None and self.node.id is not None:
+            self.node.session.send_taggroup_create(self.node.id, custom_type)
 
     def _send_destroy(self):
         """
         Send tag group destroy command to Verse server
         """
-        if session is not None and self.id is not None:
-            session.send_taggroup_destroy(self.node.prio, self.node.id, self.id)
+        if self.node.session is not None and self.id is not None:
+            self.node.session.send_taggroup_destroy(self.node.prio, self.node.id, self.id)
 
     def _send_subscribe(self):
         """
         Send tag group subscribe command
         """
-        if session is not None and self.id is not None and self.subscribed == False:
-            session.send_taggroup_subscribe(self.node.prio, self.node.id, self.id, self.version, self.crc32)
+        if self.node.session is not None and self.id is not None and self.subscribed == False:
+            self.node.session.send_taggroup_subscribe(self.node.prio, self.node.id, self.id, self.version, self.crc32)
             self.subscribed = True
 
     def _clean(self):
@@ -513,7 +518,7 @@ class VerseTagGroup(VerseEntity):
         self._destroy()
 
     @staticmethod
-    def _receive_tg_create(node_id, tg_id, custom_type):
+    def _receive_tg_create(session, node_id, tg_id, custom_type):
         """
         Static method of class that add reference to the
         the dictionary of tag groups and send pending tag_create
@@ -521,7 +526,7 @@ class VerseTagGroup(VerseEntity):
         """
         node = None
         try:
-            node = VerseNode.nodes[node_id]
+            node = session.nodes[node_id]
         except KeyError:
             return
         # Is it tag group created by this client?
@@ -540,14 +545,14 @@ class VerseTagGroup(VerseEntity):
         return tg
 
     @staticmethod
-    def _receive_tg_destroy(node_id, tg_id):
+    def _receive_tg_destroy(session, node_id, tg_id):
         """
         Static method of class that should be called when
         destroy callback session method is called
         """
         # Try to find node
         try:
-            node = VerseNode.nodes[node_id]
+            node = session.nodes[node_id]
         except KeyError:
             return
         # Try to find tag group
@@ -565,15 +570,18 @@ class VerseNode(VerseEntity):
     """
     Class representing Verse node
     """
-
-    nodes = {}
-    my_node_queues = {}
     
-    def __init__(self, node_id=None, parent=None, user_id=None, custom_type=None):
+    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=None):
         """
         Constructor of VerseNode
         """
         super(VerseNode, self).__init__(custom_type=custom_type)
+
+        # Session has to be instance of class VerseSession or subclass of
+        # VerseSession
+        if issubclass(session.__class__, VerseSession) != True:
+            raise TypeError("Session is not subclass of model.VerseSession")
+        self.session = session
 
         self.id = node_id
 
@@ -598,14 +606,14 @@ class VerseNode(VerseEntity):
         if node_id is None:
             # Try to find queue of custom_type of node or create new one
             try:
-                node_queue = __class__.my_node_queues[custom_type]
+                node_queue = self.session.my_node_queues[custom_type]
             except KeyError:
                 node_queue = []
-                __class__.my_node_queues[custom_type] = node_queue
+                self.session.my_node_queues[custom_type] = node_queue
             # Add this object to the queue
             node_queue.insert(0, self)
         else:
-            __class__.nodes[node_id] = self
+            self.session.nodes[node_id] = self
             if self.parent is not None:
                 self.parent.child_nodes[node_id] = self
 
@@ -631,7 +639,7 @@ class VerseNode(VerseEntity):
         # Remove reference on this node
         if self.id is not None:
             # Remove this node from dictionary of nodes
-            __class__.nodes.pop(self.id)
+            self.session.nodes.pop(self.id)
             # Remove this node from dictionar of child nodes
             if self.parent is not None:
                 try:
@@ -651,29 +659,29 @@ class VerseNode(VerseEntity):
         """
         This method send node create command to Verse server
         """
-        if session is not None and self.id is None:
-            session.send_node_create(self.prio, self.custom_type)
+        if self.session is not None and self.id is None:
+            self.session.send_node_create(self.prio, self.custom_type)
 
 
     def _send_destroy(self):
         """
         This method send destroy command to Verse server
         """
-        if session is not None and self.id is not None:
-            session.send_node_destroy(self.prio, self.id)
+        if self.session is not None and self.id is not None:
+            self.session.send_node_destroy(self.prio, self.id)
 
 
     def _send_subscribe(self):
         """
         This method send subscribe command to Verse server
         """
-        if session is not None and self.id is not None:
-            session.send_node_subscribe(self.prio, self.id, self.version, self.crc32)
+        if self.session is not None and self.id is not None:
+            self.session.send_node_subscribe(self.prio, self.id, self.version, self.crc32)
             self.subscribed = True
 
 
     @staticmethod
-    def _receive_node_create(node_id, parent_id, user_id, custom_type):
+    def _receive_node_create(session, node_id, parent_id, user_id, custom_type):
         """
         Static method of class that should be called, when coresponding callback
         method of class is called. This method moves node from queue to
@@ -682,22 +690,22 @@ class VerseNode(VerseEntity):
 
         # Try to find parent node
         try:
-            parent_node = __class__.nodes[parent_id]
+            parent_node = session.nodes[parent_id]
         except KeyError:
             parent_node = None
 
         # Is it node created by this client?
         if parent_id == session.avatar_id:
-            node_queue = __class__.my_node_queues[custom_type]
+            node_queue = session.my_node_queues[custom_type]
             # If this is node created by this client, then add it to
             # dictionary of nodes
             node = node_queue.pop()
             node.id = node_id
-            __class__.nodes[node_id] = node
+            session.nodes[node_id] = node
             if node.parent is None:
                 node.parent = parent_node
         else:
-            node = VerseNode(node_id, parent_node, user_id, custom_type)
+            node = VerseNode(session, node_id, parent_node, user_id, custom_type)
 
         # Chnage state of node
         node._receive_create()
@@ -724,7 +732,7 @@ class VerseNode(VerseEntity):
         return node
 
     @staticmethod
-    def _receive_node_destroy(node_id):
+    def _receive_node_destroy(session, node_id):
         """
         Static method of class that should be called, when destroy_node
         callback method of Session class is called. This method removes
@@ -732,7 +740,7 @@ class VerseNode(VerseEntity):
         """
         # Try to find node
         try:
-            node = __class__.nodes[node_id]
+            node = session.nodes[node_id]
         except KeyError:
             return
         # Set entity state and clean data in this node
@@ -741,17 +749,17 @@ class VerseNode(VerseEntity):
         return node
 
     @staticmethod
-    def _receive_node_link(parent_node_id, child_node_id):
+    def _receive_node_link(session, parent_node_id, child_node_id):
         """
         """
         # Try to find parent node
         try:
-            parent_node = __class__.nodes[parent_node_id]
+            parent_node = session.nodes[parent_node_id]
         except KeyError:
             return
         # Try to find child node
         try:
-            child_node = __class__.nodes[child_node_id]
+            child_node = session.nodes[child_node_id]
         except KeyError:
             return
         # When current link between nodes is different, then
@@ -768,3 +776,195 @@ class VerseNode(VerseEntity):
 
         # Return reference at child node
         return child_node
+
+
+class VerseSession(vrs.Session):
+    """
+    Class with session used in this client
+    """
+
+    # The list of session instances
+    __sessions = {}
+
+    # The dictionary of nodes that belongs to this session
+    nodes = {}
+
+    # The dictionary of nodes that were created by this client and Verse
+    # server has not sent confirmation about creating of these nodes.
+    # Each custom_type of node has its own queue
+    my_node_queues = {}
+
+    def __init__(self, hostname="localhost", service="12345", flags=vrs.DGRAM_SEC_DTLS):
+        """
+        Constructor of VerseSession
+        """
+        # Call method of parent class to connect to Verse server
+        super(VerseSession, self).__init__(hostname, service, flags)
+        self._fps = 60.0
+        self.username = None
+        self.password = None
+        self.debug_print = False
+        self.state = 'CONNECTING'
+        self.__class__.__sessions[hostname+':'+service] = self
+
+
+    def _receive_user_authenticate(self, username, methods):
+        """
+        Callback method for user authenticate
+        """
+        # Call parent method to print debug information
+        if self.debug_print is True:
+            super(VerseSession, self)._receive_user_authenticate(self, username, password)
+        # Default method to get username and password
+        if username=="":
+            if self.username is None:
+                self.username = username = input('username: ')
+            else:
+                username = self.username
+            self.send_user_authenticate(username, vrs.UA_METHOD_NONE, "")
+        else:
+            if methods.count(vrs.UA_METHOD_PASSWORD)>=1:
+                if self.password is None:
+                    self.password = password = input('password: ')
+                else:
+                    password = self.password
+                self.send_user_authenticate(username, vrs.UA_METHOD_PASSWORD, password)
+            else:
+                print("Unsuported authenticate method")
+
+
+    @property
+    def fps(self):
+        """
+        Getter of session FPS
+        """
+        return self._fps
+
+
+    @fps.setter
+    def fps(self, val):
+        """
+        Setter of session FPS
+        """
+        self._fps = val
+        self.send_fps(val)
+
+
+    def _receive_connect_accept(self, user_id, avatar_id):
+        """
+        Custom callback method for connect accept
+        """
+        # Call parent method to print debug information
+        if self.debug_print is True:
+            super(VerseSession, self)._receive_connect_accept(self, user_id, avatar_id)
+        # Save important informations
+        self.user_id = user_id
+        self.avatar_id = avatar_id
+        # "Subscribe" to root node
+        self.root_node = VerseNode(session=self, node_id=0, parent=None, user_id=100, custom_type=0)
+        self.state = 'CONNECTED'
+
+
+    def _receive_node_create(self, node_id, parent_id, user_id, custom_type):
+        """
+        Custom callback method that is called, when client received
+        command node_create
+        """
+        # Call parent method to print debug information
+        if self.debug_print is True:
+            super(VerseSession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)
+        # Call calback method of model
+        node = VerseNode._receive_node_create(self, node_id, parent_id, user_id, custom_type)
+
+        return node
+
+
+    def _receive_node_destroy(self, node_id):
+        """
+        Custom callback method for command node destroy
+        """
+        # Call parent method to print debug information
+        if self.debug_print is True:
+            super(VerseSession, self)._receive_node_destroy(node_id)
+        # Call callback method of model
+        node = VerseNode._receive_node_destroy(self, node_id)
+
+        return node
+
+
+    def _receive_node_link(self, parent_node_id, child_node_id):
+        """
+        Custom callback method that is called, when client receive command changing
+        link between nodes
+        """
+        # Call parent method to print debug information
+        if self.debug_print is True:
+            super(VerseSession, self)._receive_node_link(parent_node_id, child_node_id)
+        # Call calback method of model
+        child_node = VerseNode._receive_node_link(self, parent_node_id, child_node_id)
+
+        return child_node
+
+
+    def _receive_taggroup_create(self, node_id, taggroup_id, custom_type):
+        """
+        Custom callback method that is called, when client received command
+        tag group create
+        """
+        # Call parent method to print debug information
+        if self.debug_print is True:
+            super(VerseSession, self)._receive_taggroup_create(node_id, taggroup_id, custom_type)
+        # Call calback method of model
+        tg = VerseTagGroup._receive_tg_create(self, node_id, taggroup_id, custom_type)
+
+        return tg
+
+
+    def _receive_tag_create(self, node_id, taggroup_id, tag_id, data_type, count, custom_type):
+        """
+        Custom callback method that is called, when client receive command tag create
+        """
+        # Call parent method to print debug information
+        if self.debug_print is True:
+            super(VerseSession, self)._receive_tag_create(node_id, taggroup_id, tag_id, data_type, count, custom_type)
+        # Call calback method of model
+        tag = VerseTag._receive_tag_create(self, node_id, taggroup_id, tag_id, data_type, count, custom_type)
+
+        return tag
+
+    def _receive_tag_set_value(self, node_id, taggroup_id, tag_id, value):
+        """
+        Custom callback method that is called, when client reveive command tag set value
+        """
+        # Call method of parent class
+        if self.debug_print is True:
+            super(VerseSession, self)._receive_tag_set_value(node_id, taggroup_id, tag_id, value)
+        # Call callback method of model
+        tag = VerseTag._receive_tag_set_value(self, node_id, taggroup_id, tag_id, value)
+
+        return tag
+
+
+    def _receive_connect_terminate(self, error):
+        """
+        Custom callback method for fake connect terminate command
+        """
+        # Call method of parent class
+        if self.debug_print is True:
+            super(VerseSession, self)._receive_connect_terminate(error)
+        self.state = 'DISCONNECTED'
+
+
+def main():
+    """
+    Function with main never ending verse loop
+    """
+    model.session = VerseSession()
+
+    while(model.session.state != 'DISCONNECTED'):
+        model.session.callback_update()
+        time.sleep(1.0/model.session.fps)
+
+
+if __name__ == '__main__':
+    main()
