@@ -1,0 +1,3 @@
+[submodule "io_verse/verse-entities"]
+	path = io_verse/verse-entities
+	url = git@github.com:jirihnidek/verse-entities.git
