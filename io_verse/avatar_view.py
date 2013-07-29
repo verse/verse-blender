@@ -17,17 +17,17 @@
 # ##### END GPL LICENSE BLOCK #####
 
 
-#
-# This file contain methods and classes for visualization of other
-# users connected to Verse server. It visualize their position and
-# current view to active 3DView. Other Blender users sharing data at
-# Verse server can also see, where you are and what you do.
-#
+"""
+This file contain methods and classes for visualization of other
+users connected to Verse server. It visualize their position and
+current view to active 3DView. Other Blender users sharing data at
+Verse server can also see, where you are and what you do.
+"""
 
 
 if "bpy" in locals():
     import imp
-    imp.reload(model)
+    imp.reload(vrsent)
     imp.reload(session)
 else:
     import bpy
@@ -35,7 +35,7 @@ else:
     import mathutils
     import math
     import verse as vrs
-    from . import model
+    from .vrsent import vrsent
     from . import session
 
 
@@ -56,7 +56,7 @@ def draw_cb(self, context):
     self.avatar_view.update(context)
 
 
-class AvatarView(model.VerseNode):
+class AvatarView(vrsent.VerseNode):
     """
     Verse node with representation of avatar view to 3D View
     """
@@ -68,31 +68,31 @@ class AvatarView(model.VerseNode):
 
         if my_view == True:
             # Tag group
-            self.view_tg = model.VerseTagGroup(node=self)
+            self.view_tg = vrsent.VerseTagGroup(node=self)
 
             # Tags
-            self.location = model.VerseTag(tg=self.view_tg, \
+            self.location = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
                 value=(0.0, 0.0, 0.0) )
-            self.rotation = model.VerseTag(tg=self.view_tg, \
+            self.rotation = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
                 value=(0.0, 0.0, 0.0, 0.0) )
-            self.distance = model.VerseTag(tg=self.view_tg, \
+            self.distance = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
                 value=(0.0,) )
-            self.perspective = model.VerseTag(tg=self.view_tg, \
+            self.perspective = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
                 value=(0.0,) )
-            self.width = model.VerseTag(tg=self.view_tg, \
+            self.width = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
                 value=(0.0,) )
-            self.height = model.VerseTag(tg=self.view_tg, \
+            self.height = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
                 value=(0.0,) )
-            self.persp = model.VerseTag(tg=self.view_tg, \
+            self.persp = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
                 value=(0.0,) )
-            self.lens = model.VerseTag(tg=self.view_tg, \
+            self.lens = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
                 value=(0.0,) )
 

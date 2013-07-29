@@ -19,12 +19,12 @@
 
 if "bpy" in locals():
     import imp
-    imp.reload(model)
+    imp.reload(vrsent)
     imp.reload(session)
 else:
     import bpy
     import verse as vrs
-    from . import model
+    from .vrsent import vrsent
     from . import session
 
 
@@ -86,6 +86,7 @@ class VerseConnectDialogOperator(bpy.types.Operator):
     vrs_server_name = bpy.props.StringProperty(name="Verse Server")
 
     def execute(self, context):
+        # Connect to Verse server
         session.VerseSession(self.vrs_server_name, "12345", 0)
         # Start timer
         bpy.ops.wm.modal_timer_operator()
@@ -108,7 +109,11 @@ class VerseClientDisconnect(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context): # NOT sure about this
-        if session.VerseSession.state() == 'CONNECTING' or session.VerseSession.state() == 'CONNECTED':
+        if session.VerseSession.instance() is not None:
+            state = session.VerseSession.instance().state
+        else:
+            return False
+        if state == 'CONNECTING' or state == 'CONNECTED':
             return True
         else:
             return False
@@ -130,7 +135,11 @@ class VerseClientConnect(bpy.types.Operator):
 
     @classmethod    
     def poll(cls, context):
-        if session.VerseSession.state() == 'DISCONNECTED':
+        if session.VerseSession.instance() is not None:
+            state = session.VerseSession.instance().state
+        else:
+            return True
+        if state == 'DISCONNECTED':
             return True
         else:
             return False

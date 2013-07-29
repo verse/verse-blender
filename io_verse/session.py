@@ -19,34 +19,23 @@
 
 if "bpy" in locals():
     import imp
-    imp.reload(model)
+    imp.reload(vrsent)
 else:
     import bpy
     import verse as vrs
-    from . import model
+    from .vrsent import vrsent
 
 
 # VerseSession class
-class VerseSession(vrs.Session):
+class VerseSession(vrsent.VerseSession):
     """
     Class Session for this Python client
     """
-    
-    # State of connection
-    __state = 'DISCONNECTED'
-    
+        
     # Blender could be connected only to one Verse server
     __instance = None
     
-
-    def state():
-        """
-        state() -> string
-        Class getter of state
-        """
-        return __class__.__state
-    
-
+ 
     def instance():
         """
         instance() -> object
@@ -61,19 +50,13 @@ class VerseSession(vrs.Session):
         """
         # Call __init__ from parent class to connect to Verse server
         super(VerseSession, self).__init__(hostname, service, flag)
-        __class__.__state = 'CONNECTING'
         __class__.__instance = self
-        self.fps = 60 # TODO: get current FPS
-        # Create empty dictionary of nodes
-        self.my_username = ''
-        self.my_password = ''
 
 
     def __del__(self):
         """
         __del__() -> None
         """
-        __class__.__state = 'DISCONNECTED'
         __class__.__instance = None
 
 
@@ -82,9 +65,7 @@ class VerseSession(vrs.Session):
          _receive_node_link(self, parent_node_id, child_node_id) -> None
         """
         # Call parent method to print debug information
-        super(MySession, self)._receive_node_link(parent_node_id, child_node_id)
-        # Call calback method of model
-        child_node = model.VerseNode._receive_node_link(parent_node_id, child_node_id)
+        super(VerseSession, self)._receive_node_link(parent_node_id, child_node_id)
     
 
     def _receive_node_create(self, node_id, parent_id, user_id, custom_type):
@@ -92,9 +73,7 @@ class VerseSession(vrs.Session):
         _receive_node_create(node_id, parent_id, user_id, type) -> None
         """
         # Call parent method to print debug information
-        super(MySession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)
-        # Call calback method of model
-        node = model.VerseNode._receive_node_create(node_id, parent_id, user_id, custom_type)
+        super(VerseSession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)
         
     
     def _receive_node_destroy(self, node_id):
@@ -102,17 +81,15 @@ class VerseSession(vrs.Session):
         _receive_node_destroy(node_id) -> None
         """
         # Call parent method to print debug information
-        super(MySession, self)._receive_node_destroy(node_id)
-        # Call callback method of model
-        node = model.VerseNode._receive_node_destroy(node_id)
+        super(VerseSession, self)._receive_node_destroy(node_id)
         
     
     def _receive_connect_terminate(self, error):
         """
         receive_connect_terminate(error) -> none
         """
-        print('receive_connect_terminate', error)
-        __class__.__state = 'DISCONNECTED'
+        # Call parent method to print debug information
+        super(VerseSession, self)._receive_connect_terminate(error)
         __class__.__instance = None
         # Print error message
         bpy.ops.wm.verse_error('INVOKE_DEFAULT', error_string="Disconnected")
@@ -125,13 +102,7 @@ class VerseSession(vrs.Session):
         """
         receive_connect_accept(user_id, avatar_id) -> None
         """
-        print('receive_connect_accept()', user_id, avatar_id)
-        __class__.__state = 'CONNECTED'
-        self.user_id = user_id
-        self.avatar_id = avatar_id
-        
-        # Create root node
-        self.root_node = model.VerseNode(node_id=0, parent=None, user_id=100, custom_type=0)
+        super(VerseSession, self)._receive_connect_accept(user_id, avatar_id)
 
         # TODO: Create nodes with views to the scene
  
@@ -147,14 +118,6 @@ class VerseSession(vrs.Session):
         else:
             if username == self.my_username:
                 self.send_user_authenticate(self.my_username, vrs.UA_METHOD_PASSWORD, self.my_password)
-    
-    def send_connect_terminate(self):
-        """
-        send_connect_terminate() -> None
-        
-        """
-        __class__.__state = 'DISCONNECTING'
-        vrs.Session.send_connect_terminate(self)
 
 
 # Class with timer modal operator running callback_update

@@ -16,6 +16,10 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+"""
+Blender Add-on with Verse integration
+"""
+
 bl_info = {
     "name": "Verse Client",
     "author": "Jiri Hnidek",
@@ -32,15 +36,12 @@ bl_info = {
 if "bpy" in locals():
     import imp
     imp.reload(session)
-    imp.reload(model)
     imp.reload(connection)
     imp.reload(scene)
     imp.reload(avatar_view)
 else:
     import bpy
-    import verse as vrs
     from . import session
-    from . import model
     from . import connection
     from . import scene
     from . import avatar_view
@@ -50,7 +51,6 @@ def register():
     """
     Call register methods in submodules 
     """
-
     session.register()
     connection.register()
     scene.register()
@@ -62,12 +62,10 @@ def unregister():
     """
     Call unregister methods in submodules
     """
-    
     session.unregister()
     connection.unregister()
     scene.unregister()
     avatar_view.unregister()
-
 
 
 if __name__ == "__main__":
