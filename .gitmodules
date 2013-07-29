@@ -1,0 +1,3 @@
+[submodule "io_verse/vrsent"]
+	path = io_verse/vrsent
+	url = git@github.com:jirihnidek/verse-entities.git
