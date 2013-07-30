@@ -28,7 +28,6 @@ else:
     from . import session
 
 
-# Class for reporting errors
 class VerseError(bpy.types.Operator):
     """
     Operator that is used for reporting Verse errors
@@ -47,11 +46,9 @@ class VerseError(bpy.types.Operator):
         return {'FINISHED'}
 
 
-
-# Class for displaying Login dialog
 class VerseAuthDialogOperator(bpy.types.Operator):
     """
-    User Authenticate dialog
+    Class with user authenticate dialog (username and password)
     """
     bl_idname = "scene.verse_auth_dialog_operator" 
     bl_label = "User Authenticate dialog" 
@@ -75,10 +72,10 @@ class VerseAuthDialogOperator(bpy.types.Operator):
         return wm.invoke_props_dialog(self)
 
 
-# Class for own connecting to Verse server and displaying Connect dialog
 class VerseConnectDialogOperator(bpy.types.Operator):
     """
-    Connect dialog
+    Class with connect dialog, where user can choose URL of
+    Verse server
     """
     bl_idname = "scene.verse_connect_dialog_operator" 
     bl_label = "Connect dialog" 
@@ -98,7 +95,6 @@ class VerseConnectDialogOperator(bpy.types.Operator):
         return wm.invoke_props_dialog(self)
 
 
-# Class for disconnecting from Verse server
 class VerseClientDisconnect(bpy.types.Operator):
     """
     This class will try to disconnect Blender from Verse server
@@ -124,7 +120,6 @@ class VerseClientDisconnect(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Class that tries to connect to Verse server
 class VerseClientConnect(bpy.types.Operator):
     """
     This class will try to connect Blender to Verse server
@@ -149,10 +144,9 @@ class VerseClientConnect(bpy.types.Operator):
         return {'FINISHED'}
         
 
-# Class for drawing Verse submenu
 class VerseMenu(bpy.types.Menu):
     """
-    Main Verse menu
+    Main Verse menu (it contains Connect... and Disconnect...)
     """
     bl_label = "Verse Menu"
     bl_idname = "INFO_MT_verse" # NOT sure about this
@@ -164,8 +158,10 @@ class VerseMenu(bpy.types.Menu):
         layout.operator("scene.verse_client_disconnect")
 
 
-# Verse submenu
 def draw_item(self, context):
+    """
+    This function draw item with Verse submenu
+    """
     layout = self.layout
     layout.menu(VerseMenu.bl_idname)
 

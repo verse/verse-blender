@@ -28,7 +28,7 @@ Verse server can also see, where you are and what you do.
 if "bpy" in locals():
     import imp
     imp.reload(vrsent)
-    imp.reload(session)
+#    imp.reload(session)
 else:
     import bpy
     import bgl
@@ -36,7 +36,7 @@ else:
     import math
     import verse as vrs
     from .vrsent import vrsent
-    from . import session
+#    from . import session
 
 
 def draw_cb(self, context):
@@ -60,46 +60,77 @@ class AvatarView(vrsent.VerseNode):
     """
     Verse node with representation of avatar view to 3D View
     """
-    
-    def __init__(self, my_view=False):
+
+    # View of own avatar
+    __my_view = None
+
+    # Dictionary of other avatar views of other users
+    __other_views = {}
+
+
+    # TODO: implement own __new__ method
+
+
+    def __init__(self, my_view=False, *args, **kwargs):
         """
         Constructor of AvatarView node
         """
 
-        if my_view == True:
-            # Tag group
-            self.view_tg = vrsent.VerseTagGroup(node=self)
+        super(AvatarView, self).__init__(*args, **kwargs)
 
-            # Tags
+        if my_view == True:
+
+            # Create tag group containing informatin about view
+            self.view_tg = vrsent.VerseTagGroup(node=self, \
+                custom_type=0)
+
+            # Create tags with data of view to 3D view
             self.location = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0, 0.0, 0.0) )
+                value=(0.0, 0.0, 0.0), \
+                custom_type=0)
             self.rotation = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0, 0.0, 0.0, 0.0) )
+                value=(0.0, 0.0, 0.0, 0.0), \
+                custom_type=1)
             self.distance = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,) )
+                value=(0.0,), \
+                custom_type=2)
             self.perspective = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,) )
+                value=(0.0,), \
+                custom_type=3)
             self.width = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,) )
+                value=(0.0,), \
+                custom_type=4)
             self.height = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,) )
+                value=(0.0,), \
+                custom_type=5)
             self.persp = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,) )
+                value=(0.0,), \
+                custom_type=6)
             self.lens = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,) )
+                value=(0.0,), \
+                custom_type=7)
 
             self.cur_screen = None
             self.cur_area = None
 
+            __class__.__my_view = self
+        else:
+            try:
+                __class__.__other_views[kwargs[node_id]] = self
+            except KeyError:
+                # TODO: this should not happen
+                pass
+
         self.my_view = my_view
+        self.scene_node = None
 
 
     def update(self, context):

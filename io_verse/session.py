@@ -20,10 +20,12 @@
 if "bpy" in locals():
     import imp
     imp.reload(vrsent)
+    imp.reload(avatar_view)
 else:
     import bpy
     import verse as vrs
     from .vrsent import vrsent
+    from . import avatar_view
 
 
 # VerseSession class
@@ -51,6 +53,7 @@ class VerseSession(vrsent.VerseSession):
         # Call __init__ from parent class to connect to Verse server
         super(VerseSession, self).__init__(hostname, service, flag)
         __class__.__instance = self
+        self.debug_print = True
 
 
     def __del__(self):
@@ -91,10 +94,8 @@ class VerseSession(vrsent.VerseSession):
         # Call parent method to print debug information
         super(VerseSession, self)._receive_connect_terminate(error)
         __class__.__instance = None
-        # Print error message
-        bpy.ops.wm.verse_error('INVOKE_DEFAULT', error_string="Disconnected")
         # Clear dictionary of nodes
-        model.VerseNode.nodes.clear()
+        self.nodes.clear()
         # TODO: stop timer
   
     
@@ -104,7 +105,11 @@ class VerseSession(vrsent.VerseSession):
         """
         super(VerseSession, self)._receive_connect_accept(user_id, avatar_id)
 
-        # TODO: Create nodes with views to the scene
+        # Create avatar node with representation of current view to the scene
+        avatar_view.AvatarView(my_view=True, session=self, node_id=avatar_id)
+
+        # TODO: Popup dialog to choose scene at Verse server
+        # (subscribe to parent of scene nodes)
  
     
     def _receive_user_authenticate(self, username, methods):
@@ -112,7 +117,6 @@ class VerseSession(vrsent.VerseSession):
         receive_user_authenticate(username, methods) -> None
         Callback function for user authenticate
         """
-        print('receive_user_authenticate()', username, methods)
         if username == '':
             bpy.ops.scene.verse_auth_dialog_operator('INVOKE_DEFAULT')
         else:

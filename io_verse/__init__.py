@@ -35,12 +35,14 @@ bl_info = {
 
 if "bpy" in locals():
     import imp
+    imp.reload(vrs)
     imp.reload(session)
     imp.reload(connection)
     imp.reload(scene)
     imp.reload(avatar_view)
 else:
     import bpy
+    import verse as vrs
     from . import session
     from . import connection
     from . import scene
@@ -67,6 +69,8 @@ def unregister():
     scene.unregister()
     avatar_view.unregister()
 
+
+vrs.set_debug_level(vrs.PRINT_DEBUG_MSG)
 
 if __name__ == "__main__":
     register()
