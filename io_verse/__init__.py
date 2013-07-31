@@ -59,7 +59,6 @@ def register():
     avatar_view.register()
 
 
-
 def unregister():
     """
     Call unregister methods in submodules
@@ -70,7 +69,9 @@ def unregister():
     avatar_view.unregister()
 
 
+# Print all debug messages
 vrs.set_debug_level(vrs.PRINT_DEBUG_MSG)
+
 
 if __name__ == "__main__":
     register()
