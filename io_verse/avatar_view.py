@@ -46,9 +46,10 @@ def draw_cb(self, context):
     if context.area.type != 'VIEW_3D':
         return
     
-    # If avatar view of this client doesn't exist yet, then create new one
+    # If avatar view of this client doesn't exist yet, then try to 
+    # get it
     if self.avatar_view is None:
-        self.avatar_view = AvatarView(my_view=True)
+        self.avatar_view = AvatarView.my_view()
     
     # Update information about avatar's view, when needed
     self.avatar_view.update(context)
@@ -66,21 +67,34 @@ class AvatarView(vrsent.VerseNode):
     __other_views = {}
 
 
-    # TODO: implement own __new__ method
+    @classmethod
+    def my_view(cls):
+        """
+        Getter of class memeber __my_view
+        """
+        return __class__.__my_view
 
 
-    def __init__(self, my_view=False, *args, **kwargs):
+    @classmethod
+    def other_views(cls):
+        """
+        Getter of class memeber __other_views
+        """
+        return __class__.__other_views
+
+
+    def __init__(self, session, my_view=False, *args, **kwargs):
         """
         Constructor of AvatarView node
         """
 
-        super(AvatarView, self).__init__(*args, **kwargs)
+        super(AvatarView, self).__init__(session, *args, **kwargs)
 
         if my_view == True:
 
             # Create tag group containing informatin about view
             self.view_tg = vrsent.VerseTagGroup(node=self, \
-                custom_type=0)
+                custom_type=321)
 
             # Create tags with data of view to 3D view
             self.location = vrsent.VerseTag(tg=self.view_tg, \
@@ -96,29 +110,25 @@ class AvatarView(vrsent.VerseNode):
                 value=(0.0,), \
                 custom_type=2)
             self.perspective = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,), \
+                data_type=vrs.VALUE_TYPE_STRING8, \
+                value=('PERSP',), \
                 custom_type=3)
             self.width = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,), \
+                data_type=vrs.VALUE_TYPE_UINT16, \
+                value=(0,), \
                 custom_type=4)
             self.height = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,), \
+                data_type=vrs.VALUE_TYPE_UINT16, \
+                value=(0,), \
                 custom_type=5)
-            self.persp = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,), \
-                custom_type=6)
             self.lens = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
                 value=(0.0,), \
-                custom_type=7)
+                custom_type=6)
             self.scene_node_id = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_UINT32, \
                 value=(0,), \
-                custom_type=8)
+                custom_type=7)
 
             self.cur_screen = None
             self.cur_area = None
@@ -130,6 +140,18 @@ class AvatarView(vrsent.VerseNode):
             except KeyError:
                 # TODO: this should not happen
                 pass
+            # TODO: handle this situation better.
+            # We know that these tag group and tags will be probably created,
+            # but we cannnot creat them ... other client has to do this and
+            # server has to send them to this client
+            self.view_tg = None
+            self.location = None
+            self.rotation = None
+            self.distance = None
+            self.perspective = None
+            self.width = None
+            self.height = None
+            self.lens = None
 
         self.my_view = my_view
         self.scene_node = None
@@ -156,7 +178,8 @@ class AvatarView(vrsent.VerseNode):
             self.distance.value = (context.space_data.region_3d.view_distance,)
         
         # Perspective/Ortho
-        if context.space_data.region_3d.view_perspective != self.persp.value[0]:
+        if context.space_data.region_3d.view_perspective != self.perspective.value[0]:
+            print(context.space_data.region_3d.view_perspective)
             self.persp.value = (context.space_data.region_3d.view_perspective,)
         
         # Lens
@@ -425,10 +448,21 @@ class VerseAvatarStatus(bpy.types.Operator):
         """
         return {'PASS_THROUGH'}
     
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        if AvatarView.my_view() is not None:
+            return True
+        else:
+            return False
+
     def invoke(self, context, event):
         """
-        This method is used, when Blender check, if this operator can be
-        executed
+        This method is used, when this operator is executed
         """
         if context.area.type == 'VIEW_3D':
             if context.window_manager.verse_avatar_capture is False:
@@ -573,6 +607,16 @@ class VerseAvatarPanel(bpy.types.Panel):
 
         col = row.column(align=True)
         col.menu('view3d.verse_avatar_menu', icon='DOWNARROW_HLT', text="")
+
+        if not wm.verse_avatar_capture:
+            layout.operator("view3d.verse_avatar", text="Start Capture",
+                icon = "PLAY")
+        else:
+            layout.operator("view3d.verse_avatar", text="Pause Capture",
+                icon = "PAUSE")
+
+        # TODO: display connected avatars in current scene and
+        # display widget to hide/display them in 3d
 
 
 def init_properties():
