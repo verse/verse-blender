@@ -28,7 +28,6 @@ Verse server can also see, where you are and what you do.
 if "bpy" in locals():
     import imp
     imp.reload(vrsent)
-#    imp.reload(session)
 else:
     import bpy
     import bgl
@@ -36,7 +35,6 @@ else:
     import math
     import verse as vrs
     from .vrsent import vrsent
-#    from . import session
 
 
 def draw_cb(self, context):
@@ -117,6 +115,10 @@ class AvatarView(vrsent.VerseNode):
                 data_type=vrs.VALUE_TYPE_REAL32, \
                 value=(0.0,), \
                 custom_type=7)
+            self.scene_node_id = vrsent.VerseTag(tg=self.view_tg, \
+                data_type=vrs.VALUE_TYPE_UINT32, \
+                value=(0,), \
+                custom_type=8)
 
             self.cur_screen = None
             self.cur_area = None
@@ -168,6 +170,10 @@ class AvatarView(vrsent.VerseNode):
         # Height
         if context.area.height != self.height.value[0]:
             self.height.value = (context.area.height,)    
+
+        # Scene
+        if context.scene.verse_scene_node_id != self.scene_node_id[0]:
+            self.scene_node_id = (context.scene.verse_scene_node_id,)
 
         
     def draw(self, area, region_data, space):
@@ -461,6 +467,85 @@ class VerseAvatarStatus(bpy.types.Operator):
             return {'CANCELLED'}
 
 
+class VERSE_AVATAR_OT_show(bpy.types.Operator):
+    """
+    This operator show selected avatar
+    """
+    bl_idname = 'view3d.verse_avatar_show'
+    bl_label = 'Show Avatar'
+
+    def invoke(self, context, event):
+        """
+        Show avatar selected in list of avatars
+        """
+        avatar = wm.verse_avatars[wm.cur_verse_avatar_index]
+        avatar.visualized = True
+        # TODO: subscribe to tag group
+
+
+class VERSE_AVATAR_OT_hide(bpy.types.Operator):
+    """
+    This operator hide selected avatar
+    """
+    bl_idname = 'view3d.verse_avatar_hide'
+    bl_label = 'Hide Avatar'
+
+    def invoke(self, context, event):
+        """
+        Hide avatar selected in list of avatars
+        """
+        avatar = wm.verse_avatars[wm.cur_verse_avatar_index]
+        avatar.visualized = False
+        # TODO: unsubscribe to tag group
+
+
+class VERSE_AVATAR_MT_menu(bpy.types.Menu):
+    """
+    Menu for verse avatar list
+    """
+    bl_idname = 'view3d.verse_avatar_menu'
+    bl_label = "Shape Key Specials"
+
+    def draw(self, context):
+        """
+        Draw menu
+        """
+        layout = self.layout
+        layout.operator('view3d.verse_avatar_hide')
+        layout.operator('view3d.verse_avatar_show')
+
+
+class VERSE_AVATAR_NODES_list_item(bpy.types.PropertyGroup):
+    """
+    Group of properties with representation of Verse avatar node
+    """
+    name = bpy.props.StringProperty( \
+        name = "Username", \
+        description = "Username of connected avatar", \
+        default = "User Name")
+    visualized = bpy.props.BoolProperty( \
+        name = "Visualized", \
+        description = "Is avatar visualized in 3D view", \
+        default = True)
+
+
+class VERSE_AVATAR_UL_slot(bpy.types.UIList):
+    """
+    A custom slot with information about Verse avatar node
+    """
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        verse_avatar = item
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.label(verse_avatar.name, icon='ARMATURE_DATA')
+            if verse_avatar.visualized == True:
+                layout.label(text='', icon='RESTRICT_VIEW_OFF')
+            else:
+                layout.label(text='', icon='RESTRICT_VIEW_ON')
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label(verse_avatar.name)
+
+
 class VerseAvatarPanel(bpy.types.Panel):
     """
     Panel with widgets
@@ -476,6 +561,18 @@ class VerseAvatarPanel(bpy.types.Panel):
         """
         wm = context.window_manager
         layout = self.layout
+        row = layout.row()
+
+        row.template_list('VERSE_AVATAR_UL_slot', \
+            'verse_avatars_widget_id', \
+            wm, \
+            'verse_avatars', \
+            wm, \
+            'cur_verse_avatar_index', \
+            rows = 3)
+
+        col = row.column(align=True)
+        col.menu('view3d.verse_avatar_menu', icon='DOWNARROW_HLT', text="")
 
 
 def init_properties():
@@ -483,8 +580,23 @@ def init_properties():
     Initialize properties used by this module
     """
     wm = bpy.types.WindowManager
-    wm.verse_avatar_capture = bpy.props.BoolProperty(default=False)
-    wm.verse_show_avatars = bpy.props.BoolProperty(default=False)
+    wm.verse_avatar_capture = bpy.props.BoolProperty( \
+        name = "Avatar Capture", \
+        default = False, \
+        description = "Is information about my view to 3D scene shared at Verse server"
+    )
+    wm.verse_avatars = bpy.props.CollectionProperty( \
+        type =  VERSE_AVATAR_NODES_list_item, \
+        name = "Verse Avatars", \
+        description = "The list of verse avatar nodes representing Blender at Verse server" \
+    )
+    wm.cur_verse_avatar_index = bpy.props.IntProperty( \
+        name = "Index of current Verse avatar", \
+        default = -1, \
+        min = -1, \
+        max = 1000, \
+        description = "The index of curently selected Verse avatar node"
+    )
 
 
 def reset_properties():
@@ -493,15 +605,24 @@ def reset_properties():
     """
     wm = bpy.types.WindowManager
     wm.verse_avatar_capture = False
-    wm.verse_show_avatars = False
+    wm.cur_verse_avatar_index = -1
+
+
+classes = (VERSE_AVATAR_NODES_list_item, \
+    VERSE_AVATAR_UL_slot, \
+    VerseAvatarPanel, \
+    VerseAvatarStatus, \
+    VERSE_AVATAR_OT_hide, \
+    VERSE_AVATAR_OT_show,
+    VERSE_AVATAR_MT_menu)
 
 
 def register():
     """
     Register classes with panel and init properties
     """
-    bpy.utils.register_class(VerseAvatarPanel)
-    bpy.utils.register_class(VerseAvatarStatus)
+    for c in classes:
+        bpy.utils.register_class(c)
     init_properties()
 
 
@@ -509,9 +630,10 @@ def unregister():
     """
     Unregister classes with panel and reset properties
     """
-    bpy.utils.unregister_class(VerseAvatarPanel)
-    bpy.utils.unregister_class(VerseAvatarStatus)
+    for c in classes:
+        bpy.utils.unregister_class(c)
     reset_properties()
+
 
 if __name__ == '__main__':
     register()
