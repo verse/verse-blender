@@ -136,7 +136,7 @@ class AvatarView(vrsent.VerseNode):
             __class__.__my_view = self
         else:
             try:
-                __class__.__other_views[kwargs[node_id]] = self
+                __class__.__other_views[kwargs['node_id']] = self
             except KeyError:
                 # TODO: this should not happen
                 pass
@@ -152,9 +152,22 @@ class AvatarView(vrsent.VerseNode):
             self.width = None
             self.height = None
             self.lens = None
+            self.scene_node_id = None
 
         self.my_view = my_view
         self.scene_node = None
+
+        try:
+            verse_user = session.users[self.user_id]
+        except KeyError:
+            username = "User"
+        else:
+            username = verse_user.name
+        wm = bpy.context.window_manager
+        wm.verse_avatars.add()
+        wm.verse_avatars[-1].name = username + '@' # TODO: update, when corespondig tag values are set
+        wm.verse_avatars[-1].node_id = self.id
+        # TODO: tag View3d to update
 
 
     def update(self, context):
@@ -194,9 +207,9 @@ class AvatarView(vrsent.VerseNode):
         if context.area.height != self.height.value[0]:
             self.height.value = (context.area.height,)    
 
-        # Scene
-        if context.scene.verse_scene_node_id != self.scene_node_id[0]:
-            self.scene_node_id = (context.scene.verse_scene_node_id,)
+        # TODO: Update scene
+        #if context.scene.verse_scene_node_id != self.scene_node_id[0]:
+        #    self.scene_node_id = (context.scene.verse_scene_node_id,)
 
         
     def draw(self, area, region_data, space):
@@ -455,7 +468,8 @@ class VerseAvatarStatus(bpy.types.Operator):
         executed
         """
         # Return true only in situation, when client is connected to Verse server
-        if AvatarView.my_view() is not None:
+        wm = context.window_manager
+        if wm.verse_connected == True and AvatarView.my_view() is not None:
             return True
         else:
             return False
@@ -512,9 +526,58 @@ class VERSE_AVATAR_OT_show(bpy.types.Operator):
         """
         Show avatar selected in list of avatars
         """
+        wm = context.window_manager
         avatar = wm.verse_avatars[wm.cur_verse_avatar_index]
         avatar.visualized = True
         # TODO: subscribe to tag group
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True and wm.cur_verse_avatar_index != -1:
+            if wm.verse_avatars[wm.cur_verse_avatar_index].visualized == False:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+
+class VERSE_AVATAR_OT_show_all(bpy.types.Operator):
+    """
+    This operator show all avatars
+    """
+    bl_idname = 'view3d.verse_avatar_show_all'
+    bl_label = 'Show All Avatars'
+
+    def invoke(self, context, event):
+        """
+        Show all avatars in list of avatars
+        """
+        wm = context.window_manager
+        for avatar in wm.verse_avatars:
+            avatar.visualized = True
+        # TODO: subscribe to unsubscribed tag groups
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True:
+            return True
+        else:
+            return False
 
 
 class VERSE_AVATAR_OT_hide(bpy.types.Operator):
@@ -528,9 +591,58 @@ class VERSE_AVATAR_OT_hide(bpy.types.Operator):
         """
         Hide avatar selected in list of avatars
         """
+        wm = context.window_manager
         avatar = wm.verse_avatars[wm.cur_verse_avatar_index]
         avatar.visualized = False
-        # TODO: unsubscribe to tag group
+        # TODO: unsubscribe from tag group
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True and wm.cur_verse_avatar_index != -1:
+            if wm.verse_avatars[wm.cur_verse_avatar_index].visualized == True:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+
+class VERSE_AVATAR_OT_hide_all(bpy.types.Operator):
+    """
+    This operator hide all avatars
+    """
+    bl_idname = 'view3d.verse_avatar_hide_all'
+    bl_label = 'Hide All Avatars'
+
+    def invoke(self, context, event):
+        """
+        Hide all avatars in list of avatars
+        """
+        wm = context.window_manager
+        for avatar in wm.verse_avatars:
+            avatar.visualized = False
+        # TODO: unsubscribe from all tag groups
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True:
+            return True
+        else:
+            return False
 
 
 class VERSE_AVATAR_MT_menu(bpy.types.Menu):
@@ -546,7 +658,21 @@ class VERSE_AVATAR_MT_menu(bpy.types.Menu):
         """
         layout = self.layout
         layout.operator('view3d.verse_avatar_hide')
+        layout.operator('view3d.verse_avatar_hide_all')
         layout.operator('view3d.verse_avatar_show')
+        layout.operator('view3d.verse_avatar_show_all')
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        if AvatarView.my_view() is not None:
+            return True
+        else:
+            return False
 
 
 class VERSE_AVATAR_NODES_list_item(bpy.types.PropertyGroup):
@@ -561,6 +687,10 @@ class VERSE_AVATAR_NODES_list_item(bpy.types.PropertyGroup):
         name = "Visualized", \
         description = "Is avatar visualized in 3D view", \
         default = True)
+    node_id = bpy.props.IntProperty( \
+        name = "Node ID", \
+        description = "Node ID of avatar node", \
+        default = -1)
 
 
 class VERSE_AVATAR_UL_slot(bpy.types.UIList):
@@ -572,9 +702,9 @@ class VERSE_AVATAR_UL_slot(bpy.types.UIList):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             layout.label(verse_avatar.name, icon='ARMATURE_DATA')
             if verse_avatar.visualized == True:
-                layout.label(text='', icon='RESTRICT_VIEW_OFF')
+                layout.operator('view3d.verse_avatar_hide', text='', icon='RESTRICT_VIEW_OFF')
             else:
-                layout.label(text='', icon='RESTRICT_VIEW_ON')
+                layout.operator('view3d.verse_avatar_show', text='', icon='RESTRICT_VIEW_ON')
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
             layout.label(verse_avatar.name)
@@ -595,8 +725,18 @@ class VerseAvatarPanel(bpy.types.Panel):
         """
         wm = context.window_manager
         layout = self.layout
-        row = layout.row()
 
+        # TODO: Remove following button. It should be sent automaticaly
+        if not wm.verse_avatar_capture:
+            layout.operator("view3d.verse_avatar", text="Start Capture",
+                icon = "PLAY")
+        else:
+            layout.operator("view3d.verse_avatar", text="Pause Capture",
+                icon = "PAUSE")
+
+        # Display connected avatars in current scene and
+        # display menu to hide/display them in 3d
+        row = layout.row()
         row.template_list('VERSE_AVATAR_UL_slot', \
             'verse_avatars_widget_id', \
             wm, \
@@ -607,16 +747,6 @@ class VerseAvatarPanel(bpy.types.Panel):
 
         col = row.column(align=True)
         col.menu('view3d.verse_avatar_menu', icon='DOWNARROW_HLT', text="")
-
-        if not wm.verse_avatar_capture:
-            layout.operator("view3d.verse_avatar", text="Start Capture",
-                icon = "PLAY")
-        else:
-            layout.operator("view3d.verse_avatar", text="Pause Capture",
-                icon = "PAUSE")
-
-        # TODO: display connected avatars in current scene and
-        # display widget to hide/display them in 3d
 
 
 def init_properties():
@@ -657,7 +787,9 @@ classes = (VERSE_AVATAR_NODES_list_item, \
     VerseAvatarPanel, \
     VerseAvatarStatus, \
     VERSE_AVATAR_OT_hide, \
-    VERSE_AVATAR_OT_show,
+    VERSE_AVATAR_OT_hide_all, \
+    VERSE_AVATAR_OT_show, \
+    VERSE_AVATAR_OT_show_all, \
     VERSE_AVATAR_MT_menu)
 
 

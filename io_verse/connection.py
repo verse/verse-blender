@@ -149,7 +149,7 @@ class VerseMenu(bpy.types.Menu):
     Main Verse menu (it contains Connect... and Disconnect...)
     """
     bl_label = "Verse Menu"
-    bl_idname = "INFO_MT_verse" # NOT sure about this
+    bl_idname = "INFO_MT_verse"
 
     def draw(self, context):
         layout = self.layout
@@ -164,6 +164,17 @@ def draw_item(self, context):
     """
     layout = self.layout
     layout.menu(VerseMenu.bl_idname)
+
+
+def init_properties():
+    """
+    This method initialize properties related to connection
+    """
+    bpy.types.WindowManager.verse_connected = bpy.props.BoolProperty( \
+        name = "Connected to Server", \
+        default = False, \
+        description = "Is Blender connected to Verse server"
+    )
 
 
 # List of Blender classes in this submodule
@@ -187,6 +198,8 @@ def register():
         bpy.utils.register_class(c)
 
     bpy.types.INFO_MT_file.append(draw_item)
+
+    init_properties()
 
 
 def unregister():

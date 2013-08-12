@@ -73,6 +73,9 @@ class VerseSession(vrsent.VerseSession):
         # Clear dictionary of nodes
         self.nodes.clear()
         # TODO: stop timer, disable view3d.verse_avatar() operator
+
+        # Set Blender property
+        bpy.context.window_manager.verse_connected = False
   
     
     def _receive_connect_accept(self, user_id, avatar_id):
@@ -83,6 +86,9 @@ class VerseSession(vrsent.VerseSession):
 
         # Create avatar node with representation of current view to the scene
         avatar_node = AvatarView(my_view=True, session=self, node_id=avatar_id)
+
+        # Set Blender property
+        bpy.context.window_manager.verse_connected = True
 
         # TODO: Automaticaly start capturing of curent view to 3D View
         #bpy.ops.view3d.verse_avatar()
@@ -110,10 +116,14 @@ class VerseSession(vrsent.VerseSession):
         # this client
         if parent_id == 1:
             if node_id != self.avatar_id:
+                try:
+                    parent_node = self.nodes[parent_id]
+                except KeyError:
+                    parent_node = None
                 avatar_node = AvatarView(my_view=False,
                     session=self,
                     node_id=node_id,
-                    parent_id=parent_id,
+                    parent=parent_node,
                     user_id=user_id,
                     custom_type=custom_type)
         else:

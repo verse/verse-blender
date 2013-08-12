@@ -55,8 +55,15 @@ class BLENDER_SCENE_OT_share(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         """
+        This class method is used, when Blender check, if this operator can be
+        executed
         """
-        return not context.scene.shared_at_verse_server
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True and not context.scene.shared_at_verse_server:
+            return True
+        else:
+            return False
 
 
 class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
@@ -77,9 +84,15 @@ class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         """
+        This class method is used, when Blender check, if this operator can be
+        executed
         """
-        return not context.scene.shared_at_verse_server
-        
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True and not context.scene.shared_at_verse_server:
+            return True
+        else:
+            return False
 
 class VERSE_SCENE_UL_slot(bpy.types.UIList):
     """
