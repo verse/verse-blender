@@ -84,7 +84,7 @@ class VerseConnectDialogOperator(bpy.types.Operator):
 
     def execute(self, context):
         # Connect to Verse server
-        session.VerseSession(self.vrs_server_name, "12345", 0)
+        session.VerseSession(self.vrs_server_name, "12345", vrs.DGRAM_SEC_NONE)
         # Start timer
         bpy.ops.wm.modal_timer_operator()
         self.report({'INFO'}, "Connecting to: '%s'" % (self.vrs_server_name))
