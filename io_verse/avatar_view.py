@@ -136,7 +136,7 @@ class AvatarView(vrsent.VerseNode):
             __class__.__my_view = self
         else:
             try:
-                __class__.__other_views[kwargs['node_id']] = self
+                __class__.__other_views[self.id] = self
             except KeyError:
                 # TODO: this should not happen
                 pass
@@ -157,8 +157,10 @@ class AvatarView(vrsent.VerseNode):
         self.my_view = my_view
         self.scene_node = None
 
+        print('>>>> Avatar id: ', self.id, ' Owner id: ', self.user_id, 'users: ', session.users, '<<<<')
+
         try:
-            verse_user = session.users[self.user_id]
+            verse_user = session.users[self.id]
         except KeyError:
             username = "User"
         else:

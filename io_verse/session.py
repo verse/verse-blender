@@ -85,7 +85,12 @@ class VerseSession(vrsent.VerseSession):
         super(VerseSession, self)._receive_connect_accept(user_id, avatar_id)
 
         # Create avatar node with representation of current view to the scene
-        avatar_node = AvatarView(my_view=True, session=self, node_id=avatar_id)
+        avatar_node = AvatarView(my_view=True, 
+            session = self, 
+            node_id = avatar_id, 
+            parent = None, # Not created yet
+            user_id = user_id, 
+            custom_type = 0)
 
         # Set Blender property
         bpy.context.window_manager.verse_connected = True
