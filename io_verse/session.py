@@ -97,9 +97,6 @@ class VerseSession(vrsent.VerseSession):
 
         # TODO: Automaticaly start capturing of curent view to 3D View
         #bpy.ops.view3d.verse_avatar()
-
-        # TODO: Popup dialog to choose scene at Verse server
-        # (subscribe to parent of scene nodes)
  
     
     def _receive_user_authenticate(self, username, methods):

@@ -71,7 +71,7 @@ def unregister():
 
 # Print all debug messages
 vrs.set_debug_level(vrs.PRINT_DEBUG_MSG)
-
+vrs.set_client_info("Blender", bpy.app.version_string)
 
 if __name__ == "__main__":
     register()
