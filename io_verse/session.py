@@ -20,12 +20,10 @@
 if "bpy" in locals():
     import imp
     imp.reload(vrsent)
-    imp.reload(avatar_view)
 else:
     import bpy
     import verse as vrs
     from .vrsent import vrsent
-    from .avatar_view import AvatarView
 
 
 # VerseSession class
@@ -84,19 +82,8 @@ class VerseSession(vrsent.VerseSession):
         """
         super(VerseSession, self)._receive_connect_accept(user_id, avatar_id)
 
-        # Create avatar node with representation of current view to the scene
-        avatar_node = AvatarView(my_view=True, 
-            session = self, 
-            node_id = avatar_id, 
-            parent = None, # Not created yet
-            user_id = user_id, 
-            custom_type = 0)
-
         # Set Blender property
         bpy.context.window_manager.verse_connected = True
-
-        # TODO: Automaticaly start capturing of curent view to 3D View
-        #bpy.ops.view3d.verse_avatar()
  
     
     def _receive_user_authenticate(self, username, methods):
@@ -114,23 +101,8 @@ class VerseSession(vrsent.VerseSession):
         """
         _receive_node_create(self, node_id, parent_id, user_id, type) -> None
         """
-        # Is parent node parent of avatar nodes and it is not avatar node of
-        # this client
-        if parent_id == 1:
-            if node_id != self.avatar_id:
-                try:
-                    parent_node = self.nodes[parent_id]
-                except KeyError:
-                    parent_node = None
-                avatar_node = AvatarView(my_view=False,
-                    session=self,
-                    node_id=node_id,
-                    parent=parent_node,
-                    user_id=user_id,
-                    custom_type=custom_type)
-        else:
-            # Call parent method to print debug information
-            node = super(VerseSession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)    
+        node = super(VerseSession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)    
+ 
     
     def _receive_node_destroy(self, node_id):
         """
@@ -163,11 +135,6 @@ class VerseSession(vrsent.VerseSession):
         # Call parent method to print debug information
         tg = super(VerseSession, self)._receive_taggroup_create(node_id, taggroup_id, custom_type)
 
-        # Try to find node representing avatar
-        avatar_node = AvatarView.other_views().get(node_id)
-        if avatar_node is not None and avatar_node.my_view == False and custom_type == 321:
-            avatar_node.view_tg = tg
-
 
     def _receive_taggroup_destroy(self, node_id, taggroup_id):
         """
@@ -183,11 +150,6 @@ class VerseSession(vrsent.VerseSession):
         """
         # Call parent method to print debug information
         tag = super(VerseSession, self)._receive_tag_create(node_id, taggroup_id, tag_id, data_type, count, custom_type)
-        # Try to get node and tg representing view of avatar to 3D view
-        avatar_node = AvatarView.other_views().get(node_id)
-        if avatar_node is not None and avatar_node.my_view == False and tag.tg.custom_type == 321:
-            # TODO: assign tag to avatar view node
-            pass
 
 
     def _receive_tag_destroy(self, node_id, taggroup_id, tag_id):
@@ -204,7 +166,6 @@ class VerseSession(vrsent.VerseSession):
         """
         # Call parent method to print debug information and get modified tag
         tag = super(VerseSession, self)._receive_tag_set_values(node_id, taggroup_id, tag_id, value)
-        # TODO: try to get node and tg representing view of avatar to 3D view
 
 
 # Class with timer modal operator running callback_update

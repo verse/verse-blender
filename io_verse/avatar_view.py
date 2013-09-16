@@ -35,6 +35,7 @@ else:
     import math
     import verse as vrs
     from .vrsent import vrsent
+    from . import session
 
 
 def draw_cb(self, context):
@@ -55,7 +56,7 @@ def draw_cb(self, context):
     self.avatar_view.update(context)
 
 
-class AvatarView(vrsent.VerseNode):
+class AvatarView(vrsent.VerseAvatar):
     """
     Verse node with representation of avatar view to 3D View
     """
@@ -65,6 +66,9 @@ class AvatarView(vrsent.VerseNode):
 
     # Dictionary of other avatar views of other users
     __other_views = {}
+
+    # This is specific cutom_type of Avatar
+    custom_type = 4
 
 
     @classmethod
@@ -83,19 +87,110 @@ class AvatarView(vrsent.VerseNode):
         return __class__.__other_views
 
 
-    def __init__(self, session, my_view=False, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         Constructor of AvatarView node
         """
 
-        super(AvatarView, self).__init__(session, *args, **kwargs)
+        super(AvatarView, self).__init__(*args, **kwargs)
 
-        if my_view == True:
+        wm = bpy.context.window_manager
+        wm.verse_avatars.add()
+        wm.verse_avatars[-1].node_id = self.id
 
+        # Force redraw of 3D view
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+
+        self.my_view = my_view
+        self.scene_node = None
+
+        view_initialized = False
+
+        if self.id == self.session.avatar_id:
+            # Initialize default values
+            self.cur_screen = bpy.context.screen
+            self.cur_area = None
+            __class__.__my_view = self
+
+            # Try to find current 3D view 
+            for area in bpy.context.screen.areas.values():
+                if area.type == 'VIEW_3D':
+                    self.cur_area = area
+                    for space in area.spaces.values():
+                        if space.type == 'VIEW_3D':
+                            break
+                    break
+
+            if area.type == 'VIEW_3D' and space.type == 'VIEW_3D':
+                view_initialized = True
+                # Create tag group containing informatin about view
+                self.view_tg = vrsent.VerseTagGroup(node=self, \
+                    custom_type=321)
+                # Create tags with data of view to 3D view
+
+                # Location
+                self.location = vrsent.VerseTag(tg=self.view_tg, \
+                    data_type=vrs.VALUE_TYPE_REAL32, \
+                    value=tuple(space.region_3d.view_location), \
+                    custom_type=0)
+
+                # Rotation
+                self.rotation = vrsent.VerseTag(tg=self.view_tg, \
+                    data_type=vrs.VALUE_TYPE_REAL32, \
+                    value=tuple(space.region_3d.view_rotation), \
+                    custom_type=1)
+
+                # Distance
+                self.distance = vrsent.VerseTag(tg=self.view_tg, \
+                    data_type=vrs.VALUE_TYPE_REAL32, \
+                    value=tuple(space.region_3d.distance), \
+                    custom_type=2)
+
+                # Perspective/Ortogonal
+                self.perspective = vrsent.VerseTag(tg=self.view_tg, \
+                    data_type=vrs.VALUE_TYPE_STRING8, \
+                    value=(space.region_3d.view_perspective,), \
+                    custom_type=3)
+
+                # Width
+                self.width = vrsent.VerseTag(tg=self.view_tg, \
+                    data_type=vrs.VALUE_TYPE_UINT16, \
+                    value=(area.vidth,), \
+                    custom_type=4)
+
+                # Height
+                self.height = vrsent.VerseTag(tg=self.view_tg, \
+                    data_type=vrs.VALUE_TYPE_UINT16, \
+                    value=(area.height,), \
+                    custom_type=5)
+
+                # Lens
+                self.lens = vrsent.VerseTag(tg=self.view_tg, \
+                    data_type=vrs.VALUE_TYPE_REAL32, \
+                    value=(space.lens,), \
+                    custom_type=6)
+
+                # TODO: Scene ID
+                self.scene_node_id = vrsent.VerseTag(tg=self.view_tg, \
+                    data_type=vrs.VALUE_TYPE_UINT32, \
+                    value=(0,), \
+                    custom_type=7)
+
+                # TODO: Automaticaly start capturing of curent view to 3D View
+                #bpy.ops.view3d.verse_avatar()
+        else:
+            try:
+                __class__.__other_views[self.id] = self
+            except KeyError:
+                # TODO: this should not happen
+                pass
+        
+        if view_initialized == False:
             # Create tag group containing informatin about view
             self.view_tg = vrsent.VerseTagGroup(node=self, \
                 custom_type=321)
-
             # Create tags with data of view to 3D view
             self.location = vrsent.VerseTag(tg=self.view_tg, \
                 data_type=vrs.VALUE_TYPE_REAL32, \
@@ -130,46 +225,27 @@ class AvatarView(vrsent.VerseNode):
                 value=(0,), \
                 custom_type=7)
 
-            self.cur_screen = None
-            self.cur_area = None
 
-            __class__.__my_view = self
-        else:
-            try:
-                __class__.__other_views[self.id] = self
-            except KeyError:
-                # TODO: this should not happen
-                pass
-            # TODO: handle this situation better.
-            # We know that these tag group and tags will be probably created,
-            # but we cannnot creat them ... other client has to do this and
-            # server has to send them to this client
-            self.view_tg = None
-            self.location = None
-            self.rotation = None
-            self.distance = None
-            self.perspective = None
-            self.width = None
-            self.height = None
-            self.lens = None
-            self.scene_node_id = None
-
-        self.my_view = my_view
-        self.scene_node = None
-
-        print('>>>> Avatar id: ', self.id, ' Owner id: ', self.user_id, 'users: ', session.users, '<<<<')
-
-        try:
-            verse_user = session.users[self.id]
-        except KeyError:
-            username = "User"
-        else:
-            username = verse_user.name
+    @classmethod
+    def _receive_node_destroy(cls, session, node_id):
+        """
+        This method is called, when server destroyed avatar with node_id
+        """
+        # Remove item from collection of properties
         wm = bpy.context.window_manager
-        wm.verse_avatars.add()
-        wm.verse_avatars[-1].name = username + '@' # TODO: update, when corespondig tag values are set
-        wm.verse_avatars[-1].node_id = self.id
-        # TODO: tag View3d to update
+        index = 0
+        for item in wm.verse_avatars:
+            if item.node_id == node_id:
+                wm.verse_avatars.remove()
+                if wm.cur_verse_avatar_index >= index:
+                    wm.cur_verse_avatar_index -= 1
+                break
+            index += 1
+        # Force redraw of 3D view
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+        return super(AvatarView, cls)._receive_node_destroy(cls, session, node_id)
 
 
     def update(self, context):
@@ -700,16 +776,21 @@ class VERSE_AVATAR_UL_slot(bpy.types.UIList):
     A custom slot with information about Verse avatar node
     """
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        verse_avatar = item
-        if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.label(verse_avatar.name, icon='ARMATURE_DATA')
-            if verse_avatar.visualized == True:
-                layout.operator('view3d.verse_avatar_hide', text='', icon='RESTRICT_VIEW_OFF')
-            else:
-                layout.operator('view3d.verse_avatar_show', text='', icon='RESTRICT_VIEW_ON')
-        elif self.layout_type in {'GRID'}:
-            layout.alignment = 'CENTER'
-            layout.label(verse_avatar.name)
+        vrs_session = session.VerseSession.instance()
+        if vrs_session is not None:
+            try:
+                verse_avatar = vrs_session.avatars[item.node_id]
+            except KeyError:
+                return
+            if self.layout_type in {'DEFAULT', 'COMPACT'}:
+                layout.label(verse_avatar.username+'@'+verse_avatar.hostname, icon='ARMATURE_DATA')
+                if item.visualized == True:
+                    layout.operator('view3d.verse_avatar_hide', text='', icon='RESTRICT_VIEW_OFF')
+                else:
+                    layout.operator('view3d.verse_avatar_show', text='', icon='RESTRICT_VIEW_ON')
+            elif self.layout_type in {'GRID'}:
+                layout.alignment = 'CENTER'
+                layout.label(verse_avatar.name)
 
 
 class VerseAvatarPanel(bpy.types.Panel):
@@ -759,7 +840,7 @@ def init_properties():
     wm.verse_avatar_capture = bpy.props.BoolProperty( \
         name = "Avatar Capture", \
         default = False, \
-        description = "Is information about my view to 3D scene shared at Verse server"
+        description = "This is information about my view to 3D scene shared at Verse server"
     )
     wm.verse_avatars = bpy.props.CollectionProperty( \
         type =  VERSE_AVATAR_NODES_list_item, \
