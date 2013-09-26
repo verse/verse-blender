@@ -24,7 +24,6 @@ current view to active 3DView. Other Blender users sharing data at
 Verse server can also see, where you are and what you do.
 """
 
-
 if "bpy" in locals():
     import imp
     imp.reload(vrsent)
@@ -36,6 +35,10 @@ else:
     import verse as vrs
     from .vrsent import vrsent
     from . import session
+
+
+TG_INFO_CT = 0
+TAG_LOCATION_CT = 0
 
 
 def draw_cb(self, context):
@@ -54,6 +57,41 @@ def draw_cb(self, context):
     
     # Update information about avatar's view, when needed
     self.avatar_view.update(context)
+
+
+class Updater3DView(vrsent.VerseTag):
+    """
+    Class used for subclassing and used for updating all visible 3D views
+    """
+
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(Updater3DView, cls)._receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value)
+        avatar_view = tag.tg.node
+        if tag.update_all_3dview == True or avatar_view != AvatarView.my_view():
+            # Force redraw of all 3D view in current screen
+            for area in bpy.context.screen.areas:
+                if area.type == 'VIEW_3D':
+                    area.tag_redraw()
+
+
+class AvatarLocation(vrsent.VerseTag, Updater3DView):
+    """
+    Class representing location of avatar
+    """
+
+    node_custom_type = vrs.AVATAR_NODE_CT
+    tg_custom_type = TG_INFO_CT
+    custom_type = TAG_LOCATION_CT
+
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3, custom_type=TAG_LOCATION_CT, value=(0.0, 0.0, 0.0)):
+        """
+        Constructor of AvatarLocation
+        """
+        super(AvatarLocation, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
 
 
 class AvatarView(vrsent.VerseAvatar):
