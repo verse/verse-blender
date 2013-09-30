@@ -39,6 +39,13 @@ else:
 
 TG_INFO_CT = 0
 TAG_LOCATION_CT = 0
+TAG_ROTATION_CT = 1
+TAG_DISTANCE_CT = 2
+TAG_PERSPECTIVE_CT = 3
+TAG_WIDTH_CT = 4
+TAG_HEIGHT_CT = 5
+TAG_LENS_CT = 6
+TAG_SCENE_CT = 7
 
 
 def draw_cb(self, context):
@@ -59,9 +66,10 @@ def draw_cb(self, context):
     self.avatar_view.update(context)
 
 
-class Updater3DView(vrsent.VerseTag):
+class AllVavatarUpdater3DView(vrsent.VerseTag):
     """
-    Class used for subclassing and used for updating all visible 3D views
+    Class used for subclassing and used for updating all visible 3D views,
+    when any avatar view is changed
     """
 
     @classmethod
@@ -69,29 +77,113 @@ class Updater3DView(vrsent.VerseTag):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(Updater3DView, cls)._receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value)
+        tag = super(AllVavatarUpdater3DView, cls)._receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value)
+        # Force redraw of all 3D view in current screen
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+
+
+class AvatarUpdater3DView(vrsent.VerseTag):
+    """
+    Class used for subclassing and used for updating all visible 3D views,
+    when any other avatar view is changed
+    """
+
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(AvatarUpdater3DView, cls)._receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value)
         avatar_view = tag.tg.node
-        if tag.update_all_3dview == True or avatar_view != AvatarView.my_view():
+        # 3DView should be updated only in situation, when position/rotation/etc
+        # of other avatar is changed
+        if avatar_view != AvatarView.my_view():
             # Force redraw of all 3D view in current screen
             for area in bpy.context.screen.areas:
                 if area.type == 'VIEW_3D':
                     area.tag_redraw()
 
 
-class AvatarLocation(vrsent.VerseTag, Updater3DView):
-    """
-    Class representing location of avatar
-    """
-
+class AvatarLocation(vrsent.VerseTag, AtaraUpdater3DView):
+    """Class representing location of avatar"""
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_LOCATION_CT
-
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3, custom_type=TAG_LOCATION_CT, value=(0.0, 0.0, 0.0)):
-        """
-        Constructor of AvatarLocation
-        """
+        """Constructor of AvatarLocation"""
         super(AvatarLocation, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+
+
+class AvatarRotation(vrsent.VerseTag, AtaraUpdater3DView):
+    """Class representing rotation of avatar"""
+    node_custom_type = vrs.AVATAR_NODE_CT
+    tg_custom_type = TG_INFO_CT
+    custom_type = TAG_ROTATION_CT
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=4, custom_type=TAG_ROTATION_CT, value=(0.0, 0.0, 0.0, 0.0)):
+        """Constructor of AvatarRotation"""
+        super(AvatarRotation, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+
+
+class AvatarDistance(vrsent.VerseTag, AtaraUpdater3DView):
+    """Class representing distance of avatar from center of rotation"""
+    node_custom_type = vrs.AVATAR_NODE_CT
+    tg_custom_type = TG_INFO_CT
+    custom_type = TAG_DISTANCE_CT
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=1, custom_type=TAG_DISTANCE_CT, value=(0.0,)):
+        """Constructor of AvatarDistance"""
+        super(AvatarDistance, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+
+
+class AvatarPerspective(vrsent.VerseTag, AtaraUpdater3DView):
+    """Class representing perspective of avatar"""
+    node_custom_type = vrs.AVATAR_NODE_CT
+    tg_custom_type = TG_INFO_CT
+    custom_type = TAG_PERSPECTIVE_CT
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_STRING8, count=1, custom_type=TAG_PERSPECTIVE_CT, value=('PERSP',)):
+        """Constructor of AvatarPerspective"""
+        super(AvatarPerspective, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+
+
+class AvatarWidth(vrsent.VerseTag, AtaraUpdater3DView):
+    """Class representing width of avatar view"""
+    node_custom_type = vrs.AVATAR_NODE_CT
+    tg_custom_type = TG_INFO_CT
+    custom_type = TAG_WIDTH_CT
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16, count=1, custom_type=TAG_WIDTH_CT, value=(0,)):
+        """Constructor of AvatarWidth"""
+        super(AvatarWidth, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+
+
+class AvatarHeight(vrsent.VerseTag, AtaraUpdater3DView):
+    """Class representing height of avatar view"""
+    node_custom_type = vrs.AVATAR_NODE_CT
+    tg_custom_type = TG_INFO_CT
+    custom_type = TAG_HEIGHT_CT
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16, count=1, custom_type=TAG_HEIGHT_CT, value=(0,)):
+        """Constructor of AvatarHeight"""
+        super(AvatarHeight, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+
+
+class AvatarLens(vrsent.VerseTag, AtaraUpdater3DView):
+    """Class representing lens of avatar view"""
+    node_custom_type = vrs.AVATAR_NODE_CT
+    tg_custom_type = TG_INFO_CT
+    custom_type = TAG_HEIGHT_CT
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16, count=1, custom_type=TAG_HEIGHT_CT, value=(0,)):
+        """Constructor of AvatarLens"""
+        super(AvatarLens, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+
+
+class AvatarScene(vrsent.VerseTag, AtaraUpdater3DView):
+    """Class representing scene id of avatar view"""
+    node_custom_type = vrs.AVATAR_NODE_CT
+    tg_custom_type = TG_INFO_CT
+    custom_type = TAG_SCENE_CT
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT32, count=1, custom_type=TAG_SCENE_CT, value=(0,)):
+        """Constructor of AvatarScene"""
+        super(AvatarScene, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
 
 
 class AvatarView(vrsent.VerseAvatar):
@@ -165,57 +257,32 @@ class AvatarView(vrsent.VerseAvatar):
                 view_initialized = True
                 # Create tag group containing informatin about view
                 self.view_tg = vrsent.VerseTagGroup(node=self, \
-                    custom_type=321)
+                    custom_type=TG_INFO_CT)
                 # Create tags with data of view to 3D view
-
                 # Location
-                self.location = vrsent.VerseTag(tg=self.view_tg, \
-                    data_type=vrs.VALUE_TYPE_REAL32, \
-                    value=tuple(space.region_3d.view_location), \
-                    custom_type=0)
-
+                self.location = AvatarLocation(tg=self.view_tg, \
+                    value=tuple(space.region_3d.view_location))
                 # Rotation
-                self.rotation = vrsent.VerseTag(tg=self.view_tg, \
-                    data_type=vrs.VALUE_TYPE_REAL32, \
-                    value=tuple(space.region_3d.view_rotation), \
-                    custom_type=1)
-
+                self.rotation = AvatarRotation(tg=self.view_tg, \
+                    value=tuple(space.region_3d.view_rotation))
                 # Distance
-                self.distance = vrsent.VerseTag(tg=self.view_tg, \
-                    data_type=vrs.VALUE_TYPE_REAL32, \
-                    value=tuple(space.region_3d.distance), \
-                    custom_type=2)
-
+                self.distance = AvatarDistance(tg=self.view_tg, \
+                    value=tuple(space.region_3d.distance))
                 # Perspective/Ortogonal
-                self.perspective = vrsent.VerseTag(tg=self.view_tg, \
-                    data_type=vrs.VALUE_TYPE_STRING8, \
-                    value=(space.region_3d.view_perspective,), \
-                    custom_type=3)
-
+                self.perspective = AvatarPerspective(tg=self.view_tg, \
+                    value=(space.region_3d.view_perspective,))
                 # Width
-                self.width = vrsent.VerseTag(tg=self.view_tg, \
-                    data_type=vrs.VALUE_TYPE_UINT16, \
-                    value=(area.vidth,), \
-                    custom_type=4)
-
+                self.width = AvatarWidth(tg=self.view_tg, \
+                    value=(area.vidth,))
                 # Height
-                self.height = vrsent.VerseTag(tg=self.view_tg, \
-                    data_type=vrs.VALUE_TYPE_UINT16, \
-                    value=(area.height,), \
-                    custom_type=5)
-
+                self.height = AvatarHeight(tg=self.view_tg, \
+                    value=(area.height,))
                 # Lens
-                self.lens = vrsent.VerseTag(tg=self.view_tg, \
-                    data_type=vrs.VALUE_TYPE_REAL32, \
-                    value=(space.lens,), \
-                    custom_type=6)
-
-                # TODO: Scene ID
-                self.scene_node_id = vrsent.VerseTag(tg=self.view_tg, \
-                    data_type=vrs.VALUE_TYPE_UINT32, \
-                    value=(0,), \
-                    custom_type=7)
-
+                self.lens = AvatarLens(tg=self.view_tg, \
+                    value=(space.lens,))
+                # TODO: Get current Scene ID
+                self.scene_node_id = AvatarScene(tg=self.view_tg, \
+                    value=(0,))
                 # TODO: Automaticaly start capturing of curent view to 3D View
                 #bpy.ops.view3d.verse_avatar()
         else:
@@ -228,40 +295,16 @@ class AvatarView(vrsent.VerseAvatar):
         if view_initialized == False:
             # Create tag group containing informatin about view
             self.view_tg = vrsent.VerseTagGroup(node=self, \
-                custom_type=321)
+                custom_type=TG_INFO_CT)
             # Create tags with data of view to 3D view
-            self.location = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0, 0.0, 0.0), \
-                custom_type=0)
-            self.rotation = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0, 0.0, 0.0, 0.0), \
-                custom_type=1)
-            self.distance = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,), \
-                custom_type=2)
-            self.perspective = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_STRING8, \
-                value=('PERSP',), \
-                custom_type=3)
-            self.width = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_UINT16, \
-                value=(0,), \
-                custom_type=4)
-            self.height = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_UINT16, \
-                value=(0,), \
-                custom_type=5)
-            self.lens = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_REAL32, \
-                value=(0.0,), \
-                custom_type=6)
-            self.scene_node_id = vrsent.VerseTag(tg=self.view_tg, \
-                data_type=vrs.VALUE_TYPE_UINT32, \
-                value=(0,), \
-                custom_type=7)
+            self.location = AvatarLocation(tg=self.view_tg)
+            self.rotation = AvatarRotation(tg=self.view_tg)
+            self.distance = AvatarDistance(tg=self.view_tg)
+            self.perspective = AvatarPerspective(tg=self.view_tg)
+            self.width = AvatarWidth(tg=self.view_tg)
+            self.height = AvatarHeight(tg=self.view_tg)
+            self.lens = AvatarLens(tg=self.view_tg)
+            self.scene_node_id = AvatarScene(tg=self.view_tg)
 
 
     @classmethod
@@ -308,7 +351,6 @@ class AvatarView(vrsent.VerseAvatar):
         
         # Perspective/Ortho
         if context.space_data.region_3d.view_perspective != self.perspective.value[0]:
-            print(context.space_data.region_3d.view_perspective)
             self.persp.value = (context.space_data.region_3d.view_perspective,)
         
         # Lens
