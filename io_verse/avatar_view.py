@@ -66,47 +66,53 @@ def draw_cb(self, context):
     self.avatar_view.update(context)
 
 
-class AllVavatarUpdater3DView(vrsent.VerseTag):
+def update_3dview(avatar_view):
     """
-    Class used for subclassing and used for updating all visible 3D views,
-    when any avatar view is changed
+    This method update 3D View but not in case, when the avatar_view is equal to current view,
+    because it would be useless.
     """
-
-    @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
-        """
-        This method is called, when new value of verse tag was set
-        """
-        tag = super(AllVavatarUpdater3DView, cls)._receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value)
+    # 3DView should be updated only in situation, when position/rotation/etc
+    # of other avatar is changed
+    if avatar_view != AvatarView.my_view():
         # Force redraw of all 3D view in current screen
         for area in bpy.context.screen.areas:
             if area.type == 'VIEW_3D':
                 area.tag_redraw()
 
 
-class AvatarUpdater3DView(vrsent.VerseTag):
+class BlenderUserNameTag(vrsent.verse_user.UserNameTag):
     """
-    Class used for subclassing and used for updating all visible 3D views,
-    when any other avatar view is changed
+    Custom VerseTag subclass for storing username
     """
-
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(AvatarUpdater3DView, cls)._receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value)
-        avatar_view = tag.tg.node
-        # 3DView should be updated only in situation, when position/rotation/etc
-        # of other avatar is changed
-        if avatar_view != AvatarView.my_view():
-            # Force redraw of all 3D view in current screen
-            for area in bpy.context.screen.areas:
-                if area.type == 'VIEW_3D':
-                    area.tag_redraw()
+        tag = super(BlenderUserNameTag, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+        return tag
 
 
-class AvatarLocation(vrsent.VerseTag, AtaraUpdater3DView):
+class BlenderHostnameTag(vrsent.verse_avatar.HostnameTag):
+    """
+    Custom VerseTag subclass for storing hostname
+    """
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(BlenderHostnameTag, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+        return tag
+
+
+class AvatarLocation(vrsent.VerseTag):
     """Class representing location of avatar"""
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
@@ -114,9 +120,18 @@ class AvatarLocation(vrsent.VerseTag, AtaraUpdater3DView):
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3, custom_type=TAG_LOCATION_CT, value=(0.0, 0.0, 0.0)):
         """Constructor of AvatarLocation"""
         super(AvatarLocation, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(AvatarLocation, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
 
 
-class AvatarRotation(vrsent.VerseTag, AtaraUpdater3DView):
+
+class AvatarRotation(vrsent.VerseTag):
     """Class representing rotation of avatar"""
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
@@ -124,9 +139,17 @@ class AvatarRotation(vrsent.VerseTag, AtaraUpdater3DView):
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=4, custom_type=TAG_ROTATION_CT, value=(0.0, 0.0, 0.0, 0.0)):
         """Constructor of AvatarRotation"""
         super(AvatarRotation, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(AvatarRotation, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
 
 
-class AvatarDistance(vrsent.VerseTag, AtaraUpdater3DView):
+class AvatarDistance(vrsent.VerseTag):
     """Class representing distance of avatar from center of rotation"""
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
@@ -134,9 +157,17 @@ class AvatarDistance(vrsent.VerseTag, AtaraUpdater3DView):
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=1, custom_type=TAG_DISTANCE_CT, value=(0.0,)):
         """Constructor of AvatarDistance"""
         super(AvatarDistance, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(AvatarDistance, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
 
 
-class AvatarPerspective(vrsent.VerseTag, AtaraUpdater3DView):
+class AvatarPerspective(vrsent.VerseTag):
     """Class representing perspective of avatar"""
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
@@ -144,9 +175,17 @@ class AvatarPerspective(vrsent.VerseTag, AtaraUpdater3DView):
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_STRING8, count=1, custom_type=TAG_PERSPECTIVE_CT, value=('PERSP',)):
         """Constructor of AvatarPerspective"""
         super(AvatarPerspective, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(AvatarPerspective, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
 
 
-class AvatarWidth(vrsent.VerseTag, AtaraUpdater3DView):
+class AvatarWidth(vrsent.VerseTag):
     """Class representing width of avatar view"""
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
@@ -154,9 +193,17 @@ class AvatarWidth(vrsent.VerseTag, AtaraUpdater3DView):
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16, count=1, custom_type=TAG_WIDTH_CT, value=(0,)):
         """Constructor of AvatarWidth"""
         super(AvatarWidth, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(AvatarWidth, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
 
 
-class AvatarHeight(vrsent.VerseTag, AtaraUpdater3DView):
+class AvatarHeight(vrsent.VerseTag):
     """Class representing height of avatar view"""
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
@@ -164,9 +211,17 @@ class AvatarHeight(vrsent.VerseTag, AtaraUpdater3DView):
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16, count=1, custom_type=TAG_HEIGHT_CT, value=(0,)):
         """Constructor of AvatarHeight"""
         super(AvatarHeight, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(AvatarHeight, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
 
 
-class AvatarLens(vrsent.VerseTag, AtaraUpdater3DView):
+class AvatarLens(vrsent.VerseTag):
     """Class representing lens of avatar view"""
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
@@ -174,9 +229,17 @@ class AvatarLens(vrsent.VerseTag, AtaraUpdater3DView):
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16, count=1, custom_type=TAG_HEIGHT_CT, value=(0,)):
         """Constructor of AvatarLens"""
         super(AvatarLens, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(AvatarLens, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
 
 
-class AvatarScene(vrsent.VerseTag, AtaraUpdater3DView):
+class AvatarScene(vrsent.VerseTag):
     """Class representing scene id of avatar view"""
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
@@ -184,6 +247,14 @@ class AvatarScene(vrsent.VerseTag, AtaraUpdater3DView):
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT32, count=1, custom_type=TAG_SCENE_CT, value=(0,)):
         """Constructor of AvatarScene"""
         super(AvatarScene, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(AvatarScene, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
 
 
 class AvatarView(vrsent.VerseAvatar):
@@ -863,7 +934,7 @@ class VERSE_AVATAR_UL_slot(bpy.types.UIList):
             except KeyError:
                 return
             if self.layout_type in {'DEFAULT', 'COMPACT'}:
-                layout.label(verse_avatar.username+'@'+verse_avatar.hostname, icon='ARMATURE_DATA')
+                layout.label(verse_avatar.username + '@' + verse_avatar.hostname, icon='ARMATURE_DATA')
                 if item.visualized == True:
                     layout.operator('view3d.verse_avatar_hide', text='', icon='RESTRICT_VIEW_OFF')
                 else:
@@ -890,12 +961,12 @@ class VerseAvatarPanel(bpy.types.Panel):
         layout = self.layout
 
         # TODO: Remove following button. It should be sent automaticaly
-        if not wm.verse_avatar_capture:
-            layout.operator("view3d.verse_avatar", text="Start Capture",
-                icon = "PLAY")
-        else:
-            layout.operator("view3d.verse_avatar", text="Pause Capture",
-                icon = "PAUSE")
+        #if not wm.verse_avatar_capture:
+        #    layout.operator("view3d.verse_avatar", text="Start Capture",
+        #        icon = "PLAY")
+        #else:
+        #    layout.operator("view3d.verse_avatar", text="Pause Capture",
+        #        icon = "PAUSE")
 
         # Display connected avatars in current scene and
         # display menu to hide/display them in 3d
