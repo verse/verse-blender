@@ -68,7 +68,7 @@ def draw_cb(self, context):
 
 def update_3dview(avatar_view):
     """
-    This method update 3D View but not in case, when the avatar_view is equal to current view,
+    This method updates 3D View but not in case, when the avatar_view is equal to current view,
     because it would be useless.
     """
     # 3DView should be updated only in situation, when position/rotation/etc
@@ -87,7 +87,8 @@ class BlenderUserNameTag(vrsent.verse_user.UserNameTag):
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
-        This method is called, when new value of verse tag was set
+        This method is called, when new value of verse tag was set.
+        It should force to redraw all visible 3D views.
         """
         tag = super(BlenderUserNameTag, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         for area in bpy.context.screen.areas:
@@ -103,7 +104,8 @@ class BlenderHostnameTag(vrsent.verse_avatar.HostnameTag):
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
-        This method is called, when new value of verse tag was set
+        This method is called, when new value of verse tag was set.
+        It should force to redraw all visible 3D views.
         """
         tag = super(BlenderHostnameTag, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         for area in bpy.context.screen.areas:
@@ -225,8 +227,8 @@ class AvatarLens(vrsent.VerseTag):
     """Class representing lens of avatar view"""
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
-    custom_type = TAG_HEIGHT_CT
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16, count=1, custom_type=TAG_HEIGHT_CT, value=(0,)):
+    custom_type = TAG_LENS_CT
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=1, custom_type=TAG_LENS_CT, value=(0.0,)):
         """Constructor of AvatarLens"""
         super(AvatarLens, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
     @classmethod
@@ -269,7 +271,7 @@ class AvatarView(vrsent.VerseAvatar):
     __other_views = {}
 
     # This is specific cutom_type of Avatar
-    custom_type = 4
+    custom_type = vrs.AVATAR_NODE_CT
 
 
     @classmethod
@@ -292,19 +294,18 @@ class AvatarView(vrsent.VerseAvatar):
         """
         Constructor of AvatarView node
         """
-
+        
         super(AvatarView, self).__init__(*args, **kwargs)
-
+        
         wm = bpy.context.window_manager
         wm.verse_avatars.add()
         wm.verse_avatars[-1].node_id = self.id
-
+        
         # Force redraw of 3D view
         for area in bpy.context.screen.areas:
             if area.type == 'VIEW_3D':
                 area.tag_redraw()
 
-        self.my_view = my_view
         self.scene_node = None
 
         view_initialized = False
@@ -338,13 +339,13 @@ class AvatarView(vrsent.VerseAvatar):
                     value=tuple(space.region_3d.view_rotation))
                 # Distance
                 self.distance = AvatarDistance(tg=self.view_tg, \
-                    value=tuple(space.region_3d.distance))
+                    value=(space.region_3d.view_distance,))
                 # Perspective/Ortogonal
                 self.perspective = AvatarPerspective(tg=self.view_tg, \
                     value=(space.region_3d.view_perspective,))
                 # Width
                 self.width = AvatarWidth(tg=self.view_tg, \
-                    value=(area.vidth,))
+                    value=(area.width,))
                 # Height
                 self.height = AvatarHeight(tg=self.view_tg, \
                     value=(area.height,))
@@ -354,8 +355,14 @@ class AvatarView(vrsent.VerseAvatar):
                 # TODO: Get current Scene ID
                 self.scene_node_id = AvatarScene(tg=self.view_tg, \
                     value=(0,))
-                # TODO: Automaticaly start capturing of curent view to 3D View
-                #bpy.ops.view3d.verse_avatar()
+            
+                # Start capturing of curent view to 3D View
+                # Save current context to 3d view, start capturing and
+                # then restore original context
+                original_type = bpy.context.area.type
+                bpy.context.area.type = 'VIEW_3D'
+                bpy.ops.view3d.verse_avatar()
+                bpy.context.area.type = original_type
         else:
             try:
                 __class__.__other_views[self.id] = self
@@ -703,7 +710,7 @@ class VerseAvatarStatus(bpy.types.Operator):
         else:
             return False
 
-    def invoke(self, context, event):
+    def execute(self, context):
         """
         This method is used, when this operator is executed
         """
@@ -934,7 +941,10 @@ class VERSE_AVATAR_UL_slot(bpy.types.UIList):
             except KeyError:
                 return
             if self.layout_type in {'DEFAULT', 'COMPACT'}:
-                layout.label(verse_avatar.username + '@' + verse_avatar.hostname, icon='ARMATURE_DATA')
+                if verse_avatar.id == vrs_session.avatar_id:
+                    layout.label('Me@' + verse_avatar.hostname, icon='ARMATURE_DATA')
+                else:
+                    layout.label(verse_avatar.username + '@' + verse_avatar.hostname, icon='ARMATURE_DATA')
                 if item.visualized == True:
                     layout.operator('view3d.verse_avatar_hide', text='', icon='RESTRICT_VIEW_OFF')
                 else:
