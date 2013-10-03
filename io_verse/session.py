@@ -23,6 +23,9 @@ can be connected only to one Verse server. Thus there could be only
 one session in one Blender instance.
 """
 
+# Default FPS for timer operator
+FPS = 60
+
 
 if "bpy" in locals():
     import imp
@@ -115,7 +118,7 @@ class VerseSession(vrsent.VerseSession):
         """
         _receive_node_create(self, node_id, parent_id, user_id, type) -> None
         """
-        node = super(VerseSession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)    
+        return super(VerseSession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)    
  
     
     def _receive_node_destroy(self, node_id):
@@ -123,7 +126,7 @@ class VerseSession(vrsent.VerseSession):
         _receive_node_destroy(self, node_id) -> None
         """
         # Call parent method to print debug information
-        node = super(VerseSession, self)._receive_node_destroy(node_id)
+        return super(VerseSession, self)._receive_node_destroy(node_id)
 
     
     def _receive_node_link(self, parent_node_id, child_node_id):
@@ -131,7 +134,7 @@ class VerseSession(vrsent.VerseSession):
          _receive_node_link(self, parent_node_id, child_node_id) -> None
         """
         # Call parent method to print debug information
-        child_node = super(VerseSession, self)._receive_node_link(parent_node_id, child_node_id)
+        return super(VerseSession, self)._receive_node_link(parent_node_id, child_node_id)
 
 
     def _receive_node_perm(self, node_id, user_id, perm):
@@ -139,7 +142,7 @@ class VerseSession(vrsent.VerseSession):
         _receive_node_perm(self, node_id, user_id, perm) -> None
         """
         # Call parent method to print debug information
-        node = super(VerseSession, self)._receive_node_perm(node_id, user_id, perm)
+        return super(VerseSession, self)._receive_node_perm(node_id, user_id, perm)
 
 
     def _receive_taggroup_create(self, node_id, taggroup_id, custom_type):
@@ -147,7 +150,7 @@ class VerseSession(vrsent.VerseSession):
         _receive_taggroup_create(self, node_id, taggroup_id, custom_type) -> None
         """
         # Call parent method to print debug information
-        tg = super(VerseSession, self)._receive_taggroup_create(node_id, taggroup_id, custom_type)
+        return super(VerseSession, self)._receive_taggroup_create(node_id, taggroup_id, custom_type)
 
 
     def _receive_taggroup_destroy(self, node_id, taggroup_id):
@@ -155,7 +158,7 @@ class VerseSession(vrsent.VerseSession):
         _receive_taggroup_destroy(self, node_id, taggroup_id) -> None
         """
         # Call parent method to print debug information
-        tg = super(VerseSession, self)._receive_taggroup_destroy(node_id, taggroup_id)
+        return super(VerseSession, self)._receive_taggroup_destroy(node_id, taggroup_id)
 
 
     def _receive_tag_create(self, node_id, taggroup_id, tag_id, data_type, count, custom_type):
@@ -163,7 +166,7 @@ class VerseSession(vrsent.VerseSession):
         _receive_tag_create(self, node_id, taggroup_id, tag_id, data_type, count, custom_type) -> None
         """
         # Call parent method to print debug information
-        tag = super(VerseSession, self)._receive_tag_create(node_id, taggroup_id, tag_id, data_type, count, custom_type)
+        return super(VerseSession, self)._receive_tag_create(node_id, taggroup_id, tag_id, data_type, count, custom_type)
 
 
     def _receive_tag_destroy(self, node_id, taggroup_id, tag_id):
@@ -171,7 +174,7 @@ class VerseSession(vrsent.VerseSession):
         _receive_tag_destroy(self, node_id, taggroup_id, tag_id) -> None
         """
         # Call parent method to print debug information
-        tag = super(VerseSession, self)._receive_tag_destroy(node_id, taggroup_id, tag_id)
+        return super(VerseSession, self)._receive_tag_destroy(node_id, taggroup_id, tag_id)
 
 
     def _receive_tag_set_values(self, node_id, taggroup_id, tag_id, value):
@@ -179,18 +182,23 @@ class VerseSession(vrsent.VerseSession):
         Custom callback method that is called, when client reveived command tag set value
         """
         # Call parent method to print debug information and get modified tag
-        tag = super(VerseSession, self)._receive_tag_set_values(node_id, taggroup_id, tag_id, value)
+        return super(VerseSession, self)._receive_tag_set_values(node_id, taggroup_id, tag_id, value)
 
 
-# Class with timer modal operator running callback_update
 class ModalTimerOperator(bpy.types.Operator):
-    """Operator which runs its self from a timer"""
+    """
+    Operator which runs its self from a timer
+    """
     bl_idname = "wm.modal_timer_operator"
     bl_label = "Modal Timer Operator"
 
     _timer = None
 
     def modal(self, context, event):
+        """
+        This method is called periodicaly and it is used to call callback
+        methods, when appropriate command is received.
+        """
         if event.type == 'TIMER':
             vrs_session = VerseSession.instance()
             if vrs_session is not None:
@@ -202,11 +210,17 @@ class ModalTimerOperator(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
     def execute(self, context):
-        self._timer = context.window_manager.event_timer_add(0.1, context.window)
+        """
+        This method add timer
+        """
+        self._timer = context.window_manager.event_timer_add(1.0/FPS, context.window)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
     def cancel(self, context):
+        """
+        This method remove timer
+        """
         context.window_manager.event_timer_remove(self._timer)
         return {'CANCELLED'}
 
@@ -221,7 +235,6 @@ def register():
     """
     This method register all methods of this submodule
     """
-
     for c in classes:
         bpy.utils.register_class(c)
 
@@ -230,6 +243,5 @@ def unregister():
     """
     This method unregister all methods of this submodule
     """
-
     for c in classes:
         bpy.utils.unregister_class(c)
