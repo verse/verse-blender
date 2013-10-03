@@ -81,7 +81,7 @@ def update_3dview(avatar_view):
                 # 3DView spaces in this area
                 for space in area.spaces.values():
                     if space.type == 'VIEW_3D':
-                        for avatar in AvatarView.other_views:
+                        for avatar in AvatarView.other_views().values():
                             avatar.draw(area, space)
                 # Tag area to redraw
                 area.tag_redraw()
@@ -235,7 +235,7 @@ class AvatarLens(vrsent.VerseTag):
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_LENS_CT
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=1, custom_type=TAG_LENS_CT, value=(0.0,)):
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=1, custom_type=TAG_LENS_CT, value=(35.0,)):
         """Constructor of AvatarLens"""
         super(AvatarLens, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
     @classmethod
@@ -284,7 +284,7 @@ class AvatarView(vrsent.VerseAvatar):
     @classmethod
     def my_view(cls):
         """
-        Getter of class memeber __my_view
+        Getter of class member __my_view
         """
         return __class__.__my_view
 
@@ -292,7 +292,7 @@ class AvatarView(vrsent.VerseAvatar):
     @classmethod
     def other_views(cls):
         """
-        Getter of class memeber __other_views
+        Getter of class member __other_views
         """
         return __class__.__other_views
 
@@ -317,6 +317,8 @@ class AvatarView(vrsent.VerseAvatar):
 
         view_initialized = False
 
+        self.active = True
+
         if self.id == self.session.avatar_id:
             # Initialize default values
             self.cur_screen = bpy.context.screen
@@ -334,7 +336,7 @@ class AvatarView(vrsent.VerseAvatar):
 
             if area.type == 'VIEW_3D' and space.type == 'VIEW_3D':
                 view_initialized = True
-                # Create tag group containing informatin about view
+                # Create tag group containing information about view
                 self.view_tg = vrsent.VerseTagGroup(node=self, \
                     custom_type=TG_INFO_CT)
                 # Create tags with data of view to 3D view
@@ -347,7 +349,7 @@ class AvatarView(vrsent.VerseAvatar):
                 # Distance
                 self.distance = AvatarDistance(tg=self.view_tg, \
                     value=(space.region_3d.view_distance,))
-                # Perspective/Ortogonal
+                # Perspective/Orthogonal
                 self.perspective = AvatarPerspective(tg=self.view_tg, \
                     value=(space.region_3d.view_perspective,))
                 # Width
@@ -363,7 +365,7 @@ class AvatarView(vrsent.VerseAvatar):
                 self.scene_node_id = AvatarScene(tg=self.view_tg, \
                     value=(0,))
             
-                # Start capturing of curent view to 3D View
+                # Start capturing of current view to 3D View
                 # Save current context to 3d view, start capturing and
                 # then restore original context
                 original_type = bpy.context.area.type
@@ -378,7 +380,8 @@ class AvatarView(vrsent.VerseAvatar):
                 pass
         
         if view_initialized == False:
-            # Create tag group containing informatin about view
+            print(' #### Not Initialized #### ')
+            # Create tag group containing information about view
             self.view_tg = vrsent.VerseTagGroup(node=self, \
                 custom_type=TG_INFO_CT)
             # Create tags with data of view to 3D view
@@ -390,6 +393,7 @@ class AvatarView(vrsent.VerseAvatar):
             self.height = AvatarHeight(tg=self.view_tg)
             self.lens = AvatarLens(tg=self.view_tg)
             self.scene_node_id = AvatarScene(tg=self.view_tg)
+            print(' ##### Initialized ##### ')
 
 
     @classmethod
@@ -434,7 +438,7 @@ class AvatarView(vrsent.VerseAvatar):
         if context.space_data.region_3d.view_distance != self.distance.value[0]:
             self.distance.value = (context.space_data.region_3d.view_distance,)
         
-        # Perspective/Ortho
+        # Perspective/Orthogonal
         if context.space_data.region_3d.view_perspective != self.perspective.value[0]:
             self.persp.value = (context.space_data.region_3d.view_perspective,)
         
@@ -459,12 +463,14 @@ class AvatarView(vrsent.VerseAvatar):
         """
         Draw avatar view in given context
         """
-        
         color = (0.0, 0.0, 1.0, 1.0)
         alpha = 2.0*math.atan((18.0/2.0)/self.lens.value[0])
         dist = 0.5/(math.tan(alpha/2.0))
         height = 1.0
-        width = self.width.value[0]/self.height.value[0]
+        if self.height.value[0] == 0:
+            width = 0.7
+        else:
+            width = self.width.value[0]/self.height.value[0]
                     
         points = {}
         points['border'] = [None, None, None, None]
@@ -660,9 +666,9 @@ class AvatarView(vrsent.VerseAvatar):
         
         # Draw dashed line from Look At point and center of camera
         bgl.glBegin(bgl.GL_LINES)
-        bgl.glVertex3f(self.location[0], \
-            self.location[1], \
-            self.location[2])
+        bgl.glVertex3f(self.location.value[0], \
+            self.location.value[1], \
+            self.location.value[2])
         bgl.glVertex3f(center[0][0], center[0][1], center[0][2])
         bgl.glEnd()
         bgl.glDisable(bgl.GL_LINE_STIPPLE)
@@ -1010,7 +1016,7 @@ def init_properties():
         default = -1, \
         min = -1, \
         max = 1000, \
-        description = "The index of curently selected Verse avatar node"
+        description = "The index of currently selected Verse avatar node"
     )
 
 
@@ -1036,7 +1042,7 @@ classes = (VERSE_AVATAR_NODES_list_item, \
 
 def register():
     """
-    Register classes with panel and init properties
+    Register classes with panel and initialize properties
     """
     for c in classes:
         bpy.utils.register_class(c)
