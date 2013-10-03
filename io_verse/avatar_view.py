@@ -77,6 +77,13 @@ def update_3dview(avatar_view):
         # Force redraw of all 3D view in current screen
         for area in bpy.context.screen.areas:
             if area.type == 'VIEW_3D':
+                # Draw visualization of all other avatars in all
+                # 3DView spaces in this area
+                for space in area.spaces.values():
+                    if space.type == 'VIEW_3D':
+                        for avatar in AvatarView.other_views:
+                            avatar.draw(area, space)
+                # Tag area to redraw
                 area.tag_redraw()
 
 
@@ -448,7 +455,7 @@ class AvatarView(vrsent.VerseAvatar):
         #    self.scene_node_id = (context.scene.verse_scene_node_id,)
 
         
-    def draw(self, area, region_data, space):
+    def draw(self, area, space):
         """
         Draw avatar view in given context
         """
@@ -535,7 +542,7 @@ class AvatarView(vrsent.VerseAvatar):
                 point_group[index] += mathutils.Vector(self.location.value)
         
         # Get & convert the Perspective Matrix of the current view/region.
-        perspMatrix = region_data.perspective_matrix
+        perspMatrix = space.region_3d.perspective_matrix
         tempMat = [perspMatrix[j][i] for i in range(4) for j in range(4)]
         perspBuff = bgl.Buffer(bgl.GL_FLOAT, 16, tempMat)
     
@@ -719,7 +726,6 @@ class VerseAvatarStatus(bpy.types.Operator):
                 context.window_manager.verse_avatar_capture = True
                 # Register callback function
                 VerseAvatarStatus._handle = bpy.types.SpaceView3D.draw_handler_add(draw_cb, (self, context), 'WINDOW', 'POST_PIXEL')
-                print('add handle ...', VerseAvatarStatus._handle)
                 # Force redraw (display bgl stuff)
                 for area in context.screen.areas:
                     if area.type == 'VIEW_3D':
@@ -728,7 +734,6 @@ class VerseAvatarStatus(bpy.types.Operator):
             else:
                 context.window_manager.verse_avatar_capture = False
                 # Unregister callback function
-                print('remove handle ...', VerseAvatarStatus._handle)
                 bpy.types.SpaceView3D.draw_handler_remove(VerseAvatarStatus._handle, 'WINDOW')
                 self._handle = None
                 # Force redraw (not display bgl stuff)
@@ -969,14 +974,6 @@ class VerseAvatarPanel(bpy.types.Panel):
         """
         wm = context.window_manager
         layout = self.layout
-
-        # TODO: Remove following button. It should be sent automaticaly
-        #if not wm.verse_avatar_capture:
-        #    layout.operator("view3d.verse_avatar", text="Start Capture",
-        #        icon = "PLAY")
-        #else:
-        #    layout.operator("view3d.verse_avatar", text="Pause Capture",
-        #        icon = "PAUSE")
 
         # Display connected avatars in current scene and
         # display menu to hide/display them in 3d
