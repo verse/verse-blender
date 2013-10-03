@@ -81,10 +81,11 @@ class VerseConnectDialogOperator(bpy.types.Operator):
     bl_label = "Connect dialog" 
 
     vrs_server_name = bpy.props.StringProperty(name="Verse Server")
+    vrs_server_port = bpy.props.StringProperty(name="Port")
 
     def execute(self, context):
         # Connect to Verse server
-        session.VerseSession(self.vrs_server_name, "12344", vrs.DGRAM_SEC_NONE)
+        session.VerseSession(self.vrs_server_name, self.vrs_server_port, vrs.DGRAM_SEC_NONE)
         # Start timer
         bpy.ops.wm.modal_timer_operator()
         self.report({'INFO'}, "Connecting to: '%s'" % (self.vrs_server_name))
@@ -140,7 +141,9 @@ class VerseClientConnect(bpy.types.Operator):
             return False
     
     def execute(self, context):
-        bpy.ops.scene.verse_connect_dialog_operator('INVOKE_DEFAULT', vrs_server_name = 'localhost')
+        bpy.ops.scene.verse_connect_dialog_operator('INVOKE_DEFAULT', \
+            vrs_server_name='localhost', \
+            vrs_server_port='12344')
         return {'FINISHED'}
         
 
