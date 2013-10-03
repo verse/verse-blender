@@ -17,6 +17,13 @@
 # ##### END GPL LICENSE BLOCK #####
 
 
+"""
+This module is used for connecting to Verse server. It adds some
+menu items and there are class operator definition for connect
+dialogs.
+"""
+
+
 if "bpy" in locals():
     import imp
     imp.reload(vrsent)

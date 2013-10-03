@@ -17,6 +17,13 @@
 # ##### END GPL LICENSE BLOCK #####
 
 
+"""
+This module is used for handling session with Verse server. Blender
+can be connected only to one Verse server. Thus there could be only
+one session in one Blender instance.
+"""
+
+
 if "bpy" in locals():
     import imp
     imp.reload(vrsent)
