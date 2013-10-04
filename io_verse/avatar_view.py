@@ -30,6 +30,7 @@ if "bpy" in locals():
 else:
     import bpy
     import bgl
+    import blf
     import mathutils
     import math
     import verse as vrs
@@ -65,6 +66,11 @@ def draw_cb(self, context):
     # Update information about avatar's view, when needed
     self.avatar_view.update(context)
 
+    # Draw other avatars, when there is any
+    for avatar in AvatarView.other_views().values():
+        if avatar.visualized == True:
+            avatar.draw(context.area, context.region_data)
+
 
 def update_3dview(avatar_view):
     """
@@ -74,17 +80,12 @@ def update_3dview(avatar_view):
     # 3DView should be updated only in situation, when position/rotation/etc
     # of other avatar is changed
     if avatar_view != AvatarView.my_view():
-        # Force redraw of all 3D view in current screen
-        for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                # Draw visualization of all other avatars in all
-                # 3DView spaces in this area
-                for space in area.spaces.values():
-                    if space.type == 'VIEW_3D':
-                        for avatar in AvatarView.other_views().values():
-                            avatar.draw(area, space)
-                # Tag area to redraw
-                area.tag_redraw()
+        # Force redraw of all 3D view in all screens
+        for screen in bpy.data.screens:
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    # Tag area to redraw
+                    area.tag_redraw()
 
 
 class BlenderUserNameTag(vrsent.verse_user.UserNameTag):
@@ -319,6 +320,8 @@ class AvatarView(vrsent.VerseAvatar):
 
         self.active = True
 
+        self.visualized = True
+
         if self.id == self.session.avatar_id:
             # Initialize default values
             self.cur_screen = bpy.context.screen
@@ -459,11 +462,12 @@ class AvatarView(vrsent.VerseAvatar):
         #    self.scene_node_id = (context.scene.verse_scene_node_id,)
 
         
-    def draw(self, area, space):
+    def draw(self, area, region_data):
         """
         Draw avatar view in given context
         """
-        color = (0.0, 0.0, 1.0, 1.0)
+        # TODO: Add this color to addon option
+        color = (1.0, 1.0, 0.5, 1.0)
         alpha = 2.0*math.atan((18.0/2.0)/self.lens.value[0])
         dist = 0.5/(math.tan(alpha/2.0))
         height = 1.0
@@ -548,7 +552,7 @@ class AvatarView(vrsent.VerseAvatar):
                 point_group[index] += mathutils.Vector(self.location.value)
         
         # Get & convert the Perspective Matrix of the current view/region.
-        perspMatrix = space.region_3d.perspective_matrix
+        perspMatrix = region_data.perspective_matrix
         tempMat = [perspMatrix[j][i] for i in range(4) for j in range(4)]
         perspBuff = bgl.Buffer(bgl.GL_FLOAT, 16, tempMat)
     
@@ -672,7 +676,14 @@ class AvatarView(vrsent.VerseAvatar):
         bgl.glVertex3f(center[0][0], center[0][1], center[0][2])
         bgl.glEnd()
         bgl.glDisable(bgl.GL_LINE_STIPPLE)
-    
+ 
+        # TODO: Draw username
+        #font_id, font_size, my_dpi = 0, 18, 72 # TODO: add to addon options
+        #blf.size(font_id, font_size, my_dpi)
+        #text_width, text_height = blf.dimensions(font_id, self.username)
+        #blf.position(font_id, 0.0, 0.0, 0.0)
+        #blf.draw(font_id, self.username)
+
         # Restore previous OpenGL settings
         bgl.glLoadIdentity()
         bgl.glMatrixMode(MatrixMode_prev)
@@ -684,6 +695,7 @@ class AvatarView(vrsent.VerseAvatar):
             bgl.glDisable(bgl.GL_LINE_STIPPLE)
         if not depth_test_prev:
             bgl.glDisable(bgl.GL_DEPTH_TEST)
+
         bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
 
 
@@ -774,8 +786,12 @@ class VERSE_AVATAR_OT_show(bpy.types.Operator):
         Show avatar selected in list of avatars
         """
         wm = context.window_manager
-        avatar = wm.verse_avatars[wm.cur_verse_avatar_index]
-        avatar.visualized = True
+        avatar_item = wm.verse_avatars[wm.cur_verse_avatar_index]
+        avatar_item.visualized = True
+        vrs_session = session.VerseSession.instance()
+        verse_avatar = vrs_session.avatars[avatar_item.node_id]
+        verse_avatar.visualized = True
+        update_3dview(verse_avatar)
         # TODO: subscribe to tag group
         return {'FINISHED'}
 
@@ -788,7 +804,10 @@ class VERSE_AVATAR_OT_show(bpy.types.Operator):
         # Return true only in situation, when client is connected to Verse server
         wm = context.window_manager
         if wm.verse_connected == True and wm.cur_verse_avatar_index != -1:
-            if wm.verse_avatars[wm.cur_verse_avatar_index].visualized == False:
+            avatar_item = wm.verse_avatars[wm.cur_verse_avatar_index]
+            vrs_session = session.VerseSession.instance()
+            verse_avatar = vrs_session.avatars[avatar_item.node_id]
+            if avatar_item.visualized == False and verse_avatar.id != vrs_session.avatar_id:
                 return True
             else:
                 return False
@@ -808,9 +827,12 @@ class VERSE_AVATAR_OT_show_all(bpy.types.Operator):
         Show all avatars in list of avatars
         """
         wm = context.window_manager
-        for avatar in wm.verse_avatars:
-            avatar.visualized = True
-        # TODO: subscribe to unsubscribed tag groups
+        for avatar_item in wm.verse_avatars:
+            avatar_item.visualized = True
+            vrs_session = session.VerseSession.instance()
+            verse_avatar = vrs_session.avatars[avatar_item.node_id]
+            verse_avatar.visualized = True
+            # TODO: subscribe to unsubscribed tag groups
         return {'FINISHED'}
 
     @classmethod
@@ -839,8 +861,12 @@ class VERSE_AVATAR_OT_hide(bpy.types.Operator):
         Hide avatar selected in list of avatars
         """
         wm = context.window_manager
-        avatar = wm.verse_avatars[wm.cur_verse_avatar_index]
-        avatar.visualized = False
+        avatar_item = wm.verse_avatars[wm.cur_verse_avatar_index]
+        avatar_item.visualized = False
+        vrs_session = session.VerseSession.instance()
+        verse_avatar = vrs_session.avatars[avatar_item.node_id]
+        verse_avatar.visualized = False
+        update_3dview(verse_avatar)
         # TODO: unsubscribe from tag group
         return {'FINISHED'}
 
@@ -853,7 +879,10 @@ class VERSE_AVATAR_OT_hide(bpy.types.Operator):
         # Return true only in situation, when client is connected to Verse server
         wm = context.window_manager
         if wm.verse_connected == True and wm.cur_verse_avatar_index != -1:
-            if wm.verse_avatars[wm.cur_verse_avatar_index].visualized == True:
+            avatar_item = wm.verse_avatars[wm.cur_verse_avatar_index]
+            vrs_session = session.VerseSession.instance()
+            verse_avatar = vrs_session.avatars[avatar_item.node_id]
+            if avatar_item.visualized == True and verse_avatar.id != vrs_session.avatar_id:
                 return True
             else:
                 return False
@@ -873,9 +902,12 @@ class VERSE_AVATAR_OT_hide_all(bpy.types.Operator):
         Hide all avatars in list of avatars
         """
         wm = context.window_manager
-        for avatar in wm.verse_avatars:
-            avatar.visualized = False
-        # TODO: unsubscribe from all tag groups
+        for avatar_item in wm.verse_avatars:
+            avatar_item.visualized = False
+            vrs_session = session.VerseSession.instance()
+            verse_avatar = vrs_session.avatars[avatar_item.node_id]
+            verse_avatar.visualized = False
+            # TODO: unsubscribe from all tag groups
         return {'FINISHED'}
 
     @classmethod
@@ -955,11 +987,11 @@ class VERSE_AVATAR_UL_slot(bpy.types.UIList):
                 if verse_avatar.id == vrs_session.avatar_id:
                     layout.label('Me@' + verse_avatar.hostname, icon='ARMATURE_DATA')
                 else:
-                    layout.label(verse_avatar.username + '@' + verse_avatar.hostname, icon='ARMATURE_DATA')
-                if item.visualized == True:
-                    layout.operator('view3d.verse_avatar_hide', text='', icon='RESTRICT_VIEW_OFF')
-                else:
-                    layout.operator('view3d.verse_avatar_show', text='', icon='RESTRICT_VIEW_ON')
+                    layout.label(str(verse_avatar.username) + '@' + str(verse_avatar.hostname), icon='ARMATURE_DATA')
+                    if item.visualized == True:
+                        layout.operator('view3d.verse_avatar_hide', text='', icon='RESTRICT_VIEW_OFF')
+                    else:
+                        layout.operator('view3d.verse_avatar_show', text='', icon='RESTRICT_VIEW_ON')
             elif self.layout_type in {'GRID'}:
                 layout.alignment = 'CENTER'
                 layout.label(verse_avatar.name)
