@@ -36,6 +36,7 @@ else:
     import verse as vrs
     from .vrsent import vrsent
     from . import session
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
 
 
 TG_INFO_CT = 0
@@ -74,7 +75,7 @@ def draw_cb(self, context):
 
 def update_3dview(avatar_view):
     """
-    This method updates 3D View but not in case, when the avatar_view is equal to current view,
+    This method updates all 3D View but not in case, when the avatar_view is equal to current view,
     because it would be useless.
     """
     # 3DView should be updated only in situation, when position/rotation/etc
@@ -88,6 +89,18 @@ def update_3dview(avatar_view):
                     area.tag_redraw()
 
 
+def update_all_3dview():
+    """
+    This method updates all 3D View.
+    """
+    # Force redraw of all 3D view in all screens
+    for screen in bpy.data.screens:
+        for area in screen.areas:
+            if area.type == 'VIEW_3D':
+                # Tag area to redraw
+                area.tag_redraw()
+
+
 class BlenderUserNameTag(vrsent.verse_user.UserNameTag):
     """
     Custom VerseTag subclass for storing username
@@ -99,9 +112,7 @@ class BlenderUserNameTag(vrsent.verse_user.UserNameTag):
         It should force to redraw all visible 3D views.
         """
         tag = super(BlenderUserNameTag, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
-        for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
+        update_all_3dview()
         return tag
 
 
@@ -116,9 +127,7 @@ class BlenderHostnameTag(vrsent.verse_avatar.HostnameTag):
         It should force to redraw all visible 3D views.
         """
         tag = super(BlenderHostnameTag, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
-        for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
+        update_all_3dview()
         return tag
 
 
@@ -673,14 +682,7 @@ class AvatarView(vrsent.VerseAvatar):
             self.location.value[2])
         bgl.glVertex3f(center[0][0], center[0][1], center[0][2])
         bgl.glEnd()
-        bgl.glDisable(bgl.GL_LINE_STIPPLE)
- 
-        # TODO: Draw username
-        #font_id, font_size, my_dpi = 0, 18, 72 # TODO: add to addon options
-        #blf.size(font_id, font_size, my_dpi)
-        #text_width, text_height = blf.dimensions(font_id, self.username)
-        #blf.position(font_id, 0.0, 0.0, 0.0)
-        #blf.draw(font_id, self.username)
+        bgl.glDisable(bgl.GL_LINE_STIPPLE)    
 
         # Restore previous OpenGL settings
         bgl.glLoadIdentity()
@@ -693,6 +695,18 @@ class AvatarView(vrsent.VerseAvatar):
             bgl.glDisable(bgl.GL_LINE_STIPPLE)
         if not depth_test_prev:
             bgl.glDisable(bgl.GL_DEPTH_TEST)
+
+        # Draw username
+        coord_2d = location_3d_to_region_2d(
+            area.regions[4],
+            region_data,
+            center[0])
+        print(coord_2d[0], coord_2d[1])
+        font_id, font_size, my_dpi = 0, 12, 72 # TODO: add to addon options
+        blf.size(font_id, font_size, my_dpi)
+        text_width, text_height = blf.dimensions(font_id, self.username)
+        blf.position(font_id, coord_2d[0], coord_2d[1], 0)
+        blf.draw(font_id, self.username)
 
         bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
 
@@ -830,6 +844,7 @@ class VERSE_AVATAR_OT_show_all(bpy.types.Operator):
             verse_avatar = vrs_session.avatars[avatar_item.node_id]
             verse_avatar.visualized = True
             # TODO: subscribe to unsubscribed tag groups
+        update_all_3dview()
         return {'FINISHED'}
 
     @classmethod
@@ -905,6 +920,7 @@ class VERSE_AVATAR_OT_hide_all(bpy.types.Operator):
             verse_avatar = vrs_session.avatars[avatar_item.node_id]
             verse_avatar.visualized = False
             # TODO: unsubscribe from all tag groups
+        update_all_3dview()
         return {'FINISHED'}
 
     @classmethod
