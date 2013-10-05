@@ -383,7 +383,6 @@ class AvatarView(vrsent.VerseAvatar):
                 pass
         
         if view_initialized == False:
-            print(' #### Not Initialized #### ')
             # Create tag group containing information about view
             self.view_tg = vrsent.VerseTagGroup(node=self, \
                 custom_type=TG_INFO_CT)
@@ -396,7 +395,6 @@ class AvatarView(vrsent.VerseAvatar):
             self.height = AvatarHeight(tg=self.view_tg)
             self.lens = AvatarLens(tg=self.view_tg)
             self.scene_node_id = AvatarScene(tg=self.view_tg)
-            print(' ##### Initialized ##### ')
 
 
     @classmethod
@@ -767,7 +765,6 @@ class VerseAvatarStatus(bpy.types.Operator):
         """
         This method is called, when operator is canceled.
         """
-        print('cancel()')
         if context.window_manager.verse_avatar_capture is True:
             context.window_manager.verse_avatar_capture = False
             bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
