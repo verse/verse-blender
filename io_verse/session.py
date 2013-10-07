@@ -27,13 +27,9 @@ one session in one Blender instance.
 FPS = 60
 
 
-if "bpy" in locals():
-    import imp
-    imp.reload(vrsent)
-else:
-    import bpy
-    import verse as vrs
-    from .vrsent import vrsent
+import bpy
+import verse as vrs
+from .vrsent import vrsent
 
 
 # VerseSession class

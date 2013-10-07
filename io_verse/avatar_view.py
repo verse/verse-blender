@@ -24,19 +24,15 @@ current view to active 3DView. Other Blender users sharing data at
 Verse server can also see, where you are and what you do.
 """
 
-if "bpy" in locals():
-    import imp
-    imp.reload(vrsent)
-else:
-    import bpy
-    import bgl
-    import blf
-    import mathutils
-    import math
-    import verse as vrs
-    from .vrsent import vrsent
-    from . import session
-    from bpy_extras.view3d_utils import location_3d_to_region_2d
+import bpy
+import bgl
+import blf
+import mathutils
+import math
+import verse as vrs
+from .vrsent import vrsent
+from . import session
+from bpy_extras.view3d_utils import location_3d_to_region_2d
 
 
 TG_INFO_CT = 0

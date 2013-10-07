@@ -24,15 +24,10 @@ dialogs.
 """
 
 
-if "bpy" in locals():
-    import imp
-    imp.reload(vrsent)
-    imp.reload(session)
-else:
-    import bpy
-    import verse as vrs
-    from .vrsent import vrsent
-    from . import session
+import bpy
+import verse as vrs
+from .vrsent import vrsent
+from . import session
 
 
 class VerseError(bpy.types.Operator):

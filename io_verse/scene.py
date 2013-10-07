@@ -18,6 +18,15 @@
 
 
 import bpy
+from .vrsent import vrsent
+
+
+class VerseScene(vrsent.VerseNode):
+    """
+    Custom subclass of VerseNode representing Blender scene
+    """
+
+    custom_type = 123 # Add some more reliable method
 
 
 class VERSE_SCENE_NODES_list_item(bpy.types.PropertyGroup):
@@ -28,14 +37,6 @@ class VERSE_SCENE_NODES_list_item(bpy.types.PropertyGroup):
         name = "Node ID", \
         description = "ID of scene node", \
         default = -1)
-    name = bpy.props.StringProperty( \
-        name = "Name", \
-        description = "Name of scene", \
-        default = "Scene Name")
-#    count_of_subscribers = bpy.props.IntProperty( \
-#        name = "Subscribers", \
-#        decription = "A number of users subscribed to this scene node", \
-#        default = 0)
 
 
 class BLENDER_SCENE_OT_share(bpy.types.Operator):
