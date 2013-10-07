@@ -318,12 +318,8 @@ class AvatarView(vrsent.VerseAvatar):
             if area.type == 'VIEW_3D':
                 area.tag_redraw()
 
-        self.scene_node = None
-
+        self.scene_node = None # TODO
         view_initialized = False
-
-        self.active = True
-
         self.visualized = True
 
         if self.id == self.session.avatar_id:
@@ -483,28 +479,16 @@ class AvatarView(vrsent.VerseAvatar):
         points['center'] = [None]
         
         # Points of face
-        if self.active is True:
-            points['right_eye'] = [mathutils.Vector((0.25, 0.25, self.distance.value[0] - dist)), \
-                mathutils.Vector((0.3, 0.25, self.distance.value[0] - dist)), \
-                mathutils.Vector((0.3, 0.0, self.distance.value[0] - dist)), \
-                mathutils.Vector((0.25, 0.0, self.distance.value[0] - dist)), \
-                mathutils.Vector((0.25, 0.25, self.distance.value[0] - dist))]
-            points['left_eye'] = [mathutils.Vector((-0.25, 0.25, self.distance.value[0] - dist)), \
-                mathutils.Vector((-0.3, 0.25, self.distance.value[0] - dist)), \
-                mathutils.Vector((-0.3, 0.0, self.distance.value[0] - dist)), \
-                mathutils.Vector((-0.25, 0.0, self.distance.value[0] - dist)), \
-                mathutils.Vector((-0.25, 0.25, self.distance.value[0] - dist))]
-        else:
-            points['right_eye'] = [mathutils.Vector((0.1569932997226715, 0.1604899913072586, self.distance.value[0] - dist)), \
-                mathutils.Vector((0.19806477427482605, 0.14419437944889069, self.distance.value[0] - dist)), \
-                mathutils.Vector((0.2499999850988388, 0.13702455163002014, self.distance.value[0] - dist)), \
-                mathutils.Vector((0.30193519592285156, 0.1441943645477295, self.distance.value[0] - dist)), \
-                mathutils.Vector((0.3430066704750061, 0.1604899764060974, self.distance.value[0] - dist))]
-            points['left_eye'] = [mathutils.Vector((-0.1569932997226715, 0.1604899913072586, self.distance.value[0] - dist)), \
-                mathutils.Vector((-0.19806477427482605, 0.14419437944889069, self.distance.value[0] - dist)), \
-                mathutils.Vector((-0.2499999850988388, 0.13702455163002014, self.distance.value[0] - dist)), \
-                mathutils.Vector((-0.30193519592285156, 0.1441943645477295, self.distance.value[0] - dist)), \
-                mathutils.Vector((-0.3430066704750061, 0.1604899764060974, self.distance.value[0] - dist))]
+        points['right_eye'] = [mathutils.Vector((0.25, 0.25, self.distance.value[0] - dist)), \
+            mathutils.Vector((0.3, 0.25, self.distance.value[0] - dist)), \
+            mathutils.Vector((0.3, 0.0, self.distance.value[0] - dist)), \
+            mathutils.Vector((0.25, 0.0, self.distance.value[0] - dist)), \
+            mathutils.Vector((0.25, 0.25, self.distance.value[0] - dist))]
+        points['left_eye'] = [mathutils.Vector((-0.25, 0.25, self.distance.value[0] - dist)), \
+            mathutils.Vector((-0.3, 0.25, self.distance.value[0] - dist)), \
+            mathutils.Vector((-0.3, 0.0, self.distance.value[0] - dist)), \
+            mathutils.Vector((-0.25, 0.0, self.distance.value[0] - dist)), \
+            mathutils.Vector((-0.25, 0.25, self.distance.value[0] - dist))]
         
         points['mouth'] = [mathutils.Vector((-0.40912365913391113, -0.11777058243751526, self.distance.value[0] - dist)), \
             mathutils.Vector((-0.3441678285598755, -0.15873458981513977, self.distance.value[0] - dist)), \
@@ -696,7 +680,6 @@ class AvatarView(vrsent.VerseAvatar):
             area.regions[4],
             region_data,
             center[0])
-        print(coord_2d[0], coord_2d[1])
         font_id, font_size, my_dpi = 0, 12, 72 # TODO: add to addon options
         blf.size(font_id, font_size, my_dpi)
         text_width, text_height = blf.dimensions(font_id, self.username)
@@ -962,10 +945,6 @@ class VERSE_AVATAR_NODES_list_item(bpy.types.PropertyGroup):
     """
     Group of properties with representation of Verse avatar node
     """
-    name = bpy.props.StringProperty( \
-        name = "Username", \
-        description = "Username of connected avatar", \
-        default = "User Name")
     node_id = bpy.props.IntProperty( \
         name = "Node ID", \
         description = "Node ID of avatar node", \
