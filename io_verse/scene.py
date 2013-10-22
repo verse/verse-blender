@@ -47,8 +47,10 @@ class BLENDER_SCENE_OT_share(bpy.types.Operator):
     bl_label       = "Share at Verse"
     bl_description = "Share current Blender scene at Verse scene as new Verse scene node"
 
-    """Operator for subscribing to Verse scene node"""
     def invoke(self, context, event):
+        """
+        Operator for subscribing to Verse scene node
+        """
         scene = context.scene
         # Create new verse scene node
         return {'FINISHED'}
