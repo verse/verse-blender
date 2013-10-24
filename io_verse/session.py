@@ -80,10 +80,11 @@ class VerseSession(vrsent.VerseSession):
         # Stop capturing of curent view to 3D View
         # Save current context to 3d view, start capturing and
         # then restore original context
-        original_type = bpy.context.area.type
-        bpy.context.area.type = 'VIEW_3D'
-        bpy.ops.view3d.verse_avatar()
-        bpy.context.area.type = original_type
+        if bpy.context.window_manager.verse_connected is True:
+            original_type = bpy.context.area.type
+            bpy.context.area.type = 'VIEW_3D'
+            bpy.ops.view3d.verse_avatar()
+            bpy.context.area.type = original_type
 
         # Set Blender property
         bpy.context.window_manager.verse_connected = False
