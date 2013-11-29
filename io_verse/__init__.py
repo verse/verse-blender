@@ -40,6 +40,8 @@ if "bpy" in locals():
     imp.reload(connection)
     imp.reload(scene)
     imp.reload(avatar_view)
+    imp.reload(object3d)
+    imp.reload(mesh)
 else:
     import bpy
     import verse as vrs
@@ -47,6 +49,8 @@ else:
     from . import connection
     from . import scene
     from . import avatar_view
+    from . import object3d
+    from . import mesh
 
 
 def register():
@@ -57,6 +61,8 @@ def register():
     connection.register()
     scene.register()
     avatar_view.register()
+    object3d.register()
+    mesh.register()
 
 
 def unregister():
@@ -67,6 +73,8 @@ def unregister():
     connection.unregister()
     scene.unregister()
     avatar_view.unregister()
+    object3d.unregister()
+    mesh.unregister()
 
 
 # Print all debug messages

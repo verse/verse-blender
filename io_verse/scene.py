@@ -16,6 +16,9 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+"""
+This module implements sharing Blender scenes at Verse server
+"""
 
 import bpy
 import verse as vrs
@@ -27,8 +30,23 @@ VERSE_SCENE_CT = 123
 TG_INFO_CT = 0
 TAG_SCENE_NAME_CT = 0
 
+VERSE_SCENE_DATA_CT = 124
 
-# TODO: implement custom VerseNode subclass storing blender data
+
+class VerseSceneData(vrsent.VerseNode):
+    """
+    Custom VerseNode subclass storing Blender data
+    """
+
+    custom_type = VERSE_SCENE_DATA_CT
+
+    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_SCENE_DATA_CT):
+        """
+        Constructor of VerseSceneData
+        """
+        super(VerseSceneData, self).__init__(session, node_id, parent, user_id, custom_type)
+        self.objects = {}
+        self.meshes = {}
 
 
 class VerseSceneName(vrsent.VerseTag):
@@ -79,7 +97,7 @@ class VerseScene(vrsent.VerseNode):
         # When this client created this scene, then assign node_id to coresponding
         # property of current scene
         if parent_id == session.avatar_id:
-            bpy.context.scene.verse_scene_node_id = node_id
+            bpy.context.scene.verse_node_id = node_id
 
         # Call parent class
         scene_node = super(VerseScene, cls)._receive_node_create(session=session,
@@ -137,7 +155,7 @@ class VERSE_SCENE_OT_share(bpy.types.Operator):
         """
         # Return true only in situation, when client is connected to Verse server
         wm = context.window_manager
-        if wm.verse_connected == True and context.scene.verse_scene_node_id == -1:
+        if wm.verse_connected == True and context.scene.verse_node_id == -1:
             return True
         else:
             return False
@@ -258,7 +276,7 @@ def init_properties():
         max = 1000, \
         description = "The index of curently selected Verse scene node"
     )
-    bpy.types.Scene.verse_scene_node_id = bpy.props.IntProperty( \
+    bpy.types.Scene.verse_node_id = bpy.props.IntProperty( \
         name = "ID of verse scene node", \
         default = -1, \
         description = "The ID of the verse node representing current Blender scene"
