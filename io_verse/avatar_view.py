@@ -912,7 +912,7 @@ class VERSE_AVATAR_MT_menu(bpy.types.Menu):
     Menu for verse avatar list
     """
     bl_idname = 'view3d.verse_avatar_menu'
-    bl_label = "Shape Key Specials"
+    bl_label = 'Verse Avatar Specials'
 
     def draw(self, context):
         """

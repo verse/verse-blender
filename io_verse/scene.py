@@ -182,7 +182,8 @@ class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
         This class method is used, when Blender check, if this operator can be
         executed
         """
-        # Return true only in situation, when client is connected to Verse server
+        # TODO: allow this operator only in situation, when unsubscribed scene
+        # is selected
         wm = context.window_manager
         if wm.verse_connected == True:
             return True
@@ -218,6 +219,37 @@ class VERSE_SCENE_UL_slot(bpy.types.UIList):
                 layout.label(verse_scene.name)
 
 
+class VERSE_SCENE_MT_menu(bpy.types.Menu):
+    """
+    Menu for scene list
+    """
+    bl_idname = 'scene.verse_scene_menu'
+    bl_label = "Verse Scene Specials"
+
+    def draw(self, context):
+        """
+        Draw menu
+        """
+        layout = self.layout
+        layout.operator('scene.blender_scene_share')
+        layout.operator('scene.verse_scene_node_subscribe')
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        scene = context.scene
+
+        # Return true only in situation, when client is connected to Verse server
+        if scene.cur_verse_scene_index >= 0 and \
+                len(scene.verse_scenes) > 0:
+            return True
+        else:
+            return False
+
+
 class VERSE_SCENE_panel(bpy.types.Panel):
     """
     GUI of Verse scene shared at Verse server
@@ -234,9 +266,9 @@ class VERSE_SCENE_panel(bpy.types.Panel):
         scene = context.scene
         layout = self.layout
 
-        layout.operator('scene.blender_scene_share')
+        row = layout.row()
 
-        layout.template_list('VERSE_SCENE_UL_slot', \
+        row.template_list('VERSE_SCENE_UL_slot', \
             'verse_scenes_widget_id', \
             scene, \
             'verse_scenes', \
@@ -244,16 +276,14 @@ class VERSE_SCENE_panel(bpy.types.Panel):
             'cur_verse_scene_index', \
             rows = 3)
 
-        if scene.cur_verse_scene_index >= 0 and \
-                len(scene.verse_scenes) > 0:
-            cur_verse_scene = scene.verse_scenes[scene.cur_verse_scene_index]
-            layout.separator()
-            layout.operator('scene.verse_scene_node_subscribe')
+        col = row.column(align=True)
+        col.menu('scene.verse_scene_menu', icon='DOWNARROW_HLT', text="")
 
 
 # List of Blender classes in this submodule
 classes = (VERSE_SCENE_NODES_list_item, \
     VERSE_SCENE_UL_slot, \
+    VERSE_SCENE_MT_menu, \
     VERSE_SCENE_panel, \
     VERSE_SCENE_OT_share, \
     VERSE_SCENE_OT_subscribe
