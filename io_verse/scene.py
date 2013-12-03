@@ -48,6 +48,44 @@ class VerseSceneData(vrsent.VerseNode):
         self.objects = {}
         self.meshes = {}
 
+    def _auto_subscribe(self):
+        """
+        User has to subscribe to this node manualy
+        """
+        return False
+
+    @classmethod
+    def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
+        """
+        When new node is created or verse server confirms creating of data node
+        for current scene, than this callback method is called.
+        """
+        # When this client created this scene, then assign node_id to coresponding
+        # property of current scene
+        if parent_id == session.avatar_id:
+            bpy.context.scene.verse_data_node_id = node_id
+
+        # Call parent class
+        scene_node = super(VerseScene, cls)._receive_node_create(session=session,
+            node_id=node_id,
+            parent_id=parent_id,
+            user_id=user_id,
+            custom_type=custom_type)
+        print('2')
+        try:
+            scene_node_id = scene_node.parent.id
+        except AttributeError:
+            pass
+        else:
+            try:
+                scene_item = bpy.context.scene.verse_scenes[scene_node_id]
+            except KeyError:
+                pass
+            else:
+                # Add ID of this node to the corespinding group of properties
+                scene_item.node_data_id = node_id
+        return scene_node
+
 
 class VerseSceneName(vrsent.VerseTag):
     """
@@ -83,9 +121,15 @@ class VerseScene(vrsent.VerseNode):
             parent = session.nodes[vrs.SCENE_PARENT_NODE_ID]
         # Call parent init method
         super(VerseScene, self).__init__(session, node_id, parent, user_id, custom_type)
-        # Create tag group and tag with name of scene
-        self._tg_info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
-        self._tg_info._tag_name = VerseSceneName(tg=self._tg_info, value=name)
+
+        # Create tag group and tag with scene name and node with scene data,
+        # when this node is created at this client
+        if node_id is None:
+            # Create tag group and tag with name of scene
+            self._tg_info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
+            self._tg_info._tag_name = VerseSceneName(tg=self._tg_info, value=name)
+            # Create node with data
+            self.data_node = VerseSceneData(session=session, parent=self)
 
     @classmethod
     def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -172,8 +216,16 @@ class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
 
     """Operator for subscribing to Verse scene node"""
     def invoke(self, context, event):
+        vrs_session = session.VerseSession.instance()
         scene = context.scene
-        # TODO: Send node subscribe to the selected scene data node
+        scene_item = scene.verse_scenes[scene.cur_verse_scene_index]
+        try:
+            verse_scene_data = vrs_session.nodes[scene_item.data_node_id]
+        except KeyError:
+            return {'CANCELED'}
+        else:
+            # Send node subscribe to the selected scene data node
+            verse_scene_data.subscribe()
         return {'FINISHED'}
 
     @classmethod
@@ -182,11 +234,21 @@ class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
         This class method is used, when Blender check, if this operator can be
         executed
         """
-        # TODO: allow this operator only in situation, when unsubscribed scene
-        # is selected
+        # Allow this operator only in situation, when scene with unsubscribed
+        # data node is selected
         wm = context.window_manager
-        if wm.verse_connected == True:
-            return True
+        scene = context.scene
+        if wm.verse_connected == True and scene.cur_verse_scene_index != -1:
+            scene_item = scene.verse_scenes[scene.cur_verse_scene_index]
+            vrs_session = session.VerseSession.instance()
+            try:
+                verse_scene_data = vrs_session.nodes[scene_item.data_node_id]
+            except KeyError:
+                return False
+            if verse_scene_data.subscribed is True:
+                return False
+            else:
+                return True
         else:
             return False
 
@@ -198,6 +260,10 @@ class VERSE_SCENE_NODES_list_item(bpy.types.PropertyGroup):
     node_id = bpy.props.IntProperty( \
         name = "Node ID", \
         description = "ID of scene node", \
+        default = -1)
+    data_node_id = bpy.props.IntProperty( \
+        name = "Data Node ID", \
+        description = "ID of node with scene data", \
         default = -1)
 
 
@@ -214,6 +280,12 @@ class VERSE_SCENE_UL_slot(bpy.types.UIList):
                 return
             if self.layout_type in {'DEFAULT', 'COMPACT'}:
                 layout.label(verse_scene.name, icon='SCENE_DATA')
+                try:
+                    verse_scene_data = vrs_session.nodes[item.data_node_id]
+                except KeyError:
+                    pass
+                else:
+                    layout.label('', icon='FILE_TICK')
             elif self.layout_type in {'GRID'}:
                 layout.alignment = 'CENTER'
                 layout.label(verse_scene.name)
@@ -310,6 +382,16 @@ def init_properties():
         name = "ID of verse scene node", \
         default = -1, \
         description = "The ID of the verse node representing current Blender scene"
+    )
+    bpy.types.Scene.verse_data_node_id = bpy.props.IntProperty( \
+        name = "ID of verse scene data node", \
+        default = -1, \
+        description = "The ID of the verse node representing current Blender scene data"
+    )
+    bpy.types.Scene.verse_server_hostname = bpy.props.StringProperty( \
+        name = "Verse server hostname", \
+        default = "", \
+        description = "Hostname of Verse server, where this scene is shared"
     )
 
 
