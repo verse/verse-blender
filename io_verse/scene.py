@@ -33,6 +33,18 @@ TAG_SCENE_NAME_CT = 0
 VERSE_SCENE_DATA_CT = 124
 
 
+def update_all_properties_view():
+    """
+    This method updates all Properties View.
+    """
+    # Force redraw of all Properties View in all screens
+    for screen in bpy.data.screens:
+        for area in screen.areas:
+            if area.type == 'PROPERTIES':
+                # Tag area to redraw
+                area.tag_redraw()
+
+
 class VerseSceneData(vrsent.VerseNode):
     """
     Custom VerseNode subclass storing Blender data
@@ -100,6 +112,16 @@ class VerseSceneName(vrsent.VerseTag):
         Constructor of VerseSceneName
         """
         super(VerseSceneName, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when name of scene is set
+        """
+        tag = super(VerseSceneName, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        # Update list of scenes shared at Verse server
+        update_all_properties_view()
+        return tag
 
 
 class VerseScene(vrsent.VerseNode):
