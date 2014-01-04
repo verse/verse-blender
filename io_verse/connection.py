@@ -145,7 +145,7 @@ class VerseClientConnect(bpy.types.Operator):
     def execute(self, context):
         bpy.ops.scene.verse_connect_dialog_operator('INVOKE_DEFAULT', \
             vrs_server_name='localhost', \
-            vrs_server_port='12344')
+            vrs_server_port='12345')
         return {'FINISHED'}
         
 
