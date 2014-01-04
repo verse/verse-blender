@@ -64,27 +64,26 @@ class VerseSceneData(vrsent.VerseNode):
         # property of current scene
         if parent_id == session.avatar_id:
             bpy.context.scene.verse_data_node_id = node_id
-
         # Call parent class
-        scene_node = super(VerseScene, cls)._receive_node_create(session=session,
+        scene_data_node = super(VerseSceneData, cls)._receive_node_create(session=session,
             node_id=node_id,
             parent_id=parent_id,
             user_id=user_id,
             custom_type=custom_type)
-        print('2')
         try:
-            scene_node_id = scene_node.parent.id
+            scene_node_id = scene_data_node.parent.id
         except AttributeError:
             pass
         else:
-            try:
-                scene_item = bpy.context.scene.verse_scenes[scene_node_id]
-            except KeyError:
-                pass
-            else:
+            scene_item = None
+            for _scene_item in bpy.context.scene.verse_scenes:
+                if _scene_item.node_id == scene_node_id:
+                    scene_item = _scene_item
+                    break
+            if scene_item is not None:
                 # Add ID of this node to the corespinding group of properties
-                scene_item.node_data_id = node_id
-        return scene_node
+                scene_item.data_node_id = node_id
+        return scene_data_node
 
 
 class VerseSceneName(vrsent.VerseTag):
@@ -285,7 +284,8 @@ class VERSE_SCENE_UL_slot(bpy.types.UIList):
                 except KeyError:
                     pass
                 else:
-                    layout.label('', icon='FILE_TICK')
+                    if verse_scene_data.subscribed is True:
+                        layout.label('', icon='FILE_TICK')
             elif self.layout_type in {'GRID'}:
                 layout.alignment = 'CENTER'
                 layout.label(verse_scene.name)
@@ -296,7 +296,8 @@ class VERSE_SCENE_MT_menu(bpy.types.Menu):
     Menu for scene list
     """
     bl_idname = 'scene.verse_scene_menu'
-    bl_label = "Verse Scene Specials"
+    bl_label = 'Verse Scene Specials'
+    bl_description = 'Menu for list of Verse scenes'
 
     def draw(self, context):
         """
@@ -329,7 +330,8 @@ class VERSE_SCENE_panel(bpy.types.Panel):
     bl_space_type  = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context     = 'scene'
-    bl_label       = "Verse Scenes"
+    bl_label       = 'Verse Scenes'
+    bl_description = 'Panel with Verse scenes shared at Verse server'
  
     def draw(self, context):
         """
