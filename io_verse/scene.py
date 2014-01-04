@@ -213,8 +213,10 @@ class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
     bl_label       = "Subscribe to Scene"
     bl_description = "Subscribe to verse scene node"
 
-    """Operator for subscribing to Verse scene node"""
     def invoke(self, context, event):
+        """
+        Operator for subscribing to Verse scene node
+        """
         vrs_session = session.VerseSession.instance()
         scene = context.scene
         scene_item = scene.verse_scenes[scene.cur_verse_scene_index]
@@ -233,7 +235,55 @@ class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
         This class method is used, when Blender check, if this operator can be
         executed
         """
-        # Allow this operator only in situation, when scene with unsubscribed
+        # Allow this operator only in situation, when Blender is not subscribed
+        # to any scene node
+        wm = context.window_manager
+        scene = context.scene
+        if wm.verse_connected == True and scene.cur_verse_scene_index != -1:
+            vrs_session = session.VerseSession.instance()
+            for scene_item in scene.verse_scenes:
+                try:
+                    verse_scene_data = vrs_session.nodes[scene_item.data_node_id]
+                except KeyError:
+                    continue
+                if verse_scene_data.subscribed is True:
+                    return False
+            return True
+        else:
+            return False
+
+
+class VERSE_SCENE_OT_unsubscribe(bpy.types.Operator):
+    """
+    This operator unsubscribes from scene node.
+    """
+    bl_idname      = 'scene.verse_scene_node_unsubscribe'
+    bl_label       = "Unsubscribe from Scene"
+    bl_description = "Unsubscribe from Verse scene node"
+
+    def invoke(self, context, event):
+        """
+        Operator for unsubscribing from Verse scene node
+        """
+        vrs_session = session.VerseSession.instance()
+        scene = context.scene
+        scene_item = scene.verse_scenes[scene.cur_verse_scene_index]
+        try:
+            verse_scene_data = vrs_session.nodes[scene_item.data_node_id]
+        except KeyError:
+            return {'CANCELED'}
+        else:
+            # Send node unsubscribe to the selected scene data node
+            verse_scene_data.unsubscribe()
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Allow this operator only in situation, when scene with subscribed
         # data node is selected
         wm = context.window_manager
         scene = context.scene
@@ -245,9 +295,9 @@ class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
             except KeyError:
                 return False
             if verse_scene_data.subscribed is True:
-                return False
-            else:
                 return True
+            else:
+                return False
         else:
             return False
 
@@ -306,6 +356,7 @@ class VERSE_SCENE_MT_menu(bpy.types.Menu):
         layout = self.layout
         layout.operator('scene.blender_scene_share')
         layout.operator('scene.verse_scene_node_subscribe')
+        layout.operator('scene.verse_scene_node_unsubscribe')
 
     @classmethod
     def poll(cls, context):
@@ -360,7 +411,8 @@ classes = (VERSE_SCENE_NODES_list_item, \
     VERSE_SCENE_MT_menu, \
     VERSE_SCENE_panel, \
     VERSE_SCENE_OT_share, \
-    VERSE_SCENE_OT_subscribe
+    VERSE_SCENE_OT_subscribe, \
+    VERSE_SCENE_OT_unsubscribe
 )
 
 
