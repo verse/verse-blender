@@ -24,6 +24,7 @@ import bpy
 import verse as vrs
 from .vrsent import vrsent
 from . import session
+from . import object3d
 
 
 VERSE_SCENE_CT = 123
@@ -31,6 +32,51 @@ TG_INFO_CT = 0
 TAG_SCENE_NAME_CT = 0
 
 VERSE_SCENE_DATA_CT = 124
+
+
+def scene_update(node_id):
+    """
+    This function tries to send differencies between current scene
+    and scene node
+    """
+    vrs_session = session.VerseSession.instance()
+    try:
+        scene_node = vrs_session.nodes[node_id]
+    except KeyError:
+        pass
+    else:
+        try:
+            current_name = scene_node.name
+        except AttributeError:
+            pass
+        else:
+            if current_name != bpy.context.scene.name:
+                scene_node.name = bpy.context.scene.name
+
+
+def cb_scene_update(context):
+    """
+    This function is used as callback function. It is called,
+    when something is changed in the scene
+    """
+
+    objects = bpy.data.objects
+    scenes = bpy.data.scenes
+
+    # Was any object updated?
+    if objects.is_updated:
+        for obj in objects:
+            if obj.is_updated and obj.verse_node_id != -1:
+                object3d.object_update(obj.verse_node_id)
+
+    # TODO: Make this part of Blender API working
+    # if scenes.is_updated:
+    #     print('### Some scene is updated')
+    #     for sce in scenes:
+    #         print('### Scene is updated:', sce.name)
+    #         if sce.is_updated and sce.verse_node_id != -1:
+    #             print('### Scene ID:', sce.verse_node_id)
+    #             scene_update(sce.verse_node_id)
 
 
 def update_all_properties_view():
@@ -121,6 +167,14 @@ class VerseSceneName(vrsent.VerseTag):
         tag = super(VerseSceneName, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update list of scenes shared at Verse server
         update_all_properties_view()
+        # Update name of scene, when name of current scene was changed by other Blender
+        if node_id == bpy.context.scene.verse_node_id:
+            try:
+                verse_scene = session.nodes[node_id]
+            except KeyError:
+                pass
+            else:
+                bpy.context.scene.name = verse_scene.name
         return tag
 
 
@@ -210,6 +264,8 @@ class VERSE_SCENE_OT_share(bpy.types.Operator):
         """
         vrs_session = session.VerseSession.instance()
         VerseScene(session=vrs_session, name=(context.scene.name,))
+        # Add callback function that check if name of scene was changed
+        #bpy.app.handlers.scene_update_post.append(cb_scene_update)
         return {'FINISHED'}
 
     @classmethod
@@ -297,6 +353,8 @@ class VERSE_SCENE_OT_unsubscribe(bpy.types.Operator):
         else:
             # Send node unsubscribe to the selected scene data node
             verse_scene_data.unsubscribe()
+            # Remove callback function
+            #bpy.app.handlers.scene_update_post.remove(cb_scene_update)
         return {'FINISHED'}
 
     @classmethod

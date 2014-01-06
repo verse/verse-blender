@@ -34,11 +34,22 @@ TAG_ROTATION_CT = 1
 TAG_SCALE_CT = 2
 
 
+def object_update(node_id):
+    """
+    This function is called by callback function, when
+    shared object is changed by user.
+    """
+    # TODO: send changed properties to Verse server
+    pass
+
+
 class VerseObjectPosition(vrsent.VerseTag):
     """
     Custom VerseTag subclass representing Blender object position
     """
 
+    node_custom_type = VERSE_OBJECT_CT
+    tg_custom_type = TG_TRANSFORM_CT
     custom_type = TAG_POSITION_CT
 
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3, custom_type=TAG_POSITION_CT, value=None):
@@ -53,6 +64,8 @@ class VerseObjectRotation(vrsent.VerseTag):
     Custom VerseTag subclass representing Blender object rotation
     """
 
+    node_custom_type = VERSE_OBJECT_CT
+    tg_custom_type = TG_TRANSFORM_CT
     custom_type = TAG_ROTATION_CT
 
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=4, custom_type=TAG_ROTATION_CT, value=None):
@@ -67,6 +80,8 @@ class VerseObjectScale(vrsent.VerseTag):
     Custom VerseTag subclass representing Blender object scale
     """
 
+    node_custom_type = VERSE_OBJECT_CT
+    tg_custom_type = TG_TRANSFORM_CT
     custom_type = TAG_SCALE_CT
 
     def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3, custom_type=TAG_SCALE_CT, value=None):
@@ -81,6 +96,8 @@ class VerseObject(vrsent.VerseNode):
     Custom VerseNode subclass representing Blender object
     """
 
+    node_custom_type = VERSE_OBJECT_CT
+    tg_custom_type = TG_TRANSFORM_CT
     custom_type = VERSE_OBJECT_CT
 
     def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_OBJECT_CT):

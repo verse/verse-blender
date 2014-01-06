@@ -140,7 +140,6 @@ class AvatarLocation(vrsent.VerseTag):
         return tag
 
 
-
 class AvatarRotation(vrsent.VerseTag):
     """Class representing rotation of avatar"""
     node_custom_type = vrs.AVATAR_NODE_CT
