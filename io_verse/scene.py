@@ -25,6 +25,7 @@ import verse as vrs
 from .vrsent import vrsent
 from . import session
 from . import object3d
+from . import avatar_view
 
 
 VERSE_SCENE_CT = 123
@@ -165,8 +166,6 @@ class VerseSceneName(vrsent.VerseTag):
         This method is called, when name of scene is set
         """
         tag = super(VerseSceneName, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
-        # Update list of scenes shared at Verse server
-        update_all_properties_view()
         # Update name of scene, when name of current scene was changed by other Blender
         if node_id == bpy.context.scene.verse_node_id:
             try:
@@ -175,6 +174,8 @@ class VerseSceneName(vrsent.VerseTag):
                 pass
             else:
                 bpy.context.scene.name = verse_scene.name
+        # Update list of scenes shared at Verse server
+        update_all_properties_view()
         return tag
 
 
@@ -197,14 +198,11 @@ class VerseScene(vrsent.VerseNode):
         # Call parent init method
         super(VerseScene, self).__init__(session, node_id, parent, user_id, custom_type)
 
-        # Create tag group and tag with scene name and node with scene data,
-        # when this node is created at this client
-        if node_id is None:
-            # Create tag group and tag with name of scene
-            self._tg_info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
-            self._tg_info._tag_name = VerseSceneName(tg=self._tg_info, value=name)
-            # Create node with data
-            self.data_node = VerseSceneData(session=session, parent=self)
+        # Create tag group and tag with name of scene
+        self._tg_info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
+        self._tg_info._tag_name = VerseSceneName(tg=self._tg_info, value=name)
+        # Create node with data
+        self.data_node = VerseSceneData(session=session, parent=self)
 
     @classmethod
     def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -301,10 +299,15 @@ class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
         try:
             verse_scene_data = vrs_session.nodes[scene_item.data_node_id]
         except KeyError:
-            return {'CANCELED'}
+            return {'CANCELLED'}
         else:
             # Send node subscribe to the selected scene data node
             verse_scene_data.subscribe()
+            # Save node ID in current scene
+            scene.verse_node_id = verse_scene_data.parent.id
+            # Store/share id of the verse_scene in the AvatarView
+            avatar = avatar_view.AvatarView.my_view()
+            avatar.scene_node_id = (verse_scene_data.parent.id,)
         return {'FINISHED'}
 
     @classmethod
@@ -349,7 +352,7 @@ class VERSE_SCENE_OT_unsubscribe(bpy.types.Operator):
         try:
             verse_scene_data = vrs_session.nodes[scene_item.data_node_id]
         except KeyError:
-            return {'CANCELED'}
+            return {'CANCELLED'}
         else:
             # Send node unsubscribe to the selected scene data node
             verse_scene_data.unsubscribe()

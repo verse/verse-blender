@@ -65,7 +65,9 @@ def draw_cb(self, context):
 
     # Draw other avatars, when there is any
     for avatar in AvatarView.other_views().values():
-        if avatar.visualized == True:
+        if avatar.visualized == True and \
+                context.scene.verse_node_id != -1 and \
+                context.scene.verse_node_id == avatar.scene_node_id:
             avatar.draw(context.area, context.region_data)
 
 
@@ -448,11 +450,7 @@ class AvatarView(vrsent.VerseAvatar):
         
         # Height
         if context.area.height != self.height.value[0]:
-            self.height.value = (context.area.height,)    
-
-        # TODO: Update scene
-        #if context.scene.verse_scene_node_id != self.scene_node_id[0]:
-        #    self.scene_node_id = (context.scene.verse_scene_node_id,)
+            self.height.value = (context.area.height,)
 
         
     def draw(self, area, region_data):
@@ -750,7 +748,7 @@ class VerseAvatarStatus(bpy.types.Operator):
      
     def cancel(self, context):
         """
-        This method is called, when operator is canceled.
+        This method is called, when operator is cancelled.
         """
         if context.window_manager.verse_avatar_capture is True:
             context.window_manager.verse_avatar_capture = False
@@ -962,10 +960,11 @@ class VERSE_AVATAR_UL_slot(bpy.types.UIList):
                     layout.label('Me@' + verse_avatar.hostname, icon='ARMATURE_DATA')
                 else:
                     layout.label(str(verse_avatar.username) + '@' + str(verse_avatar.hostname), icon='ARMATURE_DATA')
-                    if verse_avatar.visualized == True:
-                        layout.operator('view3d.verse_avatar_hide', text='', icon='RESTRICT_VIEW_OFF')
-                    else:
-                        layout.operator('view3d.verse_avatar_show', text='', icon='RESTRICT_VIEW_ON')
+                    if context.scene.verse_node_id != -1 and context.scene.verse_node_id == verse_avatar.scene_node_id:
+                        if verse_avatar.visualized == True:
+                            layout.operator('view3d.verse_avatar_hide', text='', icon='RESTRICT_VIEW_OFF')
+                        else:
+                            layout.operator('view3d.verse_avatar_show', text='', icon='RESTRICT_VIEW_ON')
             elif self.layout_type in {'GRID'}:
                 layout.alignment = 'CENTER'
                 layout.label(verse_avatar.name)
