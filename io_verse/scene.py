@@ -99,19 +99,21 @@ class VerseSceneData(vrsent.VerseNode):
 
     custom_type = VERSE_SCENE_DATA_CT
 
-    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_SCENE_DATA_CT):
+    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_SCENE_DATA_CT, autosubscribe=False):
         """
         Constructor of VerseSceneData
         """
         super(VerseSceneData, self).__init__(session, node_id, parent, user_id, custom_type)
         self.objects = {}
         self.meshes = {}
+        self._autosubscribe = autosubscribe
 
     def _auto_subscribe(self):
         """
-        User has to subscribe to this node manualy
+        User has to subscribe to this node manualy, when it is node created by
+        other Blender.
         """
-        return False
+        return self._autosubscribe
 
     @classmethod
     def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -142,6 +144,14 @@ class VerseSceneData(vrsent.VerseNode):
             if scene_item is not None:
                 # Add ID of this node to the corespinding group of properties
                 scene_item.data_node_id = node_id
+
+        # TODO: Fishy ... it is not true, when Blender created this node
+        # Save node ID in current scene
+        bpy.context.scene.verse_node_id = parent_id
+        # Store/share id of the verse_scene in the AvatarView
+        avatar = avatar_view.AvatarView.my_view()
+        avatar.scene_node_id = (parent_id,)
+
         return scene_data_node
 
 
@@ -201,8 +211,12 @@ class VerseScene(vrsent.VerseNode):
         # Create tag group and tag with name of scene
         self._tg_info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
         self._tg_info._tag_name = VerseSceneName(tg=self._tg_info, value=name)
-        # Create node with data
-        self.data_node = VerseSceneData(session=session, parent=self)
+
+        if node_id is None:
+            # Create node with data, when this node was created by this Blender
+            self.data_node = VerseSceneData(session=session, parent=self, autosubscribe=True)
+        else:
+            self.data_node = None
 
     @classmethod
     def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -296,18 +310,17 @@ class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
         vrs_session = session.VerseSession.instance()
         scene = context.scene
         scene_item = scene.verse_scenes[scene.cur_verse_scene_index]
+        print('### 1:', scene_item.data_node_id)
         try:
             verse_scene_data = vrs_session.nodes[scene_item.data_node_id]
         except KeyError:
+            print('### 2')
             return {'CANCELLED'}
         else:
+            print('### 3')
             # Send node subscribe to the selected scene data node
             verse_scene_data.subscribe()
-            # Save node ID in current scene
-            scene.verse_node_id = verse_scene_data.parent.id
-            # Store/share id of the verse_scene in the AvatarView
-            avatar = avatar_view.AvatarView.my_view()
-            avatar.scene_node_id = (verse_scene_data.parent.id,)
+        print('### 4')
         return {'FINISHED'}
 
     @classmethod
