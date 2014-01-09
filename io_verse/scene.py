@@ -134,7 +134,7 @@ class VerseSceneData(vrsent.VerseNode):
         bpy.context.scene.verse_server_service = self.session.service
         # Store/share id of the verse_scene in the AvatarView
         avatar = avatar_view.AvatarView.my_view()
-        avatar.scene_node_id = (self.parent.id,)
+        avatar.scene_node_id.value = (self.parent.id,)
         # Send subscribe to verse server
         super(VerseSceneData, self).subscribe()
 
