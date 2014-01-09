@@ -160,7 +160,6 @@ class VerseSceneData(vrsent.VerseNode):
                 if _scene_item.node_id == scene_node_id:
                     scene_item = _scene_item
                     break
-                else:
             if scene_item is not None:
                 # Add ID of this node to the coresponding group of properties
                 scene_item.data_node_id = node_id
