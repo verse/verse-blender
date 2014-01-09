@@ -121,9 +121,11 @@ class VerseSceneData(vrsent.VerseNode):
 
     def subscribe(self):
         """
-        This method is called, when Blender wants to subscribe to the
-        data of shared server
+        This method is called, when Blender user wants to subscribe to the
+        scene data shared at Verse server.
         """
+        # Save information about subscription to Blender scene too
+        bpy.context.scene.subscribed = True
         # Save ID of scene node in current scene
         bpy.context.scene.verse_node_id = self.parent.id
         # Save node ID of data node in current scene
@@ -135,8 +137,21 @@ class VerseSceneData(vrsent.VerseNode):
         # Store/share id of the verse_scene in the AvatarView
         avatar = avatar_view.AvatarView.my_view()
         avatar.scene_node_id.value = (self.parent.id,)
-        # Send subscribe to verse server
-        super(VerseSceneData, self).subscribe()
+        # Send subscribe command to Verse server
+        return super(VerseSceneData, self).subscribe()
+
+    def unsubscribe(self):
+        """
+        This method is called, when Blender user wants to unsubscribe
+        from scene data.
+        """
+        # Save information about subscription to Blender scene too
+        bpy.context.scene.subscribed = False
+        # Reset id of the verse_scene in the AvatarView
+        avatar = avatar_view.AvatarView.my_view()
+        avatar.scene_node_id.value = (0,)
+        # Send unsubscribe command to Verse server
+        return super(VerseSceneData, self).unsubscribe()
 
     @classmethod
     def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -531,6 +546,10 @@ def init_properties():
         max = 1000, \
         description = "The index of curently selected Verse scene node"
     )
+    bpy.types.Scene.subscribed = bpy.props.BoolProperty( \
+        name = "Subscribed to scene node", \
+        default = False, \
+        description = "Is Blender subscribed to data of shared scene.")
     bpy.types.Scene.verse_node_id = bpy.props.IntProperty( \
         name = "ID of verse scene node", \
         default = -1, \

@@ -67,6 +67,7 @@ def draw_cb(self, context):
     for avatar in AvatarView.other_views().values():
         if avatar.visualized == True and \
                 context.scene.verse_node_id != -1 and \
+                context.scene.subscribed is True and \
                 context.scene.verse_node_id == avatar.scene_node_id.value[0]:
             avatar.draw(context.area, context.region_data)
 
@@ -961,6 +962,7 @@ class VERSE_AVATAR_UL_slot(bpy.types.UIList):
                 else:
                     layout.label(str(verse_avatar.username) + '@' + str(verse_avatar.hostname), icon='ARMATURE_DATA')
                     if context.scene.verse_node_id != -1 and \
+                            context.scene.subscribed is True and \
                             context.scene.verse_node_id == verse_avatar.scene_node_id.value[0]:
                         if verse_avatar.visualized == True:
                             layout.operator('view3d.verse_avatar_hide', text='', icon='RESTRICT_VIEW_OFF')
