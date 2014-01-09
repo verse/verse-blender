@@ -113,7 +113,30 @@ class VerseSceneData(vrsent.VerseNode):
         User has to subscribe to this node manualy, when it is node created by
         other Blender.
         """
-        return self._autosubscribe
+        try:
+            autosubscribe = self._autosubscribe
+        except AttributeError:
+            autosubscribe = False
+        return autosubscribe
+
+    def subscribe(self):
+        """
+        This method is called, when Blender wants to subscribe to the
+        data of shared server
+        """
+        # Save ID of scene node in current scene
+        bpy.context.scene.verse_node_id = self.parent.id
+        # Save node ID of data node in current scene
+        bpy.context.scene.verse_data_node_id = self.id
+        # Save hostname of server in current scene
+        bpy.context.scene.verse_server_hostname = self.session.hostname
+        # Save port (service) of server in current scene
+        bpy.context.scene.verse_server_service = self.session.service
+        # Store/share id of the verse_scene in the AvatarView
+        avatar = avatar_view.AvatarView.my_view()
+        avatar.scene_node_id = (self.parent.id,)
+        # Send subscribe to verse server
+        super(VerseSceneData, self).subscribe()
 
     @classmethod
     def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -121,10 +144,6 @@ class VerseSceneData(vrsent.VerseNode):
         When new node is created or verse server confirms creating of data node
         for current scene, than this callback method is called.
         """
-        # When this client created this scene, then assign node_id to coresponding
-        # property of current scene
-        if parent_id == session.avatar_id:
-            bpy.context.scene.verse_data_node_id = node_id
         # Call parent class
         scene_data_node = super(VerseSceneData, cls)._receive_node_create(session=session,
             node_id=node_id,
@@ -141,17 +160,10 @@ class VerseSceneData(vrsent.VerseNode):
                 if _scene_item.node_id == scene_node_id:
                     scene_item = _scene_item
                     break
+                else:
             if scene_item is not None:
-                # Add ID of this node to the corespinding group of properties
+                # Add ID of this node to the coresponding group of properties
                 scene_item.data_node_id = node_id
-
-        # TODO: Fishy ... it is not true, when Blender created this node
-        # Save node ID in current scene
-        bpy.context.scene.verse_node_id = parent_id
-        # Store/share id of the verse_scene in the AvatarView
-        avatar = avatar_view.AvatarView.my_view()
-        avatar.scene_node_id = (parent_id,)
-
         return scene_data_node
 
 
@@ -215,6 +227,7 @@ class VerseScene(vrsent.VerseNode):
         if node_id is None:
             # Create node with data, when this node was created by this Blender
             self.data_node = VerseSceneData(session=session, parent=self, autosubscribe=True)
+            #self.data_node._autosubscribe = True
         else:
             self.data_node = None
 
@@ -224,11 +237,6 @@ class VerseScene(vrsent.VerseNode):
         When new node is created or verse server confirms creating of node for current
         scene, than this callback method is called.
         """
-
-        # When this client created this scene, then assign node_id to coresponding
-        # property of current scene
-        if parent_id == session.avatar_id:
-            bpy.context.scene.verse_node_id = node_id
 
         # Call parent class
         scene_node = super(VerseScene, cls)._receive_node_create(session=session,
@@ -310,17 +318,13 @@ class VERSE_SCENE_OT_subscribe(bpy.types.Operator):
         vrs_session = session.VerseSession.instance()
         scene = context.scene
         scene_item = scene.verse_scenes[scene.cur_verse_scene_index]
-        print('### 1:', scene_item.data_node_id)
         try:
             verse_scene_data = vrs_session.nodes[scene_item.data_node_id]
         except KeyError:
-            print('### 2')
             return {'CANCELLED'}
         else:
-            print('### 3')
             # Send node subscribe to the selected scene data node
             verse_scene_data.subscribe()
-        print('### 4')
         return {'FINISHED'}
 
     @classmethod
@@ -542,6 +546,11 @@ def init_properties():
         name = "Verse server hostname", \
         default = "", \
         description = "Hostname of Verse server, where this scene is shared"
+    )
+    bpy.types.Scene.verse_server_service = bpy.props.StringProperty( \
+        name = "Verse server port (service)", \
+        default = "", \
+        description = "Port (service) of Verse server"
     )
 
 
