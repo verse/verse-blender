@@ -112,8 +112,40 @@ class VerseObject(vrsent.VerseNode):
         self.transform.scale = None
 
 
+class VERSE_OBJECT_OT_share(bpy.types.Operator):
+    """
+    This operator tries to share Blender Mesh object at Verse server.
+    """
+    bl_idname      = 'object.mesh_object_share'
+    bl_label       = "Share at Verse"
+    bl_description = "Share active Mesh Object at Verse server"
+
+    def invoke(self, context, event):
+        """
+        This method will try to create new node representing Mesh Object
+        at Verse server
+        """
+        # TODO: add something here
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True and \
+                context.scene.subscribed is not False and \
+                context.active_object.verse_node_id != -1:
+            return True
+        else:
+            return False
+
+
 # List of Blender classes in this submodule
-classes = ()
+classes = (VERSE_OBJECT_OT_share,)
 
 
 def init_properties():
@@ -121,9 +153,9 @@ def init_properties():
     Init properties in blender object data type
     """
     bpy.types.Object.verse_node_id = bpy.props.IntProperty( \
-        name = "ID of verse object node", \
+        name = "ID of verse node", \
         default = -1, \
-        description = ""
+        description = "The node ID representing this Object at Verse server"
     )
 
 
