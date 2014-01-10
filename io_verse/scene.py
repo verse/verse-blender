@@ -63,21 +63,23 @@ def cb_scene_update(context):
 
     objects = bpy.data.objects
     scenes = bpy.data.scenes
+    wm = bpy.context.window_manager
 
-    # Was any object updated?
-    if objects.is_updated:
-        for obj in objects:
-            if obj.is_updated and obj.verse_node_id != -1:
-                object3d.object_update(obj.verse_node_id)
+    if wm.verse_connected is True:
+        # Was any object updated?
+        if objects.is_updated:
+            for obj in objects:
+                if obj.is_updated and obj.verse_node_id != -1:
+                    object3d.object_update(obj.verse_node_id)
 
-    # TODO: Make this part of Blender API working
-    # if scenes.is_updated:
-    #     print('### Some scene is updated')
-    #     for sce in scenes:
-    #         print('### Scene is updated:', sce.name)
-    #         if sce.is_updated and sce.verse_node_id != -1:
-    #             print('### Scene ID:', sce.verse_node_id)
-    #             scene_update(sce.verse_node_id)
+        # TODO: Make this part of Blender API working
+        # if scenes.is_updated:
+        #     print('### Some scene is updated')
+        #     for sce in scenes:
+        #         print('### Scene is updated:', sce.name)
+        #         if sce.is_updated and sce.verse_node_id != -1:
+        #             print('### Scene ID:', sce.verse_node_id)
+        #             scene_update(sce.verse_node_id)
 
 
 def update_all_properties_view():
@@ -140,6 +142,8 @@ class VerseSceneData(vrsent.VerseNode):
             # Store/share id of the verse_scene in the AvatarView
             avatar = avatar_view.AvatarView.my_view()
             avatar.scene_node_id.value = (self.parent.id,)
+            # Add Blender callback function that check sends scene updates to Verse server
+            bpy.app.handlers.scene_update_post.append(cb_scene_update)
         return subscribed
 
     def unsubscribe(self):
@@ -155,6 +159,8 @@ class VerseSceneData(vrsent.VerseNode):
             # Reset id of the verse_scene in the AvatarView
             avatar = avatar_view.AvatarView.my_view()
             avatar.scene_node_id.value = (0,)
+            # Remove Blender callback function
+            bpy.app.handlers.scene_update_post.remove(cb_scene_update)
         return subscribed
 
     def __update_item_slot(self):
@@ -321,8 +327,6 @@ class VERSE_SCENE_OT_share(bpy.types.Operator):
         """
         vrs_session = session.VerseSession.instance()
         VerseScene(session=vrs_session, name=(context.scene.name,))
-        # Add callback function that check if name of scene was changed
-        #bpy.app.handlers.scene_update_post.append(cb_scene_update)
         return {'FINISHED'}
 
     @classmethod
@@ -410,8 +414,6 @@ class VERSE_SCENE_OT_unsubscribe(bpy.types.Operator):
         else:
             # Send node unsubscribe to the selected scene data node
             verse_scene_data.unsubscribe()
-            # Remove callback function
-            #bpy.app.handlers.scene_update_post.remove(cb_scene_update)
         return {'FINISHED'}
 
     @classmethod
@@ -572,7 +574,7 @@ def init_properties():
     bpy.types.Scene.subscribed = bpy.props.BoolProperty( \
         name = "Subscribed to scene node", \
         default = False, \
-        description = "Is Blender subscribed to data of shared scene.")
+        description = "Is Blender subscribed to data of shared scene")
     bpy.types.Scene.verse_node_id = bpy.props.IntProperty( \
         name = "ID of verse scene node", \
         default = -1, \
