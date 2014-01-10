@@ -124,34 +124,56 @@ class VerseSceneData(vrsent.VerseNode):
         This method is called, when Blender user wants to subscribe to the
         scene data shared at Verse server.
         """
-        # Save information about subscription to Blender scene too
-        bpy.context.scene.subscribed = True
-        # Save ID of scene node in current scene
-        bpy.context.scene.verse_node_id = self.parent.id
-        # Save node ID of data node in current scene
-        bpy.context.scene.verse_data_node_id = self.id
-        # Save hostname of server in current scene
-        bpy.context.scene.verse_server_hostname = self.session.hostname
-        # Save port (service) of server in current scene
-        bpy.context.scene.verse_server_service = self.session.service
-        # Store/share id of the verse_scene in the AvatarView
-        avatar = avatar_view.AvatarView.my_view()
-        avatar.scene_node_id.value = (self.parent.id,)
         # Send subscribe command to Verse server
-        return super(VerseSceneData, self).subscribe()
+        subscribed = super(VerseSceneData, self).subscribe()
+        if subscribed is True:
+            # Save information about subscription to Blender scene too
+            bpy.context.scene.subscribed = True
+            # Save ID of scene node in current scene
+            bpy.context.scene.verse_node_id = self.parent.id
+            # Save node ID of data node in current scene
+            bpy.context.scene.verse_data_node_id = self.id
+            # Save hostname of server in current scene
+            bpy.context.scene.verse_server_hostname = self.session.hostname
+            # Save port (service) of server in current scene
+            bpy.context.scene.verse_server_service = self.session.service
+            # Store/share id of the verse_scene in the AvatarView
+            avatar = avatar_view.AvatarView.my_view()
+            avatar.scene_node_id.value = (self.parent.id,)
+        return subscribed
 
     def unsubscribe(self):
         """
         This method is called, when Blender user wants to unsubscribe
         from scene data.
         """
-        # Save information about subscription to Blender scene too
-        bpy.context.scene.subscribed = False
-        # Reset id of the verse_scene in the AvatarView
-        avatar = avatar_view.AvatarView.my_view()
-        avatar.scene_node_id.value = (0,)
         # Send unsubscribe command to Verse server
-        return super(VerseSceneData, self).unsubscribe()
+        subscribed = super(VerseSceneData, self).unsubscribe()
+        if subscribed is False:
+            # Save information about subscription to Blender scene too
+            bpy.context.scene.subscribed = False
+            # Reset id of the verse_scene in the AvatarView
+            avatar = avatar_view.AvatarView.my_view()
+            avatar.scene_node_id.value = (0,)
+        return subscribed
+
+    def __update_item_slot(self):
+        """
+        This method tries to update properties in slot of scene list
+        """
+        try:
+            scene_node_id = self.parent.id
+        except AttributeError:
+            pass
+        else:
+            scene_item = None
+            for _scene_item in bpy.context.scene.verse_scenes:
+                if _scene_item.node_id == scene_node_id:
+                    scene_item = _scene_item
+                    break
+            if scene_item is not None:
+                # Add ID of this node to the coresponding group of properties
+                scene_item.data_node_id = self.id
 
     @classmethod
     def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -165,19 +187,20 @@ class VerseSceneData(vrsent.VerseNode):
             parent_id=parent_id,
             user_id=user_id,
             custom_type=custom_type)
-        try:
-            scene_node_id = scene_data_node.parent.id
-        except AttributeError:
-            pass
-        else:
-            scene_item = None
-            for _scene_item in bpy.context.scene.verse_scenes:
-                if _scene_item.node_id == scene_node_id:
-                    scene_item = _scene_item
-                    break
-            if scene_item is not None:
-                # Add ID of this node to the coresponding group of properties
-                scene_item.data_node_id = node_id
+        scene_data_node.__update_item_slot()
+        return scene_data_node
+
+    @classmethod
+    def _receive_node_link(cls, session, parent_node_id, child_node_id):
+        """
+        When parent node of this type of node is chaned at Verse server, then
+        this callback method is called, when coresponding command is received.
+        """
+        # Call parent class
+        scene_data_node = super(VerseSceneData, cls)._receive_node_link(session=session,
+            parent_node_id=parent_node_id,
+            child_node_id=child_node_id)
+        scene_data_node.__update_item_slot()
         return scene_data_node
 
 
