@@ -42,6 +42,7 @@ class VerseMesh(vrsent.VerseNode):
     
     def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_MESH_CT):
         super(VerseMesh, self).__init__(session, node_id, parent, user_id, custom_type)
+        self.mesh = None
         self.vertexes = None
         self.edges = None
         self.quads = None

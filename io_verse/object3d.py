@@ -29,10 +29,15 @@ from . import session
 
 
 VERSE_OBJECT_CT = 125
+# Tranformation
 TG_TRANSFORM_CT = 0
 TAG_POSITION_CT = 0
 TAG_ROTATION_CT = 1
 TAG_SCALE_CT = 2
+# Info
+TG_INFO_CT = 1
+TAG_NAME_CT = 0
+LAYER_BB_CT = 0
 
 
 def object_update(node_id):
@@ -98,6 +103,37 @@ class VerseObjectScale(vrsent.VerseTag):
         super(VerseObjectScale, self).__init__(tg, tag_id, data_type, count, custom_type, value)
 
 
+class VerseObjectBoundingBox(vrsent.VerseLayer):
+    """
+    Custom VerseLayer subclass representing Blender object bounding box
+    """
+
+    node_custom_type = VERSE_OBJECT_CT
+    custom_type = LAYER_BB_CT
+
+    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3, custom_type=LAYER_BB_CT):
+        """
+        Constructor of VerseObjectBoundingBox
+        """
+        super(VerseObjectBoundingBox, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
+
+
+class VerseObjectName(vrsent.VerseTag):
+    """
+    Custom VerseTag cubclass representing name of Blender object name
+    """
+
+    node_custom_type = VERSE_OBJECT_CT
+    tg_custom_type = TG_INFO_CT
+    custom_type = TAG_NAME_CT
+
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_STRING8, count=1, custom_type=TAG_NAME_CT, value=None):
+        """
+        Constructor of VerseObjectName
+        """
+        super(VerseObjectName, self).__init__(tg, tag_id, data_type, count, custom_type, value)
+
+
 class VerseObject(vrsent.VerseNode):
     """
     Custom VerseNode subclass representing Blender object
@@ -113,16 +149,25 @@ class VerseObject(vrsent.VerseNode):
         """
         super(VerseObject, self).__init__(session, node_id, parent, user_id, custom_type)
         self.obj = obj
-        self.mesh = None
+        self.mesh_node = None
         self.transform = vrsent.VerseTagGroup(node=self, custom_type=TG_TRANSFORM_CT)
+        self.info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
         if obj is not None:
             self.transform.pos = VerseObjectPosition(tg=self.transform, value=tuple(obj.location))
             self.transform.rot = VerseObjectRotation(tg=self.transform, value=tuple(obj.matrix_local.to_quaternion().normalized()))
             self.transform.scale = VerseObjectScale(tg=self.transform, value=tuple(obj.scale))
+            self.info.name = VerseObjectName(tg=self.info, value=(str(obj.name),))
+            self.bb = VerseObjectBoundingBox(node=self)
+            item_id = 0
+            for bb_point in obj.bound_box:
+                self.bb.items[item_id] = (bb_point[0], bb_point[1], bb_point[2])
+                item_id += 1
         else:
             self.transform.pos = VerseObjectPosition(tg=self.transform)
             self.transform.rot = VerseObjectRotation(tg=self.transform)
             self.transform.scale = VerseObjectScale(tg=self.transform)
+            self.info.name = VerseObjectName(tg=self.info)
+            self.bb = VerseObjectBoundingBox(node=self)
 
     @classmethod
     def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -140,7 +185,7 @@ class VerseObject(vrsent.VerseNode):
 
     def update(self):
         """
-        This method tries to semd fresh properties of mesh object to Verse server
+        This method tries to send fresh properties of mesh object to Verse server
         """
 
         if self.transform.pos.value != tuple(self.obj.location):
@@ -151,6 +196,78 @@ class VerseObject(vrsent.VerseNode):
 
         if self.transform.scale.value != tuple(self.obj.scale):
             self.transform.scale.value = tuple(self.obj.scale)
+
+        item_id = 0
+        for bb_point in self.obj.bound_box:
+            if self.bb.items[item_id] != (bb_point[0], bb_point[1], bb_point[2]):
+                self.bb.items[item_id] = (bb_point[0], bb_point[1], bb_point[2])
+            item_id += 1
+
+    def draw(self, area, region_data):
+        """
+        Draw bounding box of object with unsubscribed mesh
+        """
+
+        # Get & convert the Perspective Matrix of the current view/region.
+        perspMatrix = region_data.perspective_matrix
+        tempMat = [perspMatrix[j][i] for i in range(4) for j in range(4)]
+        perspBuff = bgl.Buffer(bgl.GL_FLOAT, 16, tempMat)
+
+        # Store previous OpenGL settings.
+        # Store MatrixMode
+        MatrixMode_prev = bgl.Buffer(bgl.GL_INT, [1])
+        bgl.glGetIntegerv(bgl.GL_MATRIX_MODE, MatrixMode_prev)
+        MatrixMode_prev = MatrixMode_prev[0]
+
+        # Store projection matrix
+        ProjMatrix_prev = bgl.Buffer(bgl.GL_DOUBLE, [16])
+        bgl.glGetFloatv(bgl.GL_PROJECTION_MATRIX, ProjMatrix_prev)
+
+        # Store Line width
+        lineWidth_prev = bgl.Buffer(bgl.GL_FLOAT, [1])
+        bgl.glGetFloatv(bgl.GL_LINE_WIDTH, lineWidth_prev)
+        lineWidth_prev = lineWidth_prev[0]
+
+        # Store GL_BLEND
+        blend_prev = bgl.Buffer(bgl.GL_BYTE, [1])
+        bgl.glGetFloatv(bgl.GL_BLEND, blend_prev)
+        blend_prev = blend_prev[0]
+
+        # Store GL_DEPTH_TEST
+        depth_test_prev = bgl.Buffer(bgl.GL_BYTE, [1])
+        bgl.glGetFloatv(bgl.GL_DEPTH_TEST, depth_test_prev)
+        depth_test_prev = depth_test_prev[0]
+
+        # Store GL_LINE_STIPPLE
+        line_stipple_prev = bgl.Buffer(bgl.GL_BYTE, [1])
+        bgl.glGetFloatv(bgl.GL_LINE_STIPPLE, line_stipple_prev)
+        line_stipple_prev = line_stipple_prev[0]
+
+        # Store glColor4f
+        col_prev = bgl.Buffer(bgl.GL_FLOAT, [4])
+        bgl.glGetFloatv(bgl.GL_COLOR, col_prev)
+
+        # Prepare for 3D drawing
+        bgl.glLoadIdentity()
+        bgl.glMatrixMode(bgl.GL_PROJECTION)
+        bgl.glLoadMatrixf(perspBuff)
+        bgl.glEnable(bgl.GL_BLEND)
+        bgl.glEnable(bgl.GL_DEPTH_TEST)
+
+        # Draw Bounding box
+
+        # Restore previous OpenGL settings
+        bgl.glLoadIdentity()
+        bgl.glMatrixMode(MatrixMode_prev)
+        bgl.glLoadMatrixf(ProjMatrix_prev)
+        bgl.glLineWidth(lineWidth_prev)
+        if not blend_prev:
+            bgl.glDisable(bgl.GL_BLEND)
+        if not line_stipple_prev:
+            bgl.glDisable(bgl.GL_LINE_STIPPLE)
+        if not depth_test_prev:
+            bgl.glDisable(bgl.GL_DEPTH_TEST)
+        bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
 
 
 class VERSE_OBJECT_OT_subscribe(bpy.types.Operator):
