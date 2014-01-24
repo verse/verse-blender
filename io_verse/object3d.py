@@ -42,6 +42,21 @@ TAG_NAME_CT = 0
 LAYER_BB_CT = 0
 
 
+def draw_cb(self, context):
+    """
+    This callback function is called, when view to 3d scene is changed
+    """
+
+    print('>>>>>>>>> 0')
+    # This callback works only for 3D View
+    if context.area.type != 'VIEW_3D':
+        return
+    print('>>>>>>>>> 1')
+    for obj in VerseObject.objects.values():
+        print('>>>>>>>>> 2')
+        obj.draw(context.area, context.region_data)
+
+
 def object_update(node_id):
     """
     This function is called by Blender callback function, when
@@ -145,6 +160,8 @@ class VerseObject(vrsent.VerseNode):
     tg_custom_type = TG_TRANSFORM_CT
     custom_type = VERSE_OBJECT_CT
 
+    objects = {}
+
     def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_OBJECT_CT, obj=None):
         """
         Constructor of VerseObject
@@ -163,6 +180,7 @@ class VerseObject(vrsent.VerseNode):
             item_id = 0
             for bb_point in obj.bound_box:
                 self.bb.items[item_id] = (bb_point[0], bb_point[1], bb_point[2])
+                print('******',self.bb.items)
                 item_id += 1
         else:
             self.transform.pos = VerseObjectPosition(tg=self.transform)
@@ -183,6 +201,7 @@ class VerseObject(vrsent.VerseNode):
             user_id=user_id,
             custom_type=custom_type)
         object_node.obj.verse_node_id = node_id
+        cls.objects[node_id] = object_node
         return object_node
 
     def update(self):
@@ -257,8 +276,18 @@ class VerseObject(vrsent.VerseNode):
         bgl.glEnable(bgl.GL_BLEND)
         bgl.glEnable(bgl.GL_DEPTH_TEST)
 
-        # TODO: Transform points
-        points = tuple(mathutils.Vector(item) for item in self.bb.items)
+        # Compute transformation matrix
+        matrix = mathutils.Matrix().Translation(self.transform.pos.value) * \
+            mathutils.Quaternion(self.transform.rot.value).to_matrix().to_4x4() * \
+            mathutils.Matrix(((self.transform.scale.value[0], 0, 0, 0), \
+                (0, self.transform.scale.value[1], 0, 0), \
+                (0, 0, self.transform.scale.value[2], 0), \
+                (0, 0, 0, 1)))
+
+        # Transform points of bounding box
+        #points = tuple(matrix * mathutils.Vector(item) for item in self.bb.items)
+        points = tuple(item for item in self.bb.items)
+        print(points[0], type(points[0]))
 
         # Draw Bounding box
         bgl.glLineWidth(1)
@@ -326,6 +355,7 @@ class VERSE_OBJECT_OT_subscribe(bpy.types.Operator):
         wm = context.window_manager
         if wm.verse_connected == True and \
                 context.scene.subscribed is not False and \
+                context.active_object is not None and \
                 context.active_object.verse_node_id != -1 and \
                 context.active_object.subscribed is False:
             return True
@@ -367,6 +397,7 @@ class VERSE_OBJECT_OT_share(bpy.types.Operator):
         wm = context.window_manager
         if wm.verse_connected == True and \
                 context.scene.subscribed is not False and \
+                context.active_object is not None and \
                 context.active_object.type == 'MESH' and \
                 context.active_object.verse_node_id == -1:
             return True

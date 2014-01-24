@@ -32,6 +32,7 @@ import math
 import verse as vrs
 from .vrsent import vrsent
 from . import session
+from . import object3d
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 
 
@@ -728,6 +729,7 @@ class VerseAvatarStatus(bpy.types.Operator):
                 context.window_manager.verse_avatar_capture = True
                 # Register callback function
                 VerseAvatarStatus._handle = bpy.types.SpaceView3D.draw_handler_add(draw_cb, (self, context), 'WINDOW', 'POST_PIXEL')
+                bpy.types.SpaceView3D.draw_handler_add(object3d.draw_cb, (self, context), 'WINDOW', 'POST_PIXEL')
                 # Force redraw (display bgl stuff)
                 for area in context.screen.areas:
                     if area.type == 'VIEW_3D':
