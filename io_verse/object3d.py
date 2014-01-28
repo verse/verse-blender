@@ -47,13 +47,10 @@ def draw_cb(self, context):
     This callback function is called, when view to 3d scene is changed
     """
 
-    print('>>>>>>>>> 0')
     # This callback works only for 3D View
     if context.area.type != 'VIEW_3D':
         return
-    print('>>>>>>>>> 1')
     for obj in VerseObject.objects.values():
-        print('>>>>>>>>> 2')
         obj.draw(context.area, context.region_data)
 
 
@@ -221,6 +218,7 @@ class VerseObject(vrsent.VerseNode):
         item_id = 0
         for bb_point in self.obj.bound_box:
             if self.bb.items[item_id] != (bb_point[0], bb_point[1], bb_point[2]):
+                print(item_id, (bb_point[0], bb_point[1], bb_point[2]))
                 self.bb.items[item_id] = (bb_point[0], bb_point[1], bb_point[2])
             item_id += 1
 
@@ -285,9 +283,8 @@ class VerseObject(vrsent.VerseNode):
                 (0, 0, 0, 1)))
 
         # Transform points of bounding box
-        #points = tuple(matrix * mathutils.Vector(item) for item in self.bb.items)
-        points = tuple(item for item in self.bb.items)
-        print(points[0], type(points[0]))
+        points = tuple(matrix * mathutils.Vector(item) for item in self.bb.items.values())
+#        print(points[0], type(points[0]))
 
         # Draw Bounding box
         bgl.glLineWidth(1)
