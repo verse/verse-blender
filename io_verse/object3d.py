@@ -50,8 +50,33 @@ def draw_cb(self, context):
     # This callback works only for 3D View
     if context.area.type != 'VIEW_3D':
         return
+
     for obj in VerseObject.objects.values():
+        print(obj)
         obj.draw(context.area, context.region_data)
+
+
+def update_all_3dview():
+    """
+    This method updates all 3D View.
+    """
+    # Force redraw of all 3D view in all screens
+    for screen in bpy.data.screens:
+        for area in screen.areas:
+            if area.type == 'VIEW_3D':
+                # Tag area to redraw
+                area.tag_redraw()
+
+
+def update_3dview(node):
+    """
+    This method updates all 3D View but not in case, when object is selected/locked
+    """
+    # 3DView should be updated only in situation, when position/rotation/etc
+    # of other objects is changed
+    if node.obj.select is False:
+        update_all_3dview()
+
 
 
 def object_update(node_id):
@@ -84,6 +109,15 @@ class VerseObjectPosition(vrsent.VerseTag):
         """
         super(VerseObjectPosition, self).__init__(tg, tag_id, data_type, count, custom_type, value)
 
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(VerseObjectPosition, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
+
 
 class VerseObjectRotation(vrsent.VerseTag):
     """
@@ -99,6 +133,15 @@ class VerseObjectRotation(vrsent.VerseTag):
         Constructor of VerseObjectRotation
         """
         super(VerseObjectRotation, self).__init__(tg, tag_id, data_type, count, custom_type, value)
+
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(VerseObjectRotation, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
 
 
 class VerseObjectScale(vrsent.VerseTag):
@@ -116,6 +159,15 @@ class VerseObjectScale(vrsent.VerseTag):
         """
         super(VerseObjectScale, self).__init__(tg, tag_id, data_type, count, custom_type, value)
 
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        tag = super(VerseObjectScale, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        update_3dview(tag.tg.node)
+        return tag
+
 
 class VerseObjectBoundingBox(vrsent.VerseLayer):
     """
@@ -130,6 +182,15 @@ class VerseObjectBoundingBox(vrsent.VerseLayer):
         Constructor of VerseObjectBoundingBox
         """
         super(VerseObjectBoundingBox, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
+
+    @classmethod
+    def _receive_layer_set_values(cls, session, node_id, layer_id, item_id, value):
+        """
+        This method is called, when new value of verse tag was set
+        """
+        layer = super(VerseObjectBoundingBox, cls)._receive_tag_set_values(session, node_id, layer_id, item_id, value)
+        update_3dview(layer.node)
+        return layer
 
 
 class VerseObjectName(vrsent.VerseTag):
@@ -168,23 +229,26 @@ class VerseObject(vrsent.VerseNode):
         self.mesh_node = None
         self.transform = vrsent.VerseTagGroup(node=self, custom_type=TG_TRANSFORM_CT)
         self.info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
+        self.bb = VerseObjectBoundingBox(node=self)
         if obj is not None:
+            # Transformation
             self.transform.pos = VerseObjectPosition(tg=self.transform, value=tuple(obj.location))
             self.transform.rot = VerseObjectRotation(tg=self.transform, value=tuple(obj.matrix_local.to_quaternion().normalized()))
             self.transform.scale = VerseObjectScale(tg=self.transform, value=tuple(obj.scale))
+            # Information
             self.info.name = VerseObjectName(tg=self.info, value=(str(obj.name),))
-            self.bb = VerseObjectBoundingBox(node=self)
+            # Boundind Box
             item_id = 0
             for bb_point in obj.bound_box:
                 self.bb.items[item_id] = (bb_point[0], bb_point[1], bb_point[2])
-                print('******',self.bb.items)
                 item_id += 1
+            # Scene
+            self.parent = session.nodes[bpy.context.scene.verse_data_node_id]
         else:
             self.transform.pos = VerseObjectPosition(tg=self.transform)
             self.transform.rot = VerseObjectRotation(tg=self.transform)
             self.transform.scale = VerseObjectScale(tg=self.transform)
             self.info.name = VerseObjectName(tg=self.info)
-            self.bb = VerseObjectBoundingBox(node=self)
 
     @classmethod
     def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -197,7 +261,15 @@ class VerseObject(vrsent.VerseNode):
             parent_id=parent_id,
             user_id=user_id,
             custom_type=custom_type)
-        object_node.obj.verse_node_id = node_id
+        # Create binding between Blender object and node
+        if object_node.obj is not None:
+            object_node.obj.verse_node_id = node_id
+        else:
+            mesh = bpy.data.meshes.new('Verse')
+            obj = bpy.data.objects.new('Verse', mesh)
+            bpy.context.scene.objects.link(obj)
+            obj.verse_node_id = node_id
+            object_node.obj = obj
         cls.objects[node_id] = object_node
         return object_node
 
@@ -218,7 +290,6 @@ class VerseObject(vrsent.VerseNode):
         item_id = 0
         for bb_point in self.obj.bound_box:
             if self.bb.items[item_id] != (bb_point[0], bb_point[1], bb_point[2]):
-                print(item_id, (bb_point[0], bb_point[1], bb_point[2]))
                 self.bb.items[item_id] = (bb_point[0], bb_point[1], bb_point[2])
             item_id += 1
 
@@ -420,6 +491,7 @@ class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
         wm = context.window_manager
         if wm.verse_connected == True and \
                 context.scene.subscribed is not False and \
+                context.active_object is not None and \
                 context.active_object.type == 'MESH':
             return True
         else:
