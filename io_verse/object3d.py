@@ -110,11 +110,15 @@ class VerseObjectPosition(vrsent.VerseTag):
         super(VerseObjectPosition, self).__init__(tg, tag_id, data_type, count, custom_type, value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def _receive_tag_set_value(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(VerseObjectPosition, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(VerseObjectPosition, cls)._receive_tag_set_value(session, node_id, tg_id, tag_id, value)
+        # TODO: Update position of Blender object that are not locked (not selected)
+        if tag.tg.node.obj.select is False:
+            tag.tg.node.obj.location = mathutils.Vector(value)
+        # Redraw all 3D views
         update_3dview(tag.tg.node)
         return tag
 
@@ -184,11 +188,11 @@ class VerseObjectBoundingBox(vrsent.VerseLayer):
         super(VerseObjectBoundingBox, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
 
     @classmethod
-    def _receive_layer_set_values(cls, session, node_id, layer_id, item_id, value):
+    def _receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        layer = super(VerseObjectBoundingBox, cls)._receive_tag_set_values(session, node_id, layer_id, item_id, value)
+        layer = super(VerseObjectBoundingBox, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
         update_3dview(layer.node)
         return layer
 
