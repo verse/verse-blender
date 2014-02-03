@@ -110,12 +110,12 @@ class VerseObjectPosition(vrsent.VerseTag):
         super(VerseObjectPosition, self).__init__(tg, tag_id, data_type, count, custom_type, value)
 
     @classmethod
-    def _receive_tag_set_value(cls, session, node_id, tg_id, tag_id, value):
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(VerseObjectPosition, cls)._receive_tag_set_value(session, node_id, tg_id, tag_id, value)
-        # TODO: Update position of Blender object that are not locked (not selected)
+        tag = super(VerseObjectPosition, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        # Update position of Blender object that are not locked (not selected)
         if tag.tg.node.obj.select is False:
             tag.tg.node.obj.location = mathutils.Vector(value)
         # Redraw all 3D views
@@ -144,6 +144,9 @@ class VerseObjectRotation(vrsent.VerseTag):
         This method is called, when new value of verse tag was set
         """
         tag = super(VerseObjectRotation, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        # Update rotation of Blender object that are not locked (not selected)
+        if tag.tg.node.obj.select is False:
+            tag.tg.node.obj.rotation_quaternion = mathutils.Quaternion(value)
         update_3dview(tag.tg.node)
         return tag
 
@@ -169,6 +172,9 @@ class VerseObjectScale(vrsent.VerseTag):
         This method is called, when new value of verse tag was set
         """
         tag = super(VerseObjectScale, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        # Update scale of Blender object that are not locked (not selected)
+        if tag.tg.node.obj.select is False:
+            tag.tg.node.obj.scale = mathutils.Vector(value)
         update_3dview(tag.tg.node)
         return tag
 
@@ -275,6 +281,7 @@ class VerseObject(vrsent.VerseNode):
             obj.verse_node_id = node_id
             object_node.obj = obj
         cls.objects[node_id] = object_node
+        update_all_3dview()
         return object_node
 
     def update(self):
@@ -352,16 +359,16 @@ class VerseObject(vrsent.VerseNode):
         # Compute transformation matrix
         matrix = mathutils.Matrix().Translation(self.transform.pos.value) * \
             mathutils.Quaternion(self.transform.rot.value).to_matrix().to_4x4() * \
-            mathutils.Matrix(((self.transform.scale.value[0], 0, 0, 0), \
+            mathutils.Matrix(( \
+                (self.transform.scale.value[0], 0, 0, 0), \
                 (0, self.transform.scale.value[1], 0, 0), \
                 (0, 0, self.transform.scale.value[2], 0), \
                 (0, 0, 0, 1)))
 
         # Transform points of bounding box
         points = tuple(matrix * mathutils.Vector(item) for item in self.bb.items.values())
-#        print(points[0], type(points[0]))
 
-        # Draw Bounding box
+        # TODO: Draw Bounding box only for unsubscribed objects
         bgl.glLineWidth(1)
         bgl.glColor4f(color[0], color[1], color[2], color[3])
         bgl.glBegin(bgl.GL_LINE_LOOP)
@@ -457,6 +464,7 @@ class VERSE_OBJECT_OT_share(bpy.types.Operator):
         else:
             # Share active mesh object at Verse server
             VerseObject(session=vrs_session, parent=scene_data_node, obj=context.active_object)
+            # TODO: Create node representing mesh data
         return {'FINISHED'}
 
     @classmethod
