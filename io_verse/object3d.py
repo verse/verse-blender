@@ -52,7 +52,6 @@ def draw_cb(self, context):
         return
 
     for obj in VerseObject.objects.values():
-        print(obj)
         obj.draw(context.area, context.region_data)
 
 
@@ -284,31 +283,82 @@ class VerseObject(vrsent.VerseNode):
         update_all_3dview()
         return object_node
 
+    @classmethod
+    def _receive_node_lock(cls, session, node_id, avatar_id):
+        """
+        When some object is locked by other user, then it should not
+        be selectable
+        """
+        object_node = super(VerseObject, cls)._receive_node_lock(session, node_id, avatar_id)
+        if object_node.session.avatar_id != avatar_id:
+            # Only in case, that two clients tried to select one object
+            # at the same time and this client didn't win
+            object_node.obj.select = False
+            if object_node.obj == bpy.context.active_object:
+                bpy.context.scene.objects.active = None
+            object_node.obj.hide_select = True
+        update_all_3dview()
+        return object_node
+
+    @classmethod
+    def _receive_node_unlock(cls, session, node_id, avatar_id):
+        """
+        When some object was unlocked, then it should be able to select it again
+        """
+        object_node = super(VerseObject, cls)._receive_node_unlock(session, node_id, avatar_id)
+        if object_node.session.avatar_id != avatar_id:
+            object_node.obj.hide_select = False
+        update_all_3dview()
+        return object_node
+
     def update(self):
         """
         This method tries to send fresh properties of mesh object to Verse server
         """
 
+        # Position
         if self.transform.pos.value != tuple(self.obj.location):
             self.transform.pos.value = tuple(self.obj.location)
 
+        # Rotation
         if self.transform.rot.value != tuple(self.obj.matrix_local.to_quaternion().normalized()):
             self.transform.rot.value = tuple(self.obj.matrix_local.to_quaternion().normalized())
 
+        # Scale
         if self.transform.scale.value != tuple(self.obj.scale):
             self.transform.scale.value = tuple(self.obj.scale)
 
+        # Bounding box
         item_id = 0
         for bb_point in self.obj.bound_box:
             if self.bb.items[item_id] != (bb_point[0], bb_point[1], bb_point[2]):
                 self.bb.items[item_id] = (bb_point[0], bb_point[1], bb_point[2])
             item_id += 1
 
+        # TODO: Blender doesn't mark object as changed, when object is selected or
+        # unselected :-(. Thus following block of code is not called :-(
+
+        # # When object is selected and it is not locket yet, then try to lock it
+        # if self.locked is False and \
+        #         self.obj.select is True:
+        #     self.lock()
+
+
+        # # When object is locked by this client and it is not selected anymore,
+        # # then unlock it. Other users will be able to work with it.
+        # if self.locked is True:
+        #     if self.locker == self.session.avatar:
+        #         if self.obj.select is False:
+        #             self.unlock()
+
     def draw(self, area, region_data):
         """
         Draw bounding box of object with unsubscribed mesh
         """
-        color = (0.0, 1.0, 1.0, 1.0)
+        if self.locked is True:
+            color = (1.0, 0.0, 0.0, 1.0)
+        else:
+            color = (0.0, 1.0, 1.0, 1.0)
 
         # Get & convert the Perspective Matrix of the current view/region.
         perspMatrix = region_data.perspective_matrix
@@ -463,7 +513,8 @@ class VERSE_OBJECT_OT_share(bpy.types.Operator):
             return {'CANCELLED'}
         else:
             # Share active mesh object at Verse server
-            VerseObject(session=vrs_session, parent=scene_data_node, obj=context.active_object)
+            node = VerseObject(session=vrs_session, parent=scene_data_node, obj=context.active_object)
+            #node.lock()
             # TODO: Create node representing mesh data
         return {'FINISHED'}
 
