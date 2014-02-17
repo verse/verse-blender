@@ -789,6 +789,19 @@ class VERSE_OBJECT_panel(bpy.types.Panel):
     bl_label       = 'Verse'
     bl_description = 'Panel with Blender objects shared at Verse server'
 
+    @classmethod
+    def poll(cls, context):
+        """
+        Can this panel visible
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True and \
+                context.scene.subscribed is not False:
+            return True
+        else:
+            return False
+
     def draw(self, context):
         """
         This method draw panel of Verse scenes
