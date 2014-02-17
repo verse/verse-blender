@@ -67,6 +67,18 @@ def update_all_3dview():
                 area.tag_redraw()
 
 
+def update_all_properties_view():
+    """
+    This method updates all Properties View.
+    """
+    # Force redraw of all Properties View in all screens
+    for screen in bpy.data.screens:
+        for area in screen.areas:
+            if area.type == 'PROPERTIES':
+                # Tag area to redraw
+                area.tag_redraw()
+
+
 def update_3dview(node):
     """
     This method updates all 3D View but not in case, when object is selected/locked
@@ -216,6 +228,25 @@ class VerseObjectName(vrsent.VerseTag):
         Constructor of VerseObjectName
         """
         super(VerseObjectName, self).__init__(tg, tag_id, data_type, count, custom_type, value)
+
+    @classmethod
+    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+        """
+        This method is called, when name of object is set
+        """
+        tag = super(VerseObjectName, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        # Update name of object, when name of the object was changed by other Blender
+        try:
+            node = session.nodes[node_id]
+        except KeyError:
+            pass
+        else:
+            obj = node.obj
+            if obj.name != value[0]:
+                obj.name = value[0]
+        # Update list of scenes shared at Verse server
+        update_all_properties_view()
+        return tag
 
 
 class VerseObject(vrsent.VerseNode):
@@ -739,7 +770,6 @@ class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
         """
         Definition of panel layout
         """
-        obj = context.active_object
         layout = self.layout
 
         col = layout.column(align=True)
@@ -748,8 +778,26 @@ class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
         col.operator("object.mesh_object_lock")
         col.operator("object.mesh_object_unlock")
 
-        # TODO: Move this list to properties window
+
+class VERSE_OBJECT_panel(bpy.types.Panel):
+    """
+    GUI of Blender objects shared at Verse server
+    """
+    bl_space_type  = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context     = 'object'
+    bl_label       = 'Verse'
+    bl_description = 'Panel with Blender objects shared at Verse server'
+
+    def draw(self, context):
+        """
+        This method draw panel of Verse scenes
+        """
+        obj = context.active_object
+        layout = self.layout
+
         row = layout.row()
+
         row.template_list('VERSE_OBJECT_UL_slot', \
             'verse_objects_widget_id', \
             obj, \
@@ -757,9 +805,9 @@ class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
             obj, \
             'cur_verse_object_index', \
             rows = 3)
+
         col = row.column(align=True)
         col.menu('object.verse_object_menu', icon='DOWNARROW_HLT', text="")
-
 
 # List of Blender classes in this submodule
 classes = (VERSE_OBJECT_OT_share, \
@@ -767,6 +815,7 @@ classes = (VERSE_OBJECT_OT_share, \
         VERSE_OBJECT_OT_unlock, \
         VERSE_OBJECT_OT_subscribe, \
         VIEW3D_PT_tools_VERSE_object, \
+        VERSE_OBJECT_panel, \
         VERSE_OBJECT_NODES_list_item, \
         VERSE_OBJECT_UL_slot, \
         VERSE_OBJECT_MT_menu
