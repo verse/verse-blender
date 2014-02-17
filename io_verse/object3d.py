@@ -259,6 +259,21 @@ class VerseObject(vrsent.VerseNode):
             self.transform.scale = VerseObjectScale(tg=self.transform)
             self.info.name = VerseObjectName(tg=self.info)
 
+    @property
+    def name(self):
+        """
+        Property of object name
+        """
+        try:
+            name = self.info.name.value
+        except AttributeError:
+            return ""
+        else:
+            try:
+                return name[0]
+            except TypeError:
+                return ""
+
     @classmethod
     def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
         """
@@ -280,6 +295,8 @@ class VerseObject(vrsent.VerseNode):
             obj.verse_node_id = node_id
             object_node.obj = obj
         cls.objects[node_id] = object_node
+        bpy.context.object.verse_objects.add()
+        bpy.context.object.verse_objects[-1].node_id = node_id
         update_all_3dview()
         return object_node
 
@@ -536,6 +553,68 @@ class VERSE_OBJECT_OT_share(bpy.types.Operator):
             return False
 
 
+class VERSE_OBJECT_MT_menu(bpy.types.Menu):
+    """
+    Menu for object list
+    """
+    bl_idname = 'object.verse_object_menu'
+    bl_label = 'Verse Object Specials'
+    bl_description = 'Menu for list of Verse objects'
+
+    def draw(self, context):
+        """
+        Draw menu
+        """
+        layout = self.layout
+        layout.operator('object.mesh_object_subscribe')
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        obj = context.active_object
+
+        # Return true only in situation, when client is connected to Verse server
+        if obj.cur_verse_object_index >= 0 and \
+                len(obj.verse_objects) > 0:
+            return True
+        else:
+            return False
+
+
+class VERSE_OBJECT_NODES_list_item(bpy.types.PropertyGroup):
+    """
+    Group of properties with representation of Verse scene node
+    """
+    node_id = bpy.props.IntProperty( \
+        name = "Node ID", \
+        description = "ID of object node", \
+        default = -1)
+
+
+class VERSE_OBJECT_UL_slot(bpy.types.UIList):
+    """
+    A custom slot with information about Verse object node
+    """
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        """
+        This method draw one list item representing node
+        """
+        vrs_session = session.VerseSession.instance()
+        if vrs_session is not None:
+            try:
+                verse_object = vrs_session.nodes[item.node_id]
+            except KeyError:
+                return
+            if self.layout_type in {'DEFAULT', 'COMPACT'}:
+                layout.label(verse_object.name, icon='OBJECT_DATA')
+            elif self.layout_type in {'GRID'}:
+                layout.alignment = 'CENTER'
+                layout.label(verse_object.name)
+
+
 class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
     """
     Panel with Verse tools for Mesh Object
@@ -564,17 +643,34 @@ class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
         """
         Definition of panel layout
         """
+        obj = context.active_object
         layout = self.layout
 
         col = layout.column(align=True)
         col.operator("object.mesh_object_share")
         col.operator("object.mesh_object_subscribe")
 
+        row = layout.row()
+
+        row.template_list('VERSE_OBJECT_UL_slot', \
+            'verse_objects_widget_id', \
+            obj, \
+            'verse_objects', \
+            obj, \
+            'cur_verse_object_index', \
+            rows = 3)
+
+        col = row.column(align=True)
+        col.menu('object.verse_object_menu', icon='DOWNARROW_HLT', text="")
+
 
 # List of Blender classes in this submodule
 classes = (VERSE_OBJECT_OT_share, \
         VERSE_OBJECT_OT_subscribe, \
-        VIEW3D_PT_tools_VERSE_object
+        VIEW3D_PT_tools_VERSE_object, \
+        VERSE_OBJECT_NODES_list_item, \
+        VERSE_OBJECT_UL_slot, \
+        VERSE_OBJECT_MT_menu
     )
 
 
@@ -582,6 +678,18 @@ def init_properties():
     """
     Init properties in blender object data type
     """
+    bpy.types.Object.verse_objects = bpy.props.CollectionProperty( \
+        type =  VERSE_OBJECT_NODES_list_item, \
+        name = "Verse Objects", \
+        description = "The list of verse object nodes shared at Verse server" \
+    )
+    bpy.types.Object.cur_verse_object_index = bpy.props.IntProperty( \
+        name = "Index of current Verse object", \
+        default = -1, \
+        min = -1, \
+        max = 1000, \
+        description = "The index of curently selected Verse object node"
+    )
     bpy.types.Object.verse_node_id = bpy.props.IntProperty( \
         name = "ID of verse node", \
         default = -1, \
