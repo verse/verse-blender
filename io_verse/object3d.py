@@ -475,6 +475,94 @@ class VerseObject(vrsent.VerseNode):
         bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
 
 
+class VERSE_OBJECT_OT_unlock(bpy.types.Operator):
+    """
+    This operator tries to unlock node representing Blender Mesh object.
+    """
+    bl_idname      = 'object.mesh_object_unlock'
+    bl_label       = "UnLock"
+    bl_description = "UnLock node representing Mesh Object at Verse server"
+
+    def invoke(self, context, event):
+        """
+        This method will try to unlock node representing Mesh Object
+        at Verse server
+        """
+        vrs_session = session.VerseSession.instance()
+        node = vrs_session.nodes[context.active_object.verse_node_id]
+        node.unlock()
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True and \
+                context.active_object is not None and \
+                context.active_object.verse_node_id != -1:
+            vrs_session = session.VerseSession.instance()
+            try:
+                node = vrs_session.nodes[context.active_object.verse_node_id]
+            except KeyError:
+                return False
+            else:
+                if node.locked is True:
+                    return True
+                else:
+                    return False
+            return True
+        else:
+            return False
+
+
+class VERSE_OBJECT_OT_lock(bpy.types.Operator):
+    """
+    This operator tries to lock node representing Blender Mesh object.
+    """
+    bl_idname      = 'object.mesh_object_lock'
+    bl_label       = "Lock"
+    bl_description = "Lock node representing Mesh Object at Verse server"
+
+    def invoke(self, context, event):
+        """
+        This method will try to lock node representing Mesh Object
+        at Verse server
+        """
+        vrs_session = session.VerseSession.instance()
+        node = vrs_session.nodes[context.active_object.verse_node_id]
+        node.lock()
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True and \
+                context.active_object is not None and \
+                context.active_object.verse_node_id != -1:
+            vrs_session = session.VerseSession.instance()
+            try:
+                node = vrs_session.nodes[context.active_object.verse_node_id]
+            except KeyError:
+                return False
+            else:
+                if node.locked is not True:
+                    return True
+                else:
+                    return False
+            return True
+        else:
+            return False
+
+
 class VERSE_OBJECT_OT_subscribe(bpy.types.Operator):
     """
     This operator tries to subscribe to Blender Mesh object at Verse server.
@@ -502,9 +590,17 @@ class VERSE_OBJECT_OT_subscribe(bpy.types.Operator):
         if wm.verse_connected == True and \
                 context.scene.subscribed is not False and \
                 context.active_object is not None and \
-                context.active_object.verse_node_id != -1 and \
-                context.active_object.subscribed is False:
-            return True
+                context.active_object.verse_node_id != -1:
+            vrs_session = session.VerseSession.instance()
+            try:
+                node = vrs_session.nodes[context.active_object.verse_node_id]
+            except KeyError:
+                return False
+            else:
+                if node.subscribed is not True:
+                    return True
+                else:
+                    return False
         else:
             return False
 
@@ -649,9 +745,11 @@ class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
         col = layout.column(align=True)
         col.operator("object.mesh_object_share")
         col.operator("object.mesh_object_subscribe")
+        col.operator("object.mesh_object_lock")
+        col.operator("object.mesh_object_unlock")
 
+        # TODO: Move this list to properties window
         row = layout.row()
-
         row.template_list('VERSE_OBJECT_UL_slot', \
             'verse_objects_widget_id', \
             obj, \
@@ -659,13 +757,14 @@ class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
             obj, \
             'cur_verse_object_index', \
             rows = 3)
-
         col = row.column(align=True)
         col.menu('object.verse_object_menu', icon='DOWNARROW_HLT', text="")
 
 
 # List of Blender classes in this submodule
 classes = (VERSE_OBJECT_OT_share, \
+        VERSE_OBJECT_OT_lock, \
+        VERSE_OBJECT_OT_unlock, \
         VERSE_OBJECT_OT_subscribe, \
         VIEW3D_PT_tools_VERSE_object, \
         VERSE_OBJECT_NODES_list_item, \
