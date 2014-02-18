@@ -30,6 +30,7 @@ FPS = 60
 import bpy
 import verse as vrs
 from .vrsent import vrsent
+from . import ui
 
 
 # VerseSession class
@@ -88,6 +89,8 @@ class VerseSession(vrsent.VerseSession):
 
         # Set Blender property
         bpy.context.window_manager.verse_connected = False
+
+        ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
   
     
     def _receive_connect_accept(self, user_id, avatar_id):
@@ -98,6 +101,8 @@ class VerseSession(vrsent.VerseSession):
 
         # Set Blender property
         bpy.context.window_manager.verse_connected = True
+
+        ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
  
     
     def _receive_user_authenticate(self, username, methods):

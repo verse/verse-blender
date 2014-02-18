@@ -29,6 +29,7 @@ import verse as vrs
 from .vrsent import vrsent
 from . import session
 from . import mesh
+from . import ui
 
 
 VERSE_OBJECT_CT = 125
@@ -56,30 +57,6 @@ def draw_cb(self, context):
         obj.draw(context.area, context.region_data)
 
 
-def update_all_3dview():
-    """
-    This method updates all 3D View.
-    """
-    # Force redraw of all 3D view in all screens
-    for screen in bpy.data.screens:
-        for area in screen.areas:
-            if area.type == 'VIEW_3D':
-                # Tag area to redraw
-                area.tag_redraw()
-
-
-def update_all_properties_view():
-    """
-    This method updates all Properties View.
-    """
-    # Force redraw of all Properties View in all screens
-    for screen in bpy.data.screens:
-        for area in screen.areas:
-            if area.type == 'PROPERTIES':
-                # Tag area to redraw
-                area.tag_redraw()
-
-
 def update_3dview(node):
     """
     This method updates all 3D View but not in case, when object is selected/locked
@@ -87,7 +64,7 @@ def update_3dview(node):
     # 3DView should be updated only in situation, when position/rotation/etc
     # of other objects is changed
     if node.obj.select is False:
-        update_all_3dview()
+        ui.update_all_views(('VIEW_3D',))
 
 
 
@@ -246,7 +223,7 @@ class VerseObjectName(vrsent.VerseTag):
             if obj.name != value[0]:
                 obj.name = value[0]
         # Update list of scenes shared at Verse server
-        update_all_properties_view()
+        ui.update_all_views(('PROPERTIES',))
         return tag
 
 
@@ -331,7 +308,7 @@ class VerseObject(vrsent.VerseNode):
         cls.objects[node_id] = object_node
         bpy.context.object.verse_objects.add()
         bpy.context.object.verse_objects[-1].node_id = node_id
-        update_all_3dview()
+        ui.update_all_views(('VIEW_3D',))
         return object_node
 
     @classmethod
@@ -348,8 +325,7 @@ class VerseObject(vrsent.VerseNode):
             if object_node.obj == bpy.context.active_object:
                 bpy.context.scene.objects.active = None
             object_node.obj.hide_select = True
-        update_all_3dview()
-        update_all_properties_view()
+        ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
         return object_node
 
     @classmethod
@@ -360,8 +336,7 @@ class VerseObject(vrsent.VerseNode):
         object_node = super(VerseObject, cls)._receive_node_unlock(session, node_id, avatar_id)
         if object_node.session.avatar_id != avatar_id:
             object_node.obj.hide_select = False
-        update_all_3dview()
-        update_all_properties_view()
+        ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
         return object_node
 
     def update(self):
@@ -741,31 +716,30 @@ class VERSE_OBJECT_UL_slot(bpy.types.UIList):
                 return
             if self.layout_type in {'DEFAULT', 'COMPACT'}:
                 layout.label(verse_object.name, icon='OBJECT_DATA')
-                layout.label(str(verse_object.owner.name))
-                # TODO: improve this check
+                # Owner
+                if verse_object.user_id == vrs_session.user_id:
+                    layout.label('Me')
+                else:
+                    layout.label(str(verse_object.owner.name))
+                # Read permissions
+                perm_str = ''
+                if verse_object.can_read(vrs_session.user_id):
+                    perm_str += 'r'
+                else:
+                    perm_str += '-'
+                # Write permissions
+                if verse_object.can_write(vrs_session.user_id):
+                    perm_str += 'w'
+                else:
+                    perm_str += '-'
+                # Locked/unlocked?
+                if verse_object.locked is True:
+                    layout.label(perm_str, icon='LOCKED')
+                else:
+                    layout.label(perm_str, icon='UNLOCKED')
+                # Subscribed?
                 if verse_object.mesh_node is not None:
                     layout.label('', icon='FILE_TICK')
-                # Locked/unlocked
-                if verse_object.locked is True:
-                    layout.label('', icon='LOCKED')
-                else:
-                    layout.label('', icon='UNLOCKED')
-                # Permissions
-                try:
-                    perm = verse_object.perms[vrs_session.user_id]
-                except KeyError:
-                    pass
-                else:
-                    # Read
-                    if perm & vrs.PERM_NODE_READ:
-                        layout.label('r')
-                    else:
-                        layout.label(' ')
-                    # Write
-                    if perm & vrs.PERM_NODE_WRITE:
-                        layout.label('w')
-                    else:
-                        layout.label(' ')
             elif self.layout_type in {'GRID'}:
                 layout.alignment = 'CENTER'
                 layout.label(verse_object.name)
@@ -814,16 +788,17 @@ class VERSE_OBJECT_panel(bpy.types.Panel):
     """
     bl_space_type  = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context     = 'object'
-    bl_label       = 'Verse'
+    bl_context     = 'scene'
+    bl_label       = 'Verse Objects'
     bl_description = 'Panel with Blender objects shared at Verse server'
 
     @classmethod
     def poll(cls, context):
         """
-        Can this panel visible
+        Can be this panel visible
         """
-        # Return true only in situation, when client is connected to Verse server
+        # Return true only in situation, when client is connected
+        # to Verse server and it is subscribed to data of some scene
         wm = context.window_manager
         if wm.verse_connected == True and \
                 context.scene.subscribed is not False:

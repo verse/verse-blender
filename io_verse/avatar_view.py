@@ -33,6 +33,7 @@ import verse as vrs
 from .vrsent import vrsent
 from . import session
 from . import object3d
+from . import ui
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 
 
@@ -73,18 +74,6 @@ def draw_cb(self, context):
             avatar.draw(context.area, context.region_data)
 
 
-def update_all_3dview():
-    """
-    This method updates all 3D View.
-    """
-    # Force redraw of all 3D view in all screens
-    for screen in bpy.data.screens:
-        for area in screen.areas:
-            if area.type == 'VIEW_3D':
-                # Tag area to redraw
-                area.tag_redraw()
-
-
 def update_3dview(avatar_view):
     """
     This method updates all 3D View but not in case, when the avatar_view is equal to current view,
@@ -93,7 +82,7 @@ def update_3dview(avatar_view):
     # 3DView should be updated only in situation, when position/rotation/etc
     # of other avatar is changed
     if avatar_view != AvatarView.my_view():
-        update_all_3dview()
+        ui.update_all_views(('VIEW_3D',))
 
 
 class BlenderUserNameTag(vrsent.verse_user.UserNameTag):
@@ -107,7 +96,7 @@ class BlenderUserNameTag(vrsent.verse_user.UserNameTag):
         It should force to redraw all visible 3D views.
         """
         tag = super(BlenderUserNameTag, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
-        update_all_3dview()
+        ui.update_all_views(('VIEW_3D',))
         return tag
 
 
@@ -122,7 +111,7 @@ class BlenderHostnameTag(vrsent.verse_avatar.HostnameTag):
         It should force to redraw all visible 3D views.
         """
         tag = super(BlenderHostnameTag, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
-        update_all_3dview()
+        ui.update_all_views(('VIEW_3D',))
         return tag
 
 
@@ -816,7 +805,7 @@ class VERSE_AVATAR_OT_show_all(bpy.types.Operator):
             verse_avatar = vrs_session.avatars[avatar_item.node_id]
             verse_avatar.visualized = True
             # TODO: subscribe to unsubscribed tag groups
-        update_all_3dview()
+        ui.update_all_views(('VIEW_3D',))
         return {'FINISHED'}
 
     @classmethod
@@ -890,7 +879,7 @@ class VERSE_AVATAR_OT_hide_all(bpy.types.Operator):
             verse_avatar = vrs_session.avatars[avatar_item.node_id]
             verse_avatar.visualized = False
             # TODO: unsubscribe from all tag groups
-        update_all_3dview()
+        ui.update_all_views(('VIEW_3D',))
         return {'FINISHED'}
 
     @classmethod
@@ -983,7 +972,21 @@ class VerseAvatarPanel(bpy.types.Panel):
     bl_label = "Verse Avatar"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    
+
+    @classmethod
+    def poll(cls, context):
+        """
+        Can be this panel visible
+        """
+        # Return true only in situation, when client is connected
+        # to Verse server and it is subscribed to data of some scene
+        wm = context.window_manager
+        if wm.verse_connected == True and \
+                context.scene.subscribed is not False:
+            return True
+        else:
+            return False
+
     def draw(self, context):
         """
         Define drawing of widgets

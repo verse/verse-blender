@@ -26,6 +26,7 @@ from .vrsent import vrsent
 from . import session
 from . import object3d
 from . import avatar_view
+from . import ui
 
 
 VERSE_SCENE_CT = 123
@@ -80,18 +81,6 @@ def cb_scene_update(context):
         #         if sce.is_updated and sce.verse_node_id != -1:
         #             print('### Scene ID:', sce.verse_node_id)
         #             scene_update(sce.verse_node_id)
-
-
-def update_all_properties_view():
-    """
-    This method updates all Properties View.
-    """
-    # Force redraw of all Properties View in all screens
-    for screen in bpy.data.screens:
-        for area in screen.areas:
-            if area.type == 'PROPERTIES':
-                # Tag area to redraw
-                area.tag_redraw()
 
 
 class VerseSceneData(vrsent.VerseNode):
@@ -240,7 +229,7 @@ class VerseSceneName(vrsent.VerseTag):
             else:
                 bpy.context.scene.name = verse_scene.name
         # Update list of scenes shared at Verse server
-        update_all_properties_view()
+        ui.update_all_views(('PROPERTIES',))
         return tag
 
 
@@ -522,7 +511,19 @@ class VERSE_SCENE_panel(bpy.types.Panel):
     bl_context     = 'scene'
     bl_label       = 'Verse Scenes'
     bl_description = 'Panel with Verse scenes shared at Verse server'
- 
+
+    @classmethod
+    def poll(cls, context):
+        """
+        Can be this panel visible?
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected == True:
+            return True
+        else:
+            return False
+
     def draw(self, context):
         """
         This method draw panel of Verse scenes
