@@ -267,7 +267,6 @@ class VerseObject(vrsent.VerseNode):
         """
         super(VerseObject, self).__init__(session, node_id, parent, user_id, custom_type)
         self.obj = obj
-        self.mesh_node = None
         self.transform = vrsent.VerseTagGroup(node=self, custom_type=TG_TRANSFORM_CT)
         self.info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
         self.bb = VerseObjectBoundingBox(node=self)
@@ -286,12 +285,13 @@ class VerseObject(vrsent.VerseNode):
             # Scene
             self.parent = session.nodes[bpy.context.scene.verse_data_node_id]
             # Mesh
-            self.mesh_node = mesh.VerseMesh(session=session, parent=self, mesh=obj.data)
+            self.mesh_node = mesh.VerseMesh(session=session, parent=self, mesh=obj.data, autosubscribe=True)
         else:
             self.transform.pos = VerseObjectPosition(tg=self.transform)
             self.transform.rot = VerseObjectRotation(tg=self.transform)
             self.transform.scale = VerseObjectScale(tg=self.transform)
             self.info.name = VerseObjectName(tg=self.info)
+            self.mesh_node = None
 
     @property
     def name(self):
@@ -349,6 +349,7 @@ class VerseObject(vrsent.VerseNode):
                 bpy.context.scene.objects.active = None
             object_node.obj.hide_select = True
         update_all_3dview()
+        update_all_properties_view()
         return object_node
 
     @classmethod
@@ -360,6 +361,7 @@ class VerseObject(vrsent.VerseNode):
         if object_node.session.avatar_id != avatar_id:
             object_node.obj.hide_select = False
         update_all_3dview()
+        update_all_properties_view()
         return object_node
 
     def update(self):
@@ -661,6 +663,7 @@ class VERSE_OBJECT_OT_share(bpy.types.Operator):
         else:
             # Share active mesh object at Verse server
             node = VerseObject(session=vrs_session, parent=scene_data_node, obj=context.active_object)
+            node.lock()
         return {'FINISHED'}
 
     @classmethod
@@ -738,6 +741,31 @@ class VERSE_OBJECT_UL_slot(bpy.types.UIList):
                 return
             if self.layout_type in {'DEFAULT', 'COMPACT'}:
                 layout.label(verse_object.name, icon='OBJECT_DATA')
+                layout.label(str(verse_object.owner.name))
+                # TODO: improve this check
+                if verse_object.mesh_node is not None:
+                    layout.label('', icon='FILE_TICK')
+                # Locked/unlocked
+                if verse_object.locked is True:
+                    layout.label('', icon='LOCKED')
+                else:
+                    layout.label('', icon='UNLOCKED')
+                # Permissions
+                try:
+                    perm = verse_object.perms[vrs_session.user_id]
+                except KeyError:
+                    pass
+                else:
+                    # Read
+                    if perm & vrs.PERM_NODE_READ:
+                        layout.label('r')
+                    else:
+                        layout.label(' ')
+                    # Write
+                    if perm & vrs.PERM_NODE_WRITE:
+                        layout.label('w')
+                    else:
+                        layout.label(' ')
             elif self.layout_type in {'GRID'}:
                 layout.alignment = 'CENTER'
                 layout.label(verse_object.name)

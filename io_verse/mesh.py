@@ -86,7 +86,7 @@ class VerseMesh(vrsent.VerseNode):
 
     custom_type = VERSE_MESH_CT
     
-    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_MESH_CT, mesh=None):
+    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_MESH_CT, mesh=None, autosubscribe=False):
         """
         Constructor of VerseMesh
         """
@@ -96,6 +96,7 @@ class VerseMesh(vrsent.VerseNode):
         self.vertices = VerseVertices(node=self)
         self.edges = VerseEdges(node=self)
         self.quads = VerseFaces(node=self)
+        self._autosubscribe = autosubscribe
 
         if self.mesh is not None:
             self.mesh.update(calc_tessface=True)
