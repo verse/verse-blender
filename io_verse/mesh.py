@@ -33,6 +33,52 @@ LAYER_EDGES_CT = 1
 LAYER_QUADS_CT = 2
 
 
+class VerseVertices(vrsent.VerseLayer):
+    """
+    Custom VerseLayer subclass representing position of vertexes
+    """
+
+    node_custom_type = VERSE_MESH_CT
+    custom_type = LAYER_VERTEXES_CT
+
+    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_REAL64, count=3, custom_type=LAYER_VERTEXES_CT):
+        """
+        Constructor of VerseVertices
+        """
+        super(VerseVertices, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
+
+
+class VerseEdges(vrsent.VerseLayer):
+    """
+    Custom VerseLayer subclass representing edges (indexes to vertexes)
+    """
+
+    node_custom_type = VERSE_MESH_CT
+    custom_type = LAYER_EDGES_CT
+
+    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_UINT32, count=2, custom_type=LAYER_EDGES_CT):
+        """
+        Constructor of VerseEdges
+        """
+        super(VerseEdges, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
+
+
+class VerseFaces(vrsent.VerseLayer):
+    """
+    Custom VerseLayer subclass representing tesselated faces (indexes to vertexes).
+    Tesselated mesh contains only tris and quads.
+    """
+
+    node_custom_type = VERSE_MESH_CT
+    custom_type = LAYER_QUADS_CT
+
+    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_UINT32, count=4, custom_type=LAYER_QUADS_CT):
+        """
+        Constructor of VerseFaces
+        """
+        super(VerseFaces, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
+
+
 class VerseMesh(vrsent.VerseNode):
     """
     Custom VerseNode subclass representing Blender mesh data structure
@@ -40,12 +86,28 @@ class VerseMesh(vrsent.VerseNode):
 
     custom_type = VERSE_MESH_CT
     
-    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_MESH_CT):
+    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_MESH_CT, mesh=None):
+        """
+        Constructor of VerseMesh
+        """
         super(VerseMesh, self).__init__(session, node_id, parent, user_id, custom_type)
-        self.mesh = None
-        self.vertexes = None
-        self.edges = None
-        self.quads = None
+
+        self.mesh = mesh
+        self.vertices = VerseVertices(node=self)
+        self.edges = VerseEdges(node=self)
+        self.quads = VerseFaces(node=self)
+
+        if self.mesh is not None:
+            self.mesh.update(calc_tessface=True)
+            # Vertices
+            for vert in mesh.vertices:
+                self.vertices.items[vert.index] = tuple(vert.co)
+            # Edges
+            for edge in mesh.edges:
+                self.edges.items[edge.index] = (edge.vertices[0], edge.vertices[1])
+            # Faces
+            for face in mesh.tessfaces:
+                self.quads.items[face.index] = tuple(vert for vert in face.vertices)
 
 
 # List of Blender classes in this submodule

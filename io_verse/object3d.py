@@ -28,6 +28,7 @@ import mathutils
 import verse as vrs
 from .vrsent import vrsent
 from . import session
+from . import mesh
 
 
 VERSE_OBJECT_CT = 125
@@ -284,6 +285,8 @@ class VerseObject(vrsent.VerseNode):
                 item_id += 1
             # Scene
             self.parent = session.nodes[bpy.context.scene.verse_data_node_id]
+            # Mesh
+            self.mesh_node = mesh.VerseMesh(session=session, parent=self, mesh=obj.data)
         else:
             self.transform.pos = VerseObjectPosition(tg=self.transform)
             self.transform.rot = VerseObjectRotation(tg=self.transform)
@@ -658,8 +661,6 @@ class VERSE_OBJECT_OT_share(bpy.types.Operator):
         else:
             # Share active mesh object at Verse server
             node = VerseObject(session=vrs_session, parent=scene_data_node, obj=context.active_object)
-            #node.lock()
-            # TODO: Create node representing mesh data
         return {'FINISHED'}
 
     @classmethod
