@@ -110,6 +110,19 @@ class VerseMesh(vrsent.VerseNode):
             for face in mesh.tessfaces:
                 self.quads.items[face.index] = tuple(vert for vert in face.vertices)
 
+    @classmethod
+    def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
+        """
+        When new mesh node is created or verse server, then this callback method is called.
+        """
+        # Call parent class
+        mesh_node = super(VerseMesh, cls)._receive_node_create(session=session,
+            node_id=node_id,
+            parent_id=parent_id,
+            user_id=user_id,
+            custom_type=custom_type)
+        return mesh_node
+
 
 # List of Blender classes in this submodule
 classes = ()
