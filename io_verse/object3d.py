@@ -33,7 +33,7 @@ from . import ui
 
 
 VERSE_OBJECT_CT = 125
-# Tranformation
+# Transformation
 TG_TRANSFORM_CT = 0
 TAG_POSITION_CT = 0
 TAG_ROTATION_CT = 1
@@ -185,7 +185,7 @@ class VerseObjectBoundingBox(vrsent.VerseLayer):
     @classmethod
     def _receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
         """
-        This method is called, when new value of verse tag was set
+        This method is called, when new value of verse layer was set
         """
         layer = super(VerseObjectBoundingBox, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
         update_3dview(layer.node)
@@ -194,7 +194,7 @@ class VerseObjectBoundingBox(vrsent.VerseLayer):
 
 class VerseObjectName(vrsent.VerseTag):
     """
-    Custom VerseTag cubclass representing name of Blender object name
+    Custom VerseTag subclass representing name of Blender object name
     """
 
     node_custom_type = VERSE_OBJECT_CT
@@ -254,7 +254,7 @@ class VerseObject(vrsent.VerseNode):
             self.transform.scale = VerseObjectScale(tg=self.transform, value=tuple(obj.scale))
             # Information
             self.info.name = VerseObjectName(tg=self.info, value=(str(obj.name),))
-            # Boundind Box
+            # Bounding Box
             item_id = 0
             for bb_point in obj.bound_box:
                 self.bb.items[item_id] = (bb_point[0], bb_point[1], bb_point[2])
@@ -853,7 +853,7 @@ def init_properties():
         default = -1, \
         min = -1, \
         max = 1000, \
-        description = "The index of curently selected Verse object node"
+        description = "The index of currently selected Verse object node"
     )
     bpy.types.Object.verse_node_id = bpy.props.IntProperty( \
         name = "ID of verse node", \

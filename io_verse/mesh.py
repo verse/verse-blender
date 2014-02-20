@@ -47,6 +47,21 @@ class VerseVertices(vrsent.VerseLayer):
         """
         super(VerseVertices, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
 
+    @classmethod
+    def _receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
+        """
+        This method is called, when new value of verse layer was set
+        """
+        layer = super(VerseVertices, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
+        mesh = layer.node.mesh
+        if item_id < len(mesh.vertices):
+            if mesh.vertices[item_id].co != Vector(value):
+                mesh.vertices[item_id].co = Vector(value)
+        else:
+            mesh.vertices.add(count=1)
+            mesh.vertices[item_id].co = Vector(value)
+        return layer
+
 
 class VerseEdges(vrsent.VerseLayer):
     """
@@ -62,11 +77,20 @@ class VerseEdges(vrsent.VerseLayer):
         """
         super(VerseEdges, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
 
+    @classmethod
+    def _receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
+        """
+        This method is called, when new value of verse layer was set
+        """
+        layer = super(VerseEdges, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
+        # TODO: not sure, what to do here. Probably on check, if new face could be created from
+        # fragments of tessellated polygon
+        return layer
 
 class VerseFaces(vrsent.VerseLayer):
     """
-    Custom VerseLayer subclass representing tesselated faces (indexes to vertexes).
-    Tesselated mesh contains only tris and quads.
+    Custom VerseLayer subclass representing tessellated faces (indexes to vertexes).
+    Tessellated mesh contains only triangles and quads.
     """
 
     node_custom_type = VERSE_MESH_CT
@@ -77,6 +101,15 @@ class VerseFaces(vrsent.VerseLayer):
         Constructor of VerseFaces
         """
         super(VerseFaces, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
+
+    @classmethod
+    def _receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
+        """
+        This method is called, when new value of verse layer was set
+        """
+        layer = super(VerseFaces, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
+        # TODO: create new polygon, when all fragments of tessellated polygon were received
+        return layer
 
 
 class VerseMesh(vrsent.VerseNode):
@@ -98,6 +131,7 @@ class VerseMesh(vrsent.VerseNode):
         self.quads = VerseFaces(node=self)
         self._autosubscribe = autosubscribe
 
+        # TODO: do not do it in this way for huge mesh
         if self.mesh is not None:
             self.mesh.update(calc_tessface=True)
             # Vertices
@@ -121,6 +155,9 @@ class VerseMesh(vrsent.VerseNode):
             parent_id=parent_id,
             user_id=user_id,
             custom_type=custom_type)
+        if self.mesh is None:
+            self.mesh = bpy.data.meshes.new('Verse') # TODO: set name according tag
+        self.mesh.verse_node_id = node_id
         return mesh_node
 
 
