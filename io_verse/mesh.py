@@ -83,7 +83,7 @@ class VerseEdges(vrsent.VerseLayer):
         This method is called, when new value of verse layer was set
         """
         layer = super(VerseEdges, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
-        # TODO: not sure, what to do here. Probably on check, if new face could be created from
+        # TODO: not sure, what to do here. Probably only check, if new face could be created from
         # fragments of tessellated polygon
         return layer
 
