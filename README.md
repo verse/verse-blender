@@ -1,9 +1,10 @@
 Blender Addon with Verse Integration
 =====================================
 
-This is very WIP of Blender Python Addon with Verse integration. It is
+This is pre-alpha version of Blender Python Addon with Verse integration. It is
 possible only to connect and disconnect from Verse server now.
 
+![Blender Verse Addon screenshot](/screenshots/blender-verse-screenshot.png "Verse Blender Addon screenshot")
 
 ### Requirements ###
 
@@ -19,7 +20,7 @@ Verse project contains compiled Python module and only Linux OS is supported now
 
 To install this Addon download file:
 
-https://github.com/jirihnidek/verse-blender/archive/master.zip
+https://github.com/verse/verse-blender/archive/master.zip
 
 Unzip this archive and move directory io_verse to directory with your addons.
 Typicaly ~/.config/blender/2.68a/scripts/addons/
