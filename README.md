@@ -24,3 +24,8 @@ https://github.com/jirihnidek/verse-blender/archive/master.zip
 Unzip this archive and move directory io_verse to directory with your addons.
 Typicaly ~/.config/blender/2.68a/scripts/addons/
 
+### License ###
+
+The source code of this Blender Addon is available under GNU GPL 2.0. For details
+look at LICENSE file.
+
