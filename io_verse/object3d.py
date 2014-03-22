@@ -749,6 +749,7 @@ class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
     """
     Panel with Verse tools for Mesh Object
     """
+    bl_category = "Relations"
     bl_context = 'objectmode'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
