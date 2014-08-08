@@ -306,8 +306,8 @@ class VerseObject(vrsent.VerseNode):
             obj.verse_node_id = node_id
             object_node.obj = obj
         cls.objects[node_id] = object_node
-        bpy.context.object.verse_objects.add()
-        bpy.context.object.verse_objects[-1].node_id = node_id
+        bpy.context.scene.verse_objects.add()
+        bpy.context.scene.verse_objects[-1].node_id = node_id
         ui.update_all_views(('VIEW_3D',))
         return object_node
 
@@ -680,11 +680,11 @@ class VERSE_OBJECT_MT_menu(bpy.types.Menu):
         This class method is used, when Blender check, if this operator can be
         executed
         """
-        obj = context.active_object
+        scene = context.scene
 
         # Return true only in situation, when client is connected to Verse server
-        if obj.cur_verse_object_index >= 0 and \
-                len(obj.verse_objects) > 0:
+        if scene.cur_verse_object_index >= 0 and \
+                len(scene.verse_objects) > 0:
             return True
         else:
             return False
@@ -811,16 +811,16 @@ class VERSE_OBJECT_panel(bpy.types.Panel):
         """
         This method draw panel of Verse scenes
         """
-        obj = context.active_object
+        scene = context.scene
         layout = self.layout
 
         row = layout.row()
 
         row.template_list('VERSE_OBJECT_UL_slot', \
             'verse_objects_widget_id', \
-            obj, \
+            scene, \
             'verse_objects', \
-            obj, \
+            scene, \
             'cur_verse_object_index', \
             rows = 3)
 
@@ -844,12 +844,12 @@ def init_properties():
     """
     Init properties in blender object data type
     """
-    bpy.types.Object.verse_objects = bpy.props.CollectionProperty( \
+    bpy.types.Scene.verse_objects = bpy.props.CollectionProperty( \
         type =  VERSE_OBJECT_NODES_list_item, \
         name = "Verse Objects", \
         description = "The list of verse object nodes shared at Verse server" \
     )
-    bpy.types.Object.cur_verse_object_index = bpy.props.IntProperty( \
+    bpy.types.Scene.cur_verse_object_index = bpy.props.IntProperty( \
         name = "Index of current Verse object", \
         default = -1, \
         min = -1, \
