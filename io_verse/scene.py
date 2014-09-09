@@ -133,6 +133,10 @@ class VerseSceneData(vrsent.VerseNode):
             avatar.scene_node_id.value = (self.parent.id,)
             # Add Blender callback function that check sends scene updates to Verse server
             bpy.app.handlers.scene_update_post.append(cb_scene_update)
+        # Force redraw of 3D view
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
         return subscribed
 
     def unsubscribe(self):
@@ -150,6 +154,10 @@ class VerseSceneData(vrsent.VerseNode):
             avatar.scene_node_id.value = (0,)
             # Remove Blender callback function
             bpy.app.handlers.scene_update_post.remove(cb_scene_update)
+        # Force redraw of 3D view
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
         return subscribed
 
     def __update_item_slot(self):
