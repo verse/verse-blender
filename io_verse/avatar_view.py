@@ -391,16 +391,17 @@ class AvatarView(vrsent.VerseAvatar):
         index = 0
         for item in wm.verse_avatars:
             if item.node_id == node_id:
-                wm.verse_avatars.remove()
+                wm.verse_avatars.remove(index)
                 if wm.cur_verse_avatar_index >= index:
                     wm.cur_verse_avatar_index -= 1
                 break
             index += 1
+        cls.__other_views.pop(node_id)
         # Force redraw of 3D view
         for area in bpy.context.screen.areas:
             if area.type == 'VIEW_3D':
                 area.tag_redraw()
-        return super(AvatarView, cls)._receive_node_destroy(cls, session, node_id)
+        return super(AvatarView, cls)._receive_node_destroy(session, node_id)
 
 
     def update(self, context):
