@@ -105,7 +105,7 @@ class VerseObjectPosition(vrsent.VerseTag):
         """
         tag = super(VerseObjectPosition, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update position of Blender object that are not locked (not selected)
-        if tag.tg.node.obj.select is False:
+        if tag.tg.node.locked is False:
             tag.tg.node.obj.location = mathutils.Vector(value)
         # Redraw all 3D views
         update_3dview(tag.tg.node)
@@ -134,7 +134,7 @@ class VerseObjectRotation(vrsent.VerseTag):
         """
         tag = super(VerseObjectRotation, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update rotation of Blender object that are not locked (not selected)
-        if tag.tg.node.obj.select is False:
+        if tag.tg.node.locked is False:
             tag.tg.node.obj.rotation_quaternion = mathutils.Quaternion(value)
         update_3dview(tag.tg.node)
         return tag
@@ -162,7 +162,7 @@ class VerseObjectScale(vrsent.VerseTag):
         """
         tag = super(VerseObjectScale, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update scale of Blender object that are not locked (not selected)
-        if tag.tg.node.obj.select is False:
+        if tag.tg.node.locked is False:
             tag.tg.node.obj.scale = mathutils.Vector(value)
         update_3dview(tag.tg.node)
         return tag
