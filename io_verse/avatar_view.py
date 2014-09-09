@@ -306,7 +306,7 @@ class AvatarView(vrsent.VerseAvatar):
             if area.type == 'VIEW_3D':
                 area.tag_redraw()
 
-        self.scene_node = None # TODO
+        self.scene_node = None
         view_initialized = False
         self.visualized = True
 
@@ -364,11 +364,7 @@ class AvatarView(vrsent.VerseAvatar):
                 bpy.ops.view3d.verse_avatar()
                 bpy.context.area.type = original_type
         else:
-            try:
-                __class__.__other_views[self.id] = self
-            except KeyError:
-                # TODO: this should not happen
-                pass
+            __class__.__other_views[self.id] = self
         
         if view_initialized == False:
             # Create tag group containing information about view
