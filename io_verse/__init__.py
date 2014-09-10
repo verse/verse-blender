@@ -42,6 +42,7 @@ if "bpy" in locals():
     imp.reload(avatar_view)
     imp.reload(object3d)
     imp.reload(mesh)
+    imp.reload(ui)
 else:
     import bpy
     import verse as vrs
@@ -51,12 +52,14 @@ else:
     from . import avatar_view
     from . import object3d
     from . import mesh
+    from . import ui
 
 
 def register():
     """
     Call register methods in submodules 
     """
+    ui.register()
     session.register()
     connection.register()
     scene.register()
@@ -69,6 +72,7 @@ def unregister():
     """
     Call unregister methods in submodules
     """
+    ui.unregister()
     session.unregister()
     connection.unregister()
     scene.unregister()

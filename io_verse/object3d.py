@@ -690,16 +690,6 @@ class VERSE_OBJECT_MT_menu(bpy.types.Menu):
             return False
 
 
-class VERSE_OBJECT_NODES_list_item(bpy.types.PropertyGroup):
-    """
-    Group of properties with representation of Verse scene node
-    """
-    node_id = bpy.props.IntProperty( \
-        name = "Node ID", \
-        description = "ID of object node", \
-        default = -1)
-
-
 class VERSE_OBJECT_UL_slot(bpy.types.UIList):
     """
     A custom slot with information about Verse object node
@@ -827,6 +817,7 @@ class VERSE_OBJECT_panel(bpy.types.Panel):
         col = row.column(align=True)
         col.menu('object.verse_object_menu', icon='DOWNARROW_HLT', text="")
 
+
 # List of Blender classes in this submodule
 classes = (VERSE_OBJECT_OT_share, \
         VERSE_OBJECT_OT_lock, \
@@ -834,37 +825,8 @@ classes = (VERSE_OBJECT_OT_share, \
         VERSE_OBJECT_OT_subscribe, \
         VIEW3D_PT_tools_VERSE_object, \
         VERSE_OBJECT_panel, \
-        VERSE_OBJECT_NODES_list_item, \
         VERSE_OBJECT_UL_slot, \
         VERSE_OBJECT_MT_menu
-    )
-
-
-def init_properties():
-    """
-    Init properties in blender object data type
-    """
-    bpy.types.Scene.verse_objects = bpy.props.CollectionProperty( \
-        type =  VERSE_OBJECT_NODES_list_item, \
-        name = "Verse Objects", \
-        description = "The list of verse object nodes shared at Verse server" \
-    )
-    bpy.types.Scene.cur_verse_object_index = bpy.props.IntProperty( \
-        name = "Index of current Verse object", \
-        default = -1, \
-        min = -1, \
-        max = 1000, \
-        description = "The index of currently selected Verse object node"
-    )
-    bpy.types.Object.verse_node_id = bpy.props.IntProperty( \
-        name = "ID of verse node", \
-        default = -1, \
-        description = "The node ID representing this Object at Verse server"
-    )
-    bpy.types.Object.subscribed = bpy.props.BoolProperty( \
-        name = "Subscribed to data of object node", \
-        default = False, \
-        description = "Is Blender subscribed to data of mesh object"
     )
 
 
@@ -874,7 +836,7 @@ def register():
     """
     for c in classes:
         bpy.utils.register_class(c)
-    init_properties()
+    ui.init_object_properties()
 
 
 def unregister():
@@ -883,6 +845,7 @@ def unregister():
     """
     for c in classes:
         bpy.utils.unregister_class(c)
+    ui.reset_object_properties()
 
 
 if __name__ == '__main__':

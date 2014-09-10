@@ -438,20 +438,6 @@ class VERSE_SCENE_OT_unsubscribe(bpy.types.Operator):
             return False
 
 
-class VERSE_SCENE_NODES_list_item(bpy.types.PropertyGroup):
-    """
-    Group of properties with representation of Verse scene node
-    """
-    node_id = bpy.props.IntProperty( \
-        name = "Node ID", \
-        description = "ID of scene node", \
-        default = -1)
-    data_node_id = bpy.props.IntProperty( \
-        name = "Data Node ID", \
-        description = "ID of node with scene data", \
-        default = -1)
-
-
 class VERSE_SCENE_UL_slot(bpy.types.UIList):
     """
     A custom slot with information about Verse scene node
@@ -554,8 +540,7 @@ class VERSE_SCENE_panel(bpy.types.Panel):
 
 
 # List of Blender classes in this submodule
-classes = (VERSE_SCENE_NODES_list_item, \
-    VERSE_SCENE_UL_slot, \
+classes = (VERSE_SCENE_UL_slot, \
     VERSE_SCENE_MT_menu, \
     VERSE_SCENE_panel, \
     VERSE_SCENE_OT_share, \
@@ -564,55 +549,13 @@ classes = (VERSE_SCENE_NODES_list_item, \
 )
 
 
-def init_properties():
-    """
-    Init properties in blender scene data type
-    """
-    bpy.types.Scene.verse_scenes = bpy.props.CollectionProperty( \
-        type =  VERSE_SCENE_NODES_list_item, \
-        name = "Verse Scenes", \
-        description = "The list of verse scene nodes shared at Verse server" \
-    )
-    bpy.types.Scene.cur_verse_scene_index = bpy.props.IntProperty( \
-        name = "Index of current Verse scene", \
-        default = -1, \
-        min = -1, \
-        max = 1000, \
-        description = "The index of curently selected Verse scene node"
-    )
-    bpy.types.Scene.subscribed = bpy.props.BoolProperty( \
-        name = "Subscribed to scene node", \
-        default = False, \
-        description = "Is Blender subscribed to data of shared scene")
-    bpy.types.Scene.verse_node_id = bpy.props.IntProperty( \
-        name = "ID of verse scene node", \
-        default = -1, \
-        description = "The ID of the verse node representing current Blender scene"
-    )
-    bpy.types.Scene.verse_data_node_id = bpy.props.IntProperty( \
-        name = "ID of verse scene data node", \
-        default = -1, \
-        description = "The ID of the verse node representing current Blender scene data"
-    )
-    bpy.types.Scene.verse_server_hostname = bpy.props.StringProperty( \
-        name = "Verse server hostname", \
-        default = "", \
-        description = "Hostname of Verse server, where this scene is shared"
-    )
-    bpy.types.Scene.verse_server_service = bpy.props.StringProperty( \
-        name = "Verse server port (service)", \
-        default = "", \
-        description = "Port (service) of Verse server"
-    )
-
-
 def register():
     """
     This method register all methods of this submodule
     """
     for c in classes:
         bpy.utils.register_class(c)
-    init_properties()
+    ui.init_scene_properties()
 
 
 def unregister():
@@ -621,6 +564,7 @@ def unregister():
     """
     for c in classes:
         bpy.utils.unregister_class(c)
+    ui.reset_scene_properties()
 
 
 if __name__ == '__main__':

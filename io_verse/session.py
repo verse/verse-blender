@@ -87,8 +87,10 @@ class VerseSession(vrsent.VerseSession):
             bpy.ops.view3d.verse_avatar()
             bpy.context.area.type = original_type
 
-        # TODO: Clear all collections
-        bpy.context.window_manager.verse_avatars.clear()
+        # Reset all properties
+        ui.reset_avatar_properties()
+        ui.reset_scene_properties()
+        ui.reset_object_properties()
 
         # Set Blender property
         bpy.context.window_manager.verse_connected = False

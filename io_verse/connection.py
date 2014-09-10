@@ -171,7 +171,7 @@ def draw_item(self, context):
     layout.menu(VerseMenu.bl_idname)
 
 
-def init_properties():
+def init_connection_properties():
     """
     This method initialize properties related to connection
     """
@@ -204,7 +204,7 @@ def register():
 
     bpy.types.INFO_MT_file.append(draw_item)
 
-    init_properties()
+    init_connection_properties()
 
 
 def unregister():

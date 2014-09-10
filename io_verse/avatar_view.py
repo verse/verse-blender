@@ -923,16 +923,6 @@ class VERSE_AVATAR_MT_menu(bpy.types.Menu):
             return False
 
 
-class VERSE_AVATAR_NODES_list_item(bpy.types.PropertyGroup):
-    """
-    Group of properties with representation of Verse avatar node
-    """
-    node_id = bpy.props.IntProperty( \
-        name = "Node ID", \
-        description = "Node ID of avatar node", \
-        default = -1)
-
-
 class VERSE_AVATAR_UL_slot(bpy.types.UIList):
     """
     A custom slot with information about Verse avatar node
@@ -1006,41 +996,7 @@ class VerseAvatarPanel(bpy.types.Panel):
         col.menu('view3d.verse_avatar_menu', icon='DOWNARROW_HLT', text="")
 
 
-def init_properties():
-    """
-    Initialize properties used by this module
-    """
-    wm = bpy.types.WindowManager
-    wm.verse_avatar_capture = bpy.props.BoolProperty( \
-        name = "Avatar Capture", \
-        default = False, \
-        description = "This is information about my view to 3D scene shared at Verse server"
-    )
-    wm.verse_avatars = bpy.props.CollectionProperty( \
-        type =  VERSE_AVATAR_NODES_list_item, \
-        name = "Verse Avatars", \
-        description = "The list of verse avatar nodes representing Blender at Verse server" \
-    )
-    wm.cur_verse_avatar_index = bpy.props.IntProperty( \
-        name = "Index of current Verse avatar", \
-        default = -1, \
-        min = -1, \
-        max = 1000, \
-        description = "The index of currently selected Verse avatar node"
-    )
-
-
-def reset_properties():
-    """
-    Reset properties used by this module
-    """
-    wm = bpy.types.WindowManager
-    wm.verse_avatar_capture = False
-    wm.cur_verse_avatar_index = -1
-
-
-classes = (VERSE_AVATAR_NODES_list_item, \
-    VERSE_AVATAR_UL_slot, \
+classes = (VERSE_AVATAR_UL_slot, \
     VerseAvatarPanel, \
     VerseAvatarStatus, \
     VERSE_AVATAR_OT_hide, \
@@ -1056,7 +1012,7 @@ def register():
     """
     for c in classes:
         bpy.utils.register_class(c)
-    init_properties()
+    ui.init_avatar_properties()
 
 
 def unregister():
@@ -1065,7 +1021,7 @@ def unregister():
     """
     for c in classes:
         bpy.utils.unregister_class(c)
-    reset_properties()
+    ui.reset_avatar_properties()
 
 
 if __name__ == '__main__':
