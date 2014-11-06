@@ -346,8 +346,12 @@ class VerseObject(vrsent.VerseNode):
         # Bounding box
         item_id = 0
         for bb_point in self.obj.bound_box:
-            if self.bb.items[item_id] != (bb_point[0], bb_point[1], bb_point[2]):
-                self.bb.items[item_id] = (bb_point[0], bb_point[1], bb_point[2])
+            try:
+                if self.bb.items[item_id] != (bb_point[0], bb_point[1], bb_point[2]):
+                    self.bb.items[item_id] = (bb_point[0], bb_point[1], bb_point[2])
+            except KeyError:
+                # Bounding box was not received yet
+                break
             item_id += 1
 
         # TODO: Blender doesn't mark object as changed, when object is selected or
@@ -433,31 +437,32 @@ class VerseObject(vrsent.VerseNode):
         # Transform points of bounding box
         points = tuple(matrix * mathutils.Vector(item) for item in self.bb.items.values())
 
-        # TODO: Draw Bounding box only for unsubscribed objects
-        bgl.glLineWidth(1)
-        bgl.glColor4f(color[0], color[1], color[2], color[3])
-        bgl.glBegin(bgl.GL_LINE_LOOP)
-        bgl.glVertex3f(points[0][0], points[0][1], points[0][2])
-        bgl.glVertex3f(points[1][0], points[1][1], points[1][2])
-        bgl.glVertex3f(points[2][0], points[2][1], points[2][2])
-        bgl.glVertex3f(points[3][0], points[3][1], points[3][2])
-        bgl.glEnd()
-        bgl.glBegin(bgl.GL_LINE_LOOP)
-        bgl.glVertex3f(points[4][0], points[4][1], points[4][2])
-        bgl.glVertex3f(points[5][0], points[5][1], points[5][2])
-        bgl.glVertex3f(points[6][0], points[6][1], points[6][2])
-        bgl.glVertex3f(points[7][0], points[7][1], points[7][2])
-        bgl.glEnd()
-        bgl.glBegin(bgl.GL_LINES)
-        bgl.glVertex3f(points[0][0], points[0][1], points[0][2])
-        bgl.glVertex3f(points[4][0], points[4][1], points[4][2])
-        bgl.glVertex3f(points[1][0], points[1][1], points[1][2])
-        bgl.glVertex3f(points[5][0], points[5][1], points[5][2])
-        bgl.glVertex3f(points[2][0], points[2][1], points[2][2])
-        bgl.glVertex3f(points[6][0], points[6][1], points[6][2])
-        bgl.glVertex3f(points[3][0], points[3][1], points[3][2])
-        bgl.glVertex3f(points[7][0], points[7][1], points[7][2])
-        bgl.glEnd()
+        if len(points) == 8:
+            # TODO: Draw Bounding box only for unsubscribed objects
+            bgl.glLineWidth(1)
+            bgl.glColor4f(color[0], color[1], color[2], color[3])
+            bgl.glBegin(bgl.GL_LINE_LOOP)
+            bgl.glVertex3f(points[0][0], points[0][1], points[0][2])
+            bgl.glVertex3f(points[1][0], points[1][1], points[1][2])
+            bgl.glVertex3f(points[2][0], points[2][1], points[2][2])
+            bgl.glVertex3f(points[3][0], points[3][1], points[3][2])
+            bgl.glEnd()
+            bgl.glBegin(bgl.GL_LINE_LOOP)
+            bgl.glVertex3f(points[4][0], points[4][1], points[4][2])
+            bgl.glVertex3f(points[5][0], points[5][1], points[5][2])
+            bgl.glVertex3f(points[6][0], points[6][1], points[6][2])
+            bgl.glVertex3f(points[7][0], points[7][1], points[7][2])
+            bgl.glEnd()
+            bgl.glBegin(bgl.GL_LINES)
+            bgl.glVertex3f(points[0][0], points[0][1], points[0][2])
+            bgl.glVertex3f(points[4][0], points[4][1], points[4][2])
+            bgl.glVertex3f(points[1][0], points[1][1], points[1][2])
+            bgl.glVertex3f(points[5][0], points[5][1], points[5][2])
+            bgl.glVertex3f(points[2][0], points[2][1], points[2][2])
+            bgl.glVertex3f(points[6][0], points[6][1], points[6][2])
+            bgl.glVertex3f(points[3][0], points[3][1], points[3][2])
+            bgl.glVertex3f(points[7][0], points[7][1], points[7][2])
+            bgl.glEnd()
 
         # Restore previous OpenGL settings
         bgl.glLoadIdentity()
