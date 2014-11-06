@@ -44,19 +44,6 @@ TAG_NAME_CT = 0
 LAYER_BB_CT = 0
 
 
-def draw_cb(self, context):
-    """
-    This callback function is called, when view to 3d scene is changed
-    """
-
-    # This callback works only for 3D View
-    if context.area.type != 'VIEW_3D':
-        return
-
-    for obj in VerseObject.objects.values():
-        obj.draw(context.area, context.region_data)
-
-
 def update_3dview(node):
     """
     This method updates all 3D View but not in case, when object is selected/locked

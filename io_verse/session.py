@@ -229,7 +229,7 @@ class ModalTimerOperator(bpy.types.Operator):
         This method remove timer
         """
         context.window_manager.event_timer_remove(self._timer)
-        return {'CANCELLED'}
+        return None
 
 
 # List of Blender classes in this submodule

@@ -28,24 +28,7 @@ import bpy
 import verse as vrs
 from .vrsent import vrsent
 from . import session
-
-
-class VerseError(bpy.types.Operator):
-    """
-    Operator that is used for reporting Verse errors
-    """
-    bl_idname = "wm.verse_error"
-    bl_label = "Verse Error"
-    
-    error_string = bpy.props.StringProperty(name="Error")
-    
-    def execute(self, context):
-        # TODO: display popup, report doesn't work :-(
-        self.report({'ERROR'}, "%s" % (self.error_string))
-    
-    def invoke(self, context, event):
-        self.execute(context)    
-        return {'FINISHED'}
+from . import draw3d
 
 
 class VerseAuthDialogOperator(bpy.types.Operator):
@@ -80,7 +63,8 @@ class VerseConnectDialogOperator(bpy.types.Operator):
     Verse server
     """
     bl_idname = "scene.verse_connect_dialog_operator" 
-    bl_label = "Connect dialog" 
+    bl_label = "Connect Dialog"
+    bl_description = "Dialog for setting verse server and port"
 
     vrs_server_name = bpy.props.StringProperty(name="Verse Server")
     vrs_server_port = bpy.props.StringProperty(name="Port")
@@ -88,9 +72,10 @@ class VerseConnectDialogOperator(bpy.types.Operator):
     def execute(self, context):
         # Connect to Verse server
         session.VerseSession(self.vrs_server_name, self.vrs_server_port, vrs.DGRAM_SEC_NONE)
-        # Start timer
+        # Start timer and callback function
         bpy.ops.wm.modal_timer_operator()
-        self.report({'INFO'}, "Connecting to: '%s'" % (self.vrs_server_name))
+        # Add draw callback
+        draw3d.HANDLER = bpy.types.SpaceView3D.draw_handler_add(draw3d.draw3d_cb, (context,), 'WINDOW', 'POST_PIXEL')
         return {'FINISHED'} 
 
     def invoke(self, context, event): 
@@ -119,7 +104,9 @@ class VerseClientDisconnect(bpy.types.Operator):
     
     def execute(self, context):
         vrs_session = session.VerseSession.instance()
+        # Send disconnect request to verse server
         vrs_session.send_connect_terminate()
+        bpy.types.SpaceView3D.draw_handler_remove(draw3d.HANDLER, 'WINDOW')
         return {'FINISHED'}
 
 
@@ -188,8 +175,7 @@ classes = (
     VerseConnectDialogOperator,
     VerseClientConnect,
     VerseClientDisconnect,
-    VerseMenu,
-    VerseError
+    VerseMenu
 )
 
 

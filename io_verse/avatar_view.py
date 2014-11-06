@@ -18,7 +18,7 @@
 
 
 """
-This file contain methods and classes for visualization of other
+This file contains methods and classes for visualization of other
 users connected to Verse server. It visualize their position and
 current view to active 3DView. Other Blender users sharing data at
 Verse server can also see, where you are and what you do.
@@ -46,32 +46,6 @@ TAG_WIDTH_CT = 4
 TAG_HEIGHT_CT = 5
 TAG_LENS_CT = 6
 TAG_SCENE_CT = 7
-
-
-def draw_cb(self, context):
-    """
-    This callback function is called, when view to 3d scene is changed
-    """
-
-    # This callback works only for 3D View
-    if context.area.type != 'VIEW_3D':
-        return
-    
-    # If avatar view of this client doesn't exist yet, then try to 
-    # get it
-    if self.avatar_view is None:
-        self.avatar_view = AvatarView.my_view()
-    
-    # Update information about avatar's view, when needed
-    self.avatar_view.update(context)
-
-    # Draw other avatars, when there is any
-    for avatar in AvatarView.other_views().values():
-        if avatar.visualized == True and \
-                context.scene.verse_node_id != -1 and \
-                context.scene.subscribed is True and \
-                context.scene.verse_node_id == avatar.scene_node_id.value[0]:
-            avatar.draw(context.area, context.region_data)
 
 
 def update_3dview(avatar_view):
@@ -302,9 +276,7 @@ class AvatarView(vrsent.VerseAvatar):
         wm.verse_avatars[-1].node_id = self.id
         
         # Force redraw of 3D view
-        for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
+        ui.update_all_views(('VIEW_3D',))
 
         self.scene_node = None
         view_initialized = False
@@ -398,9 +370,7 @@ class AvatarView(vrsent.VerseAvatar):
             index += 1
         cls.__other_views.pop(node_id)
         # Force redraw of 3D view
-        for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
+        ui.update_all_views(('VIEW_3D',))
         return super(AvatarView, cls)._receive_node_destroy(session, node_id)
 
 
@@ -678,9 +648,7 @@ class VerseAvatarStatus(bpy.types.Operator):
     bl_label = "Capture"
     bl_description = "Capture camera position"
     last_activity = 'NONE'
-    
-    _handle = None
-    
+
     def __init__(self):
         """
         Constructor of this operator
@@ -713,23 +681,13 @@ class VerseAvatarStatus(bpy.types.Operator):
         if context.area.type == 'VIEW_3D':
             if context.window_manager.verse_avatar_capture is False:
                 context.window_manager.verse_avatar_capture = True
-                # Register callback function
-                VerseAvatarStatus._handle = bpy.types.SpaceView3D.draw_handler_add(draw_cb, (self, context), 'WINDOW', 'POST_PIXEL')
-                bpy.types.SpaceView3D.draw_handler_add(object3d.draw_cb, (self, context), 'WINDOW', 'POST_PIXEL')
                 # Force redraw (display bgl stuff)
-                for area in context.screen.areas:
-                    if area.type == 'VIEW_3D':
-                        area.tag_redraw()
+                ui.update_all_views(('VIEW_3D',))
                 return {'RUNNING_MODAL'}
             else:
                 context.window_manager.verse_avatar_capture = False
-                # Unregister callback function
-                bpy.types.SpaceView3D.draw_handler_remove(VerseAvatarStatus._handle, 'WINDOW')
-                self._handle = None
                 # Force redraw (not display bgl stuff)
-                for area in context.screen.areas:
-                    if area.type == 'VIEW_3D':
-                        area.tag_redraw()
+                ui.update_all_views(('VIEW_3D',))
                 return {'CANCELLED'}
         else:
             self.report({'WARNING'}, "3D View not found, can't run Camera Capture")
@@ -741,7 +699,6 @@ class VerseAvatarStatus(bpy.types.Operator):
         """
         if context.window_manager.verse_avatar_capture is True:
             context.window_manager.verse_avatar_capture = False
-            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
             return {'CANCELLED'}
 
 

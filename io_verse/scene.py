@@ -131,12 +131,10 @@ class VerseSceneData(vrsent.VerseNode):
             # Store/share id of the verse_scene in the AvatarView
             avatar = avatar_view.AvatarView.my_view()
             avatar.scene_node_id.value = (self.parent.id,)
-            # Add Blender callback function that check sends scene updates to Verse server
+            # Add Blender callback function that sends scene updates to Verse server
             bpy.app.handlers.scene_update_post.append(cb_scene_update)
         # Force redraw of 3D view
-        for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
+        ui.update_all_views(('VIEW_3D',))
         return subscribed
 
     def unsubscribe(self):
@@ -155,9 +153,7 @@ class VerseSceneData(vrsent.VerseNode):
             # Remove Blender callback function
             bpy.app.handlers.scene_update_post.remove(cb_scene_update)
         # Force redraw of 3D view
-        for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                area.tag_redraw()
+        ui.update_all_views(('VIEW_3D',))
         return subscribed
 
     def __update_item_slot(self):
