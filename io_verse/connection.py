@@ -106,6 +106,7 @@ class VerseClientDisconnect(bpy.types.Operator):
         vrs_session = session.VerseSession.instance()
         # Send disconnect request to verse server
         vrs_session.send_connect_terminate()
+        # Remove callback for 3d view
         bpy.types.SpaceView3D.draw_handler_remove(draw3d.HANDLER, 'WINDOW')
         return {'FINISHED'}
 

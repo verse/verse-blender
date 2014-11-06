@@ -27,7 +27,7 @@ from . import avatar_view
 from . import session
 from . import object3d
 
-
+# TODO: this should be in some class
 HANDLER = None
 
 
