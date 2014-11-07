@@ -23,6 +23,7 @@ This module implements sharing Blender meshes at Verse server
 
 
 import bpy
+import mathutils
 import verse as vrs
 from .vrsent import vrsent
 
@@ -54,12 +55,14 @@ class VerseVertices(vrsent.VerseLayer):
         """
         layer = super(VerseVertices, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
         mesh = layer.node.mesh
-        if item_id < len(mesh.vertices):
-            if mesh.vertices[item_id].co != Vector(value):
-                mesh.vertices[item_id].co = Vector(value)
-        else:
-            mesh.vertices.add(count=1)
-            mesh.vertices[item_id].co = Vector(value)
+        if mesh is not None:
+            if item_id < len(mesh.vertices):
+                if mesh.vertices[item_id].co != mathutils.Vector(value):
+                    mesh.vertices[item_id].co = mathutils.Vector(value)
+            else:
+                mesh.vertices.add(count=1)
+                mesh.vertices[item_id].co = mathutils.Vector(value)
+            mesh.update()
         return layer
 
 
@@ -155,9 +158,9 @@ class VerseMesh(vrsent.VerseNode):
             parent_id=parent_id,
             user_id=user_id,
             custom_type=custom_type)
-        if self.mesh is None:
-            self.mesh = bpy.data.meshes.new('Verse') # TODO: set name according tag
-        self.mesh.verse_node_id = node_id
+        if mesh_node.mesh is None:
+            mesh_node.mesh = bpy.data.meshes.new('Verse') # TODO: set name according tag
+        mesh_node.mesh.verse_node_id = node_id
         return mesh_node
 
 

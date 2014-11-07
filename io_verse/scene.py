@@ -152,6 +152,8 @@ class VerseSceneData(vrsent.VerseNode):
             avatar.scene_node_id.value = (0,)
             # Remove Blender callback function
             bpy.app.handlers.scene_update_post.remove(cb_scene_update)
+            # TODO: switch all shared data to right state
+            # (nodes of objects, nodes of meshes, etc.) or destroy them
         # Force redraw of 3D view
         ui.update_all_views(('VIEW_3D',))
         return subscribed

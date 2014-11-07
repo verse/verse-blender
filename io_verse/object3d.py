@@ -284,14 +284,15 @@ class VerseObject(vrsent.VerseNode):
             user_id=user_id,
             custom_type=custom_type)
         # Create binding between Blender object and node
-        if object_node.obj is not None:
-            object_node.obj.verse_node_id = node_id
-        else:
+        if object_node.obj is None:
+            # Create Blender mesh
             mesh = bpy.data.meshes.new('Verse')
+            # Create Blender object
             obj = bpy.data.objects.new('Verse', mesh)
+            # Link Blender object to Blender scene
             bpy.context.scene.objects.link(obj)
-            obj.verse_node_id = node_id
             object_node.obj = obj
+        object_node.obj.verse_node_id = node_id
         cls.objects[node_id] = object_node
         bpy.context.scene.verse_objects.add()
         bpy.context.scene.verse_objects[-1].node_id = node_id
