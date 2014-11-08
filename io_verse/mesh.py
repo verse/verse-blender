@@ -26,6 +26,7 @@ import bpy
 import mathutils
 import verse as vrs
 from .vrsent import vrsent
+from . import object3d
 
 
 VERSE_MESH_CT = 126
@@ -89,6 +90,7 @@ class VerseEdges(vrsent.VerseLayer):
         # TODO: not sure, what to do here. Probably only check, if new face could be created from
         # fragments of tessellated polygon
         return layer
+
 
 class VerseFaces(vrsent.VerseLayer):
     """
@@ -158,8 +160,11 @@ class VerseMesh(vrsent.VerseNode):
             parent_id=parent_id,
             user_id=user_id,
             custom_type=custom_type)
+
         if mesh_node.mesh is None:
-            mesh_node.mesh = bpy.data.meshes.new('Verse') # TODO: set name according tag
+            object_node = object3d.VerseObject.objects[parent_id]
+            mesh_node.mesh = object_node.obj.data
+
         mesh_node.mesh.verse_node_id = node_id
         return mesh_node
 
@@ -172,9 +177,9 @@ def init_properties():
     """
     Init properties in blender object data type
     """
-    bpy.types.Mesh.verse_node_id = bpy.props.IntProperty( \
-        name = "ID of verse mesh node", \
-        default = -1, \
+    bpy.types.Mesh.verse_node_id = bpy.props.IntProperty(
+        name = "ID of verse mesh node",
+        default = -1,
         description = ""
     )
 

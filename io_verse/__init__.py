@@ -51,6 +51,7 @@ else:
     from . import scene
     from . import avatar_view
     from . import object3d
+    from . import ui_object3d
     from . import mesh
     from . import ui
 
@@ -64,7 +65,7 @@ def register():
     connection.register()
     scene.register()
     avatar_view.register()
-    object3d.register()
+    ui_object3d.register()
     mesh.register()
 
 
@@ -77,7 +78,7 @@ def unregister():
     connection.unregister()
     scene.unregister()
     avatar_view.unregister()
-    object3d.unregister()
+    ui_object3d.unregister()
     mesh.unregister()
 
 
