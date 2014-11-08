@@ -29,3 +29,6 @@ pip-log.txt
 #SublimeText
 *.sublime-project
 *.sublime-workspace
+
+# PyCharm
+.idea
