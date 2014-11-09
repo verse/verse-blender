@@ -41,6 +41,7 @@ if "bpy" in locals():
     imp.reload(scene)
     imp.reload(ui_scene)
     imp.reload(avatar_view)
+    imp.reload(ui_avatar_view)
     imp.reload(object3d)
     imp.reload(ui_object3d)
     imp.reload(mesh)
@@ -53,6 +54,7 @@ else:
     from . import scene
     from . import ui_scene
     from . import avatar_view
+    from . import ui_avatar_view
     from . import object3d
     from . import ui_object3d
     from . import mesh
@@ -67,7 +69,7 @@ def register():
     session.register()
     connection.register()
     ui_scene.register()
-    avatar_view.register()
+    ui_avatar_view.register()
     ui_object3d.register()
     mesh.register()
 
@@ -80,7 +82,7 @@ def unregister():
     session.unregister()
     connection.unregister()
     ui_scene.unregister()
-    avatar_view.unregister()
+    ui_avatar_view.unregister()
     ui_object3d.unregister()
     mesh.unregister()
 
