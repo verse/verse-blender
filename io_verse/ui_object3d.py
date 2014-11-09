@@ -23,10 +23,6 @@ This module implements sharing Blender objects at Verse server
 
 
 import bpy
-import bgl
-import mathutils
-import verse as vrs
-from .vrsent import vrsent
 from . import session
 from . import object3d
 from . import mesh

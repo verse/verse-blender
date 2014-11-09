@@ -39,8 +39,10 @@ if "bpy" in locals():
     imp.reload(session)
     imp.reload(connection)
     imp.reload(scene)
+    imp.reload(ui_scene)
     imp.reload(avatar_view)
     imp.reload(object3d)
+    imp.reload(ui_object3d)
     imp.reload(mesh)
     imp.reload(ui)
 else:
@@ -49,6 +51,7 @@ else:
     from . import session
     from . import connection
     from . import scene
+    from . import ui_scene
     from . import avatar_view
     from . import object3d
     from . import ui_object3d
@@ -63,7 +66,7 @@ def register():
     ui.register()
     session.register()
     connection.register()
-    scene.register()
+    ui_scene.register()
     avatar_view.register()
     ui_object3d.register()
     mesh.register()
@@ -76,7 +79,7 @@ def unregister():
     ui.unregister()
     session.unregister()
     connection.unregister()
-    scene.unregister()
+    ui_scene.unregister()
     avatar_view.unregister()
     ui_object3d.unregister()
     mesh.unregister()
@@ -86,5 +89,7 @@ def unregister():
 vrs.set_debug_level(vrs.PRINT_DEBUG_MSG)
 vrs.set_client_info("Blender", bpy.app.version_string)
 
+
 if __name__ == "__main__":
+    # Register all modules
     register()
