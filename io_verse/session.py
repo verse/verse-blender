@@ -41,15 +41,14 @@ class VerseSession(vrsent.VerseSession):
         
     # Blender could be connected only to one Verse server
     __instance = None
-    
- 
-    def instance():
+
+    @classmethod
+    def instance(cls):
         """
         instance() -> object
         Class getter of instance
         """
-        return __class__.__instance
-    
+        return cls.__instance
 
     def __init__(self, hostname, service, flag):
         """
@@ -57,16 +56,14 @@ class VerseSession(vrsent.VerseSession):
         """
         # Call __init__ from parent class to connect to Verse server
         super(VerseSession, self).__init__(hostname, service, flag)
-        __class__.__instance = self
+        self.__class__.__instance = self
         self.debug_print = True
-
 
     def __del__(self):
         """
         __del__() -> None
         """
-        __class__.__instance = None
-
+        self.__class__.__instance = None
 
     def _receive_connect_terminate(self, error):
         """
@@ -74,7 +71,7 @@ class VerseSession(vrsent.VerseSession):
         """
         # Call parent method to print debug information
         super(VerseSession, self)._receive_connect_terminate(error)
-        __class__.__instance = None
+        self.__class__.__instance = None
         # Clear dictionary of nodes
         self.nodes.clear()
 
@@ -96,8 +93,7 @@ class VerseSession(vrsent.VerseSession):
         bpy.context.window_manager.verse_connected = False
 
         ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
-  
-    
+
     def _receive_connect_accept(self, user_id, avatar_id):
         """
         _receive_connect_accept(self, user_id, avatar_id) -> None
@@ -108,8 +104,7 @@ class VerseSession(vrsent.VerseSession):
         bpy.context.window_manager.verse_connected = True
 
         ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
- 
-    
+
     def _receive_user_authenticate(self, username, methods):
         """
         _receive_user_authenticate(self, username, methods) -> None
@@ -119,15 +114,13 @@ class VerseSession(vrsent.VerseSession):
         else:
             if username == self.my_username:
                 self.send_user_authenticate(self.my_username, vrs.UA_METHOD_PASSWORD, self.my_password)
-    
 
     def _receive_node_create(self, node_id, parent_id, user_id, custom_type):
         """
         _receive_node_create(self, node_id, parent_id, user_id, type) -> None
         """
         return super(VerseSession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)    
- 
-    
+
     def _receive_node_destroy(self, node_id):
         """
         _receive_node_destroy(self, node_id) -> None
@@ -135,14 +128,12 @@ class VerseSession(vrsent.VerseSession):
         # Call parent method to print debug information
         return super(VerseSession, self)._receive_node_destroy(node_id)
 
-    
     def _receive_node_link(self, parent_node_id, child_node_id):
         """
          _receive_node_link(self, parent_node_id, child_node_id) -> None
         """
         # Call parent method to print debug information
         return super(VerseSession, self)._receive_node_link(parent_node_id, child_node_id)
-
 
     def _receive_node_perm(self, node_id, user_id, perm):
         """
@@ -151,14 +142,12 @@ class VerseSession(vrsent.VerseSession):
         # Call parent method to print debug information
         return super(VerseSession, self)._receive_node_perm(node_id, user_id, perm)
 
-
     def _receive_taggroup_create(self, node_id, taggroup_id, custom_type):
         """
         _receive_taggroup_create(self, node_id, taggroup_id, custom_type) -> None
         """
         # Call parent method to print debug information
         return super(VerseSession, self)._receive_taggroup_create(node_id, taggroup_id, custom_type)
-
 
     def _receive_taggroup_destroy(self, node_id, taggroup_id):
         """
@@ -167,7 +156,6 @@ class VerseSession(vrsent.VerseSession):
         # Call parent method to print debug information
         return super(VerseSession, self)._receive_taggroup_destroy(node_id, taggroup_id)
 
-
     def _receive_tag_create(self, node_id, taggroup_id, tag_id, data_type, count, custom_type):
         """
         _receive_tag_create(self, node_id, taggroup_id, tag_id, data_type, count, custom_type) -> None
@@ -175,14 +163,12 @@ class VerseSession(vrsent.VerseSession):
         # Call parent method to print debug information
         return super(VerseSession, self)._receive_tag_create(node_id, taggroup_id, tag_id, data_type, count, custom_type)
 
-
     def _receive_tag_destroy(self, node_id, taggroup_id, tag_id):
         """
         _receive_tag_destroy(self, node_id, taggroup_id, tag_id) -> None
         """
         # Call parent method to print debug information
         return super(VerseSession, self)._receive_tag_destroy(node_id, taggroup_id, tag_id)
-
 
     def _receive_tag_set_values(self, node_id, taggroup_id, tag_id, value):
         """
