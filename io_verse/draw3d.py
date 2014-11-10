@@ -53,7 +53,7 @@ def draw3d_cb(context):
 
     # Draw other avatars, when there is any
     for avatar in avatar_view.AvatarView.other_views().values():
-        if avatar.visualized == True and \
+        if avatar.visualized is True and \
                 context.scene.verse_node_id != -1 and \
                 context.scene.subscribed is True and \
                 context.scene.verse_node_id == avatar.scene_node_id.value[0]:
