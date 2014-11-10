@@ -178,9 +178,9 @@ def init_properties():
     Init properties in blender object data type
     """
     bpy.types.Mesh.verse_node_id = bpy.props.IntProperty(
-        name = "ID of verse mesh node",
-        default = -1,
-        description = ""
+        name="ID of verse mesh node",
+        default=-1,
+        description="ID of node representing mesh at Verse server"
     )
 
 
