@@ -141,7 +141,7 @@ class VERSE_OBJECT_OT_subscribe(bpy.types.Operator):
         """
         # Return true only in situation, when client is connected to Verse server
         wm = context.window_manager
-        if wm.verse_connected == True and \
+        if wm.verse_connected is True and \
                 context.scene.subscribed is not False and \
                 context.active_object is not None and \
                 context.active_object.verse_node_id != -1:
@@ -180,8 +180,17 @@ class VERSE_OBJECT_OT_share(bpy.types.Operator):
             return {'CANCELLED'}
         else:
             # Share active mesh object at Verse server
-            object_node = object3d.VerseObject(session=vrs_session, parent=scene_data_node, obj=context.active_object)
-            object_node.mesh_node = mesh.VerseMesh(session=vrs_session, parent=object_node, mesh=context.active_object.data, autosubscribe=True)
+            object_node = object3d.VerseObject(
+                session=vrs_session,
+                parent=scene_data_node,
+                obj=context.active_object
+            )
+            object_node.mesh_node = mesh.VerseMesh(
+                session=vrs_session,
+                parent=object_node,
+                mesh=context.active_object.data,
+                autosubscribe=True
+            )
             object_node.lock()
         return {'FINISHED'}
 
@@ -193,7 +202,7 @@ class VERSE_OBJECT_OT_share(bpy.types.Operator):
         """
         # Return true only in situation, when client is connected to Verse server
         wm = context.window_manager
-        if wm.verse_connected == True and \
+        if wm.verse_connected is True and \
                 context.scene.subscribed is not False and \
                 context.active_object is not None and \
                 context.active_object.type == 'MESH' and \
@@ -296,7 +305,7 @@ class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
         """
         # Return true only in situation, when client is connected to Verse server
         wm = context.window_manager
-        if wm.verse_connected == True and \
+        if wm.verse_connected is True and \
                 context.scene.subscribed is not False and \
                 context.active_object is not None and \
                 context.active_object.type == 'MESH':
@@ -321,10 +330,10 @@ class VERSE_OBJECT_panel(bpy.types.Panel):
     """
     GUI of Blender objects shared at Verse server
     """
-    bl_space_type  = 'PROPERTIES'
+    bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context     = 'scene'
-    bl_label       = 'Verse Objects'
+    bl_context = 'scene'
+    bl_label = 'Verse Objects'
     bl_description = 'Panel with Blender objects shared at Verse server'
 
     @classmethod
@@ -335,7 +344,7 @@ class VERSE_OBJECT_panel(bpy.types.Panel):
         # Return true only in situation, when client is connected
         # to Verse server and it is subscribed to data of some scene
         wm = context.window_manager
-        if wm.verse_connected == True and \
+        if wm.verse_connected is True and \
                 context.scene.subscribed is not False:
             return True
         else:
@@ -350,28 +359,31 @@ class VERSE_OBJECT_panel(bpy.types.Panel):
 
         row = layout.row()
 
-        row.template_list('VERSE_OBJECT_UL_slot', \
-            'verse_objects_widget_id', \
-            scene, \
-            'verse_objects', \
-            scene, \
-            'cur_verse_object_index', \
-            rows = 3)
+        row.template_list(
+            'VERSE_OBJECT_UL_slot',
+            'verse_objects_widget_id',
+            scene,
+            'verse_objects',
+            scene,
+            'cur_verse_object_index',
+            rows=3
+        )
 
         col = row.column(align=True)
         col.menu('object.verse_object_menu', icon='DOWNARROW_HLT', text="")
 
 
 # List of Blender classes in this submodule
-classes = (VERSE_OBJECT_OT_share, \
-        VERSE_OBJECT_OT_lock, \
-        VERSE_OBJECT_OT_unlock, \
-        VERSE_OBJECT_OT_subscribe, \
-        VIEW3D_PT_tools_VERSE_object, \
-        VERSE_OBJECT_panel, \
-        VERSE_OBJECT_UL_slot, \
-        VERSE_OBJECT_MT_menu
-    )
+classes = (
+    VERSE_OBJECT_OT_share,
+    VERSE_OBJECT_OT_lock,
+    VERSE_OBJECT_OT_unlock,
+    VERSE_OBJECT_OT_subscribe,
+    VIEW3D_PT_tools_VERSE_object,
+    VERSE_OBJECT_panel,
+    VERSE_OBJECT_UL_slot,
+    VERSE_OBJECT_MT_menu
+)
 
 
 def register():
