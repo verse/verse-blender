@@ -28,6 +28,7 @@ from . import session
 from . import ui
 from . import avatar_view
 
+
 class VerseAvatarStatus(bpy.types.Operator):
     """
     Status operator of Verse avatar
@@ -313,7 +314,7 @@ class VerseAvatarPanel(bpy.types.Panel):
         # Return true only in situation, when client is connected
         # to Verse server and it is subscribed to data of some scene
         wm = context.window_manager
-        if wm.verse_connected == True and \
+        if wm.verse_connected is True and \
                 context.scene.subscribed is not False:
             return True
         else:
@@ -329,26 +330,30 @@ class VerseAvatarPanel(bpy.types.Panel):
         # Display connected avatars in current scene and
         # display menu to hide/display them in 3d
         row = layout.row()
-        row.template_list('VERSE_AVATAR_UL_slot',
+        row.template_list(
+            'VERSE_AVATAR_UL_slot',
             'verse_avatars_widget_id',
             wm,
             'verse_avatars',
             wm,
             'cur_verse_avatar_index',
-            rows=3)
+            rows=3
+        )
 
         col = row.column(align=True)
         col.menu('view3d.verse_avatar_menu', icon='DOWNARROW_HLT', text="")
 
 
-classes = (VERSE_AVATAR_UL_slot,
+classes = (
+    VERSE_AVATAR_UL_slot,
     VerseAvatarPanel,
     VerseAvatarStatus,
     VERSE_AVATAR_OT_hide,
     VERSE_AVATAR_OT_hide_all,
     VERSE_AVATAR_OT_show,
     VERSE_AVATAR_OT_show_all,
-    VERSE_AVATAR_MT_menu)
+    VERSE_AVATAR_MT_menu
+)
 
 
 def register():
