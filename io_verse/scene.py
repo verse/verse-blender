@@ -74,10 +74,10 @@ class VerseSceneData(vrsent.VerseNode):
         other Blender.
         """
         try:
-            autosubscribe = self._autosubscribe
+            auto_subscribe = self._autosubscribe
         except AttributeError:
-            autosubscribe = False
-        return autosubscribe
+            auto_subscribe = False
+        return auto_subscribe
 
     def subscribe(self):
         """
@@ -142,7 +142,7 @@ class VerseSceneData(vrsent.VerseNode):
                     scene_item = _scene_item
                     break
             if scene_item is not None:
-                # Add ID of this node to the coresponding group of properties
+                # Add ID of this node to the corresponding group of properties
                 scene_item.data_node_id = self.id
 
     @classmethod
@@ -163,8 +163,8 @@ class VerseSceneData(vrsent.VerseNode):
     @classmethod
     def _receive_node_link(cls, session, parent_node_id, child_node_id):
         """
-        When parent node of this type of node is chaned at Verse server, then
-        this callback method is called, when coresponding command is received.
+        When parent node of this type of node is changed at Verse server, then
+        this callback method is called, when corresponding command is received.
         """
         # Call parent class
         scene_data_node = super(VerseSceneData, cls)._receive_node_link(session=session,
@@ -183,11 +183,13 @@ class VerseSceneName(vrsent.VerseTag):
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_SCENE_NAME_CT
 
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_STRING8, count=1, custom_type=TAG_SCENE_NAME_CT, value=None):
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_STRING8, count=1,
+                 custom_type=TAG_SCENE_NAME_CT, value=None):
         """
         Constructor of VerseSceneName
         """
-        super(VerseSceneName, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+        super(VerseSceneName, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type,
+                                             count=count, custom_type=custom_type, value=value)
 
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
@@ -228,13 +230,12 @@ class VerseScene(vrsent.VerseNode):
         super(VerseScene, self).__init__(session, node_id, parent, user_id, custom_type)
 
         # Create tag group and tag with name of scene
-        self._tg_info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
-        self._tg_info._tag_name = VerseSceneName(tg=self._tg_info, value=name)
+        self.tg_info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
+        self.tg_info.tag_name = VerseSceneName(tg=self.tg_info, value=name)
 
         if node_id is None:
             # Create node with data, when this node was created by this Blender
             self.data_node = VerseSceneData(session=session, parent=self, autosubscribe=True)
-            #self.data_node._autosubscribe = True
         else:
             self.data_node = None
 
@@ -267,7 +268,7 @@ class VerseScene(vrsent.VerseNode):
         Property of scene name
         """
         try:
-            name = self._tg_info._tag_name.value
+            name = self.tg_info.tag_name.value
         except AttributeError:
             return ""
         else:
