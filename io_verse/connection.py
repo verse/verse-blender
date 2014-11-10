@@ -46,7 +46,7 @@ class VerseAuthDialogOperator(bpy.types.Operator):
 
     def execute(self, context):
         vrs_session = session.VerseSession.instance()
-        if(vrs_session is not None):
+        if vrs_session is not None:
             vrs_session.my_username = self.dialog_username
             vrs_session.my_password = self.dialog_password
             vrs_session.send_user_authenticate(self.dialog_username, vrs.UA_METHOD_NONE, "")
@@ -92,7 +92,7 @@ class VerseClientDisconnect(bpy.types.Operator):
     bl_description = "Disconnect from Verse server"
     
     @classmethod
-    def poll(cls, context): # NOT sure about this
+    def poll(cls, context):
         if session.VerseSession.instance() is not None:
             state = session.VerseSession.instance().state
         else:
@@ -131,9 +131,11 @@ class VerseClientConnect(bpy.types.Operator):
             return False
     
     def execute(self, context):
-        bpy.ops.scene.verse_connect_dialog_operator('INVOKE_DEFAULT', \
-            vrs_server_name='localhost', \
-            vrs_server_port='12345')
+        bpy.ops.scene.verse_connect_dialog_operator(
+            'INVOKE_DEFAULT',
+            vrs_server_name='localhost',
+            vrs_server_port='12345'
+        )
         return {'FINISHED'}
         
 
@@ -163,10 +165,10 @@ def init_connection_properties():
     """
     This method initialize properties related to connection
     """
-    bpy.types.WindowManager.verse_connected = bpy.props.BoolProperty( \
-        name = "Connected to Server", \
-        default = False, \
-        description = "Is Blender connected to Verse server"
+    bpy.types.WindowManager.verse_connected = bpy.props.BoolProperty(
+        name="Connected to Server",
+        default=False,
+        description="Is Blender connected to Verse server"
     )
 
 
