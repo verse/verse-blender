@@ -22,6 +22,7 @@ This module implements ui functions used by other modules.
 
 import bpy
 
+
 def update_all_views(area_types=None):
     """
     This method updates all areas, when no type is specified.
@@ -45,56 +46,56 @@ class VERSE_SCENE_NODES_list_item(bpy.types.PropertyGroup):
     """
     Group of properties with representation of Verse scene node
     """
-    node_id = bpy.props.IntProperty( \
-        name = "Node ID", \
-        description = "ID of scene node", \
-        default = -1)
-    data_node_id = bpy.props.IntProperty( \
-        name = "Data Node ID", \
-        description = "ID of node with scene data", \
-        default = -1)
+    node_id = bpy.props.IntProperty(
+        name="Node ID",
+        description="ID of scene node",
+        default=-1)
+    data_node_id = bpy.props.IntProperty(
+        name="Data Node ID",
+        description="ID of node with scene data",
+        default=-1)
 
 
 def init_scene_properties():
     """
     Init properties in blender scene data type
     """
-    bpy.types.Scene.verse_scenes = bpy.props.CollectionProperty( \
-        type =  VERSE_SCENE_NODES_list_item, \
-        name = "Verse Scenes", \
-        description = "The list of verse scene nodes shared at Verse server"
+    bpy.types.Scene.verse_scenes = bpy.props.CollectionProperty(
+        type=VERSE_SCENE_NODES_list_item,
+        name="Verse Scenes",
+        description="The list of verse scene nodes shared at Verse server"
     )
-    bpy.types.Scene.cur_verse_scene_index = bpy.props.IntProperty( \
-        name = "Index of current Verse scene", \
-        default = -1, \
-        min = -1, \
-        max = 1000, \
-        description = "The index of curently selected Verse scene node"
+    bpy.types.Scene.cur_verse_scene_index = bpy.props.IntProperty(
+        name="Index of current Verse scene",
+        default=-1,
+        min=-1,
+        max=1000,
+        description="The index of curently selected Verse scene node"
     )
-    bpy.types.Scene.subscribed = bpy.props.BoolProperty( \
-        name = "Subscribed to scene node", \
-        default = False, \
-        description = "Is Blender subscribed to data of shared scene"
+    bpy.types.Scene.subscribed = bpy.props.BoolProperty(
+        name="Subscribed to scene node",
+        default=False,
+        description="Is Blender subscribed to data of shared scene"
     )
-    bpy.types.Scene.verse_node_id = bpy.props.IntProperty( \
-        name = "ID of verse scene node", \
-        default = -1, \
-        description = "The ID of the verse node representing current Blender scene"
+    bpy.types.Scene.verse_node_id = bpy.props.IntProperty(
+        name="ID of verse scene node",
+        default=-1,
+        description="The ID of the verse node representing current Blender scene"
     )
-    bpy.types.Scene.verse_data_node_id = bpy.props.IntProperty( \
-        name = "ID of verse scene data node", \
-        default = -1, \
-        description = "The ID of the verse node representing current Blender scene data"
+    bpy.types.Scene.verse_data_node_id = bpy.props.IntProperty(
+        name="ID of verse scene data node",
+        default=-1,
+        description="The ID of the verse node representing current Blender scene data"
     )
-    bpy.types.Scene.verse_server_hostname = bpy.props.StringProperty( \
-        name = "Verse server hostname", \
-        default = "", \
-        description = "Hostname of Verse server, where this scene is shared"
+    bpy.types.Scene.verse_server_hostname = bpy.props.StringProperty(
+        name="Verse server hostname",
+        default="",
+        description="Hostname of Verse server, where this scene is shared"
     )
-    bpy.types.Scene.verse_server_service = bpy.props.StringProperty( \
-        name = "Verse server port (service)", \
-        default = "", \
-        description = "Port (service) of Verse server"
+    bpy.types.Scene.verse_server_service = bpy.props.StringProperty(
+        name="Verse server port (service)",
+        default="",
+        description="Port (service) of Verse server"
     )
 
 
@@ -117,10 +118,11 @@ class VERSE_AVATAR_NODES_list_item(bpy.types.PropertyGroup):
     """
     Group of properties with representation of Verse avatar node
     """
-    node_id = bpy.props.IntProperty( \
-        name = "Node ID", \
-        description = "Node ID of avatar node", \
-        default = -1)
+    node_id = bpy.props.IntProperty(
+        name="Node ID",
+        description="Node ID of avatar node",
+        default=-1
+    )
 
 
 def init_avatar_properties():
@@ -128,22 +130,22 @@ def init_avatar_properties():
     Initialize properties used by this module
     """
     wm = bpy.types.WindowManager
-    wm.verse_avatar_capture = bpy.props.BoolProperty( \
-        name = "Avatar Capture", \
-        default = False, \
-        description = "This is information about my view to 3D scene shared at Verse server"
+    wm.verse_avatar_capture = bpy.props.BoolProperty(
+        name="Avatar Capture",
+        default=False,
+        description="This is information about my view to 3D scene shared at Verse server"
     )
-    wm.verse_avatars = bpy.props.CollectionProperty( \
-        type =  VERSE_AVATAR_NODES_list_item, \
-        name = "Verse Avatars", \
-        description = "The list of verse avatar nodes representing Blender at Verse server" \
+    wm.verse_avatars = bpy.props.CollectionProperty(
+        type=VERSE_AVATAR_NODES_list_item,
+        name="Verse Avatars",
+        description="The list of verse avatar nodes representing Blender at Verse server"
     )
-    wm.cur_verse_avatar_index = bpy.props.IntProperty( \
-        name = "Index of current Verse avatar", \
-        default = -1, \
-        min = -1, \
-        max = 1000, \
-        description = "The index of currently selected Verse avatar node"
+    wm.cur_verse_avatar_index = bpy.props.IntProperty(
+        name="Index of current Verse avatar",
+        default=-1,
+        min=-1,
+        max=1000,
+        description="The index of currently selected Verse avatar node"
     )
 
 
@@ -161,37 +163,38 @@ class VERSE_OBJECT_NODES_list_item(bpy.types.PropertyGroup):
     """
     Group of properties with representation of Verse scene node
     """
-    node_id = bpy.props.IntProperty( \
-        name = "Node ID", \
-        description = "ID of object node", \
-        default = -1)
+    node_id = bpy.props.IntProperty(
+        name="Node ID",
+        description="ID of object node",
+        default=-1
+    )
 
 
 def init_object_properties():
     """
     Init properties related to Blender objects
     """
-    bpy.types.Scene.verse_objects = bpy.props.CollectionProperty( \
-        type =  VERSE_OBJECT_NODES_list_item, \
-        name = "Verse Objects", \
-        description = "The list of verse object nodes shared at Verse server" \
+    bpy.types.Scene.verse_objects = bpy.props.CollectionProperty(
+        type=VERSE_OBJECT_NODES_list_item,
+        name="Verse Objects",
+        description="The list of verse object nodes shared at Verse server"
     )
-    bpy.types.Scene.cur_verse_object_index = bpy.props.IntProperty( \
-        name = "Index of current Verse object", \
-        default = -1, \
-        min = -1, \
-        max = 1000, \
-        description = "The index of currently selected Verse object node"
+    bpy.types.Scene.cur_verse_object_index = bpy.props.IntProperty(
+        name="Index of current Verse object",
+        default=-1,
+        min=-1,
+        max=1000,
+        description="The index of currently selected Verse object node"
     )
-    bpy.types.Object.verse_node_id = bpy.props.IntProperty( \
-        name = "ID of verse node", \
-        default = -1, \
-        description = "The node ID representing this Object at Verse server"
+    bpy.types.Object.verse_node_id = bpy.props.IntProperty(
+        name="ID of verse node",
+        default=-1,
+        description="The node ID representing this Object at Verse server"
     )
-    bpy.types.Object.subscribed = bpy.props.BoolProperty( \
-        name = "Subscribed to data of object node", \
-        default = False, \
-        description = "Is Blender subscribed to data of mesh object"
+    bpy.types.Object.subscribed = bpy.props.BoolProperty(
+        name="Subscribed to data of object node",
+        default=False,
+        description="Is Blender subscribed to data of mesh object"
     )
 
 
@@ -209,9 +212,11 @@ def reset_object_properties():
 
 
 # List of Blender classes in this submodule
-classes = (VERSE_SCENE_NODES_list_item, \
-    VERSE_AVATAR_NODES_list_item, \
-    VERSE_OBJECT_NODES_list_item)
+classes = (
+    VERSE_SCENE_NODES_list_item,
+    VERSE_AVATAR_NODES_list_item,
+    VERSE_OBJECT_NODES_list_item
+)
 
 
 def register():
