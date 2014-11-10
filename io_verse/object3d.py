@@ -354,13 +354,12 @@ class VerseObject(vrsent.VerseNode):
 
         # TODO: Blender doesn't mark object as changed, when object is selected or
         # unselected :-(. Thus following block of code is not called :-(
-
+        #
         # # When object is selected and it is not locket yet, then try to lock it
         # if self.locked is False and \
         #         self.obj.select is True:
         #     self.lock()
-
-
+        #
         # # When object is locked by this client and it is not selected anymore,
         # # then unlock it. Other users will be able to work with it.
         # if self.locked is True:
@@ -378,24 +377,24 @@ class VerseObject(vrsent.VerseNode):
             color = (0.0, 1.0, 1.0, 1.0)
 
         # Get & convert the Perspective Matrix of the current view/region.
-        perspMatrix = region_data.perspective_matrix
-        tempMat = [perspMatrix[j][i] for i in range(4) for j in range(4)]
-        perspBuff = bgl.Buffer(bgl.GL_FLOAT, 16, tempMat)
+        persp_matrix = region_data.perspective_matrix
+        temp_mat = [persp_matrix[j][i] for i in range(4) for j in range(4)]
+        persp_buff = bgl.Buffer(bgl.GL_FLOAT, 16, temp_mat)
 
         # Store previous OpenGL settings.
         # Store MatrixMode
-        MatrixMode_prev = bgl.Buffer(bgl.GL_INT, [1])
-        bgl.glGetIntegerv(bgl.GL_MATRIX_MODE, MatrixMode_prev)
-        MatrixMode_prev = MatrixMode_prev[0]
+        matrix_mode_prev = bgl.Buffer(bgl.GL_INT, [1])
+        bgl.glGetIntegerv(bgl.GL_MATRIX_MODE, matrix_mode_prev)
+        matrix_mode_prev = matrix_mode_prev[0]
 
         # Store projection matrix
-        ProjMatrix_prev = bgl.Buffer(bgl.GL_DOUBLE, [16])
-        bgl.glGetFloatv(bgl.GL_PROJECTION_MATRIX, ProjMatrix_prev)
+        proj_matrix_prev = bgl.Buffer(bgl.GL_DOUBLE, [16])
+        bgl.glGetFloatv(bgl.GL_PROJECTION_MATRIX, proj_matrix_prev)
 
         # Store Line width
-        lineWidth_prev = bgl.Buffer(bgl.GL_FLOAT, [1])
-        bgl.glGetFloatv(bgl.GL_LINE_WIDTH, lineWidth_prev)
-        lineWidth_prev = lineWidth_prev[0]
+        line_width_prev = bgl.Buffer(bgl.GL_FLOAT, [1])
+        bgl.glGetFloatv(bgl.GL_LINE_WIDTH, line_width_prev)
+        line_width_prev = line_width_prev[0]
 
         # Store GL_BLEND
         blend_prev = bgl.Buffer(bgl.GL_BYTE, [1])
@@ -419,18 +418,19 @@ class VerseObject(vrsent.VerseNode):
         # Prepare for 3D drawing
         bgl.glLoadIdentity()
         bgl.glMatrixMode(bgl.GL_PROJECTION)
-        bgl.glLoadMatrixf(perspBuff)
+        bgl.glLoadMatrixf(persp_buff)
         bgl.glEnable(bgl.GL_BLEND)
         bgl.glEnable(bgl.GL_DEPTH_TEST)
 
         # Compute transformation matrix
         matrix = mathutils.Matrix().Translation(self.transform.pos.value) * \
             mathutils.Quaternion(self.transform.rot.value).to_matrix().to_4x4() * \
-            mathutils.Matrix(( \
-                (self.transform.scale.value[0], 0, 0, 0), \
-                (0, self.transform.scale.value[1], 0, 0), \
-                (0, 0, self.transform.scale.value[2], 0), \
-                (0, 0, 0, 1)))
+            mathutils.Matrix((
+                (self.transform.scale.value[0], 0, 0, 0),
+                (0, self.transform.scale.value[1], 0, 0),
+                (0, 0, self.transform.scale.value[2], 0),
+                (0, 0, 0, 1)
+            ))
 
         # Transform points of bounding box
         points = tuple(matrix * mathutils.Vector(item) for item in self.bb.items.values())
@@ -464,9 +464,9 @@ class VerseObject(vrsent.VerseNode):
 
         # Restore previous OpenGL settings
         bgl.glLoadIdentity()
-        bgl.glMatrixMode(MatrixMode_prev)
-        bgl.glLoadMatrixf(ProjMatrix_prev)
-        bgl.glLineWidth(lineWidth_prev)
+        bgl.glMatrixMode(matrix_mode_prev)
+        bgl.glLoadMatrixf(proj_matrix_prev)
+        bgl.glLineWidth(line_width_prev)
         if not blend_prev:
             bgl.glDisable(bgl.GL_BLEND)
         if not line_stipple_prev:
