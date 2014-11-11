@@ -43,7 +43,11 @@ def draw3d_cb(context):
             bpy.context.scene.subscribed is False or \
             context.area.type != 'VIEW_3D':
         return
-    
+
+    # Draw all shared objects first
+    for obj in object3d.VerseObject.objects.values():
+        obj.draw(context.area, context.region_data)
+
     # If avatar view of this client doesn't exist yet, then try to 
     # get it
     my_avatar_view = avatar_view.AvatarView.my_view()
@@ -58,6 +62,3 @@ def draw3d_cb(context):
                 context.scene.subscribed is True and \
                 context.scene.verse_node_id == avatar.scene_node_id.value[0]:
             avatar.draw(context.area, context.region_data)
-
-    for obj in object3d.VerseObject.objects.values():
-        obj.draw(context.area, context.region_data)
