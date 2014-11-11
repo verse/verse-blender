@@ -284,7 +284,7 @@ class AvatarView(vrsent.VerseAvatar):
         """
         Getter of class member __my_view
         """
-        return __class__.__my_view
+        return cls.__my_view
 
 
     @classmethod
@@ -292,7 +292,7 @@ class AvatarView(vrsent.VerseAvatar):
         """
         Getter of class member __other_views
         """
-        return __class__.__other_views
+        return cls.__other_views
 
     def __init__(self, *args, **kwargs):
         """
@@ -316,7 +316,7 @@ class AvatarView(vrsent.VerseAvatar):
             # Initialize default values
             self.cur_screen = bpy.context.screen
             self.cur_area = None
-            __class__.__my_view = self
+            self.__class__.__my_view = self
 
             # Try to find current 3D view 
             for area in bpy.context.screen.areas.values():
@@ -366,7 +366,7 @@ class AvatarView(vrsent.VerseAvatar):
                 bpy.ops.view3d.verse_avatar()
                 bpy.context.area.type = original_type
         else:
-            __class__.__other_views[self.id] = self
+            self.__class__.__other_views[self.id] = self
         
         if view_initialized is False:
             # Create tag group containing information about view
