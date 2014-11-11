@@ -61,6 +61,7 @@ class BlenderUserNameTag(vrsent.verse_user.UserNameTag):
     """
     Custom VerseTag subclass for storing username
     """
+
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
@@ -76,6 +77,7 @@ class BlenderHostnameTag(vrsent.verse_avatar.HostnameTag):
     """
     Custom VerseTag subclass for storing hostname
     """
+
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
@@ -92,9 +94,13 @@ class AvatarLocation(vrsent.VerseTag):
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_LOCATION_CT
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3, custom_type=TAG_LOCATION_CT, value=(0.0, 0.0, 0.0)):
+
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32,
+                 count=3, custom_type=TAG_LOCATION_CT, value=(0.0, 0.0, 0.0)):
         """Constructor of AvatarLocation"""
-        super(AvatarLocation, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+        super(AvatarLocation, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type,
+                                             count=count, custom_type=custom_type, value=value)
+
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
@@ -110,9 +116,13 @@ class AvatarRotation(vrsent.VerseTag):
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_ROTATION_CT
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=4, custom_type=TAG_ROTATION_CT, value=(0.0, 0.0, 0.0, 0.0)):
+
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32,
+                 count=4, custom_type=TAG_ROTATION_CT, value=(0.0, 0.0, 0.0, 0.0)):
         """Constructor of AvatarRotation"""
-        super(AvatarRotation, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+        super(AvatarRotation, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type,
+                                             count=count, custom_type=custom_type, value=value)
+
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
@@ -128,9 +138,13 @@ class AvatarDistance(vrsent.VerseTag):
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_DISTANCE_CT
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=1, custom_type=TAG_DISTANCE_CT, value=(0.0,)):
+
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32,
+                 count=1, custom_type=TAG_DISTANCE_CT, value=(0.0,)):
         """Constructor of AvatarDistance"""
-        super(AvatarDistance, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+        super(AvatarDistance, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type,
+                                             count=count, custom_type=custom_type, value=value)
+
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
@@ -146,9 +160,13 @@ class AvatarPerspective(vrsent.VerseTag):
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_PERSPECTIVE_CT
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_STRING8, count=1, custom_type=TAG_PERSPECTIVE_CT, value=('PERSP',)):
+
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_STRING8,
+                 count=1, custom_type=TAG_PERSPECTIVE_CT, value=('PERSP',)):
         """Constructor of AvatarPerspective"""
-        super(AvatarPerspective, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+        super(AvatarPerspective, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type,
+                                                count=count, custom_type=custom_type, value=value)
+
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
@@ -164,9 +182,13 @@ class AvatarWidth(vrsent.VerseTag):
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_WIDTH_CT
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16, count=1, custom_type=TAG_WIDTH_CT, value=(0,)):
+
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16,
+                 count=1, custom_type=TAG_WIDTH_CT, value=(0,)):
         """Constructor of AvatarWidth"""
-        super(AvatarWidth, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+        super(AvatarWidth, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type,
+                                          count=count, custom_type=custom_type, value=value)
+
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
@@ -182,9 +204,13 @@ class AvatarHeight(vrsent.VerseTag):
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_HEIGHT_CT
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16, count=1, custom_type=TAG_HEIGHT_CT, value=(0,)):
+
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT16,
+                 count=1, custom_type=TAG_HEIGHT_CT, value=(0,)):
         """Constructor of AvatarHeight"""
-        super(AvatarHeight, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+        super(AvatarHeight, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type,
+                                           count=count, custom_type=custom_type, value=value)
+
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
@@ -200,9 +226,13 @@ class AvatarLens(vrsent.VerseTag):
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_LENS_CT
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=1, custom_type=TAG_LENS_CT, value=(35.0,)):
+
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32,
+                 count=1, custom_type=TAG_LENS_CT, value=(35.0,)):
         """Constructor of AvatarLens"""
-        super(AvatarLens, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+        super(AvatarLens, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type,
+                                         count=count, custom_type=custom_type, value=value)
+
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
@@ -218,9 +248,13 @@ class AvatarScene(vrsent.VerseTag):
     node_custom_type = vrs.AVATAR_NODE_CT
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_SCENE_CT
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT32, count=1, custom_type=TAG_SCENE_CT, value=(0,)):
+
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_UINT32,
+                 count=1, custom_type=TAG_SCENE_CT, value=(0,)):
         """Constructor of AvatarScene"""
-        super(AvatarScene, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type, count=count, custom_type=custom_type, value=value)
+        super(AvatarScene, self).__init__(tg=tg, tag_id=tag_id, data_type=data_type,
+                                          count=count, custom_type=custom_type, value=value)
+
     @classmethod
     def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
@@ -242,9 +276,8 @@ class AvatarView(vrsent.VerseAvatar):
     # Dictionary of other avatar views of other users
     __other_views = {}
 
-    # This is specific cutom_type of Avatar
+    # This is specific custom_type of Avatar
     custom_type = vrs.AVATAR_NODE_CT
-
 
     @classmethod
     def my_view(cls):
@@ -260,7 +293,6 @@ class AvatarView(vrsent.VerseAvatar):
         Getter of class member __other_views
         """
         return __class__.__other_views
-
 
     def __init__(self, *args, **kwargs):
         """
@@ -298,32 +330,32 @@ class AvatarView(vrsent.VerseAvatar):
             if area.type == 'VIEW_3D' and space.type == 'VIEW_3D':
                 view_initialized = True
                 # Create tag group containing information about view
-                self.view_tg = vrsent.VerseTagGroup(node=self, \
+                self.view_tg = vrsent.VerseTagGroup(node=self,
                     custom_type=TG_INFO_CT)
                 # Create tags with data of view to 3D view
                 # Location
-                self.location = AvatarLocation(tg=self.view_tg, \
+                self.location = AvatarLocation(tg=self.view_tg,
                     value=tuple(space.region_3d.view_location))
                 # Rotation
-                self.rotation = AvatarRotation(tg=self.view_tg, \
+                self.rotation = AvatarRotation(tg=self.view_tg,
                     value=tuple(space.region_3d.view_rotation))
                 # Distance
-                self.distance = AvatarDistance(tg=self.view_tg, \
+                self.distance = AvatarDistance(tg=self.view_tg,
                     value=(space.region_3d.view_distance,))
                 # Perspective/Orthogonal
-                self.perspective = AvatarPerspective(tg=self.view_tg, \
+                self.perspective = AvatarPerspective(tg=self.view_tg,
                     value=(space.region_3d.view_perspective,))
                 # Width
-                self.width = AvatarWidth(tg=self.view_tg, \
+                self.width = AvatarWidth(tg=self.view_tg,
                     value=(area.width,))
                 # Height
-                self.height = AvatarHeight(tg=self.view_tg, \
+                self.height = AvatarHeight(tg=self.view_tg,
                     value=(area.height,))
                 # Lens
-                self.lens = AvatarLens(tg=self.view_tg, \
+                self.lens = AvatarLens(tg=self.view_tg,
                     value=(space.lens,))
                 # Get current Scene ID
-                self.scene_node_id = AvatarScene(tg=self.view_tg, \
+                self.scene_node_id = AvatarScene(tg=self.view_tg,
                     value=(bpy.context.scene.verse_node_id,))
             
                 # Start capturing of current view to 3D View
@@ -336,9 +368,9 @@ class AvatarView(vrsent.VerseAvatar):
         else:
             __class__.__other_views[self.id] = self
         
-        if view_initialized == False:
+        if view_initialized is False:
             # Create tag group containing information about view
-            self.view_tg = vrsent.VerseTagGroup(node=self, \
+            self.view_tg = vrsent.VerseTagGroup(node=self,
                 custom_type=TG_INFO_CT)
             # Create tags with data of view to 3D view
             self.location = AvatarLocation(tg=self.view_tg)
@@ -370,7 +402,6 @@ class AvatarView(vrsent.VerseAvatar):
         # Force redraw of 3D view
         ui.update_all_views(('VIEW_3D',))
         return super(AvatarView, cls)._receive_node_destroy(session, node_id)
-
 
     def update(self, context):
         """
@@ -408,72 +439,86 @@ class AvatarView(vrsent.VerseAvatar):
         if context.area.height != self.height.value[0]:
             self.height.value = (context.area.height,)
 
-        
     def draw(self, area, region_data):
         """
         Draw avatar view in given context
         """
-        # TODO: Add this color to addon option
+        # TODO: Add this color to Add-on option
         color = (1.0, 1.0, 0.5, 1.0)
-        alpha = 2.0*math.atan((18.0/2.0)/self.lens.value[0])
-        dist = 0.5/(math.tan(alpha/2.0))
-        height = 1.0
+        alpha = 2.0 * math.atan((18.0 / 2.0) / self.lens.value[0])
+        dist = 0.5 / (math.tan(alpha / 2.0))
         if self.height.value[0] == 0:
             width = 0.7
         else:
-            width = self.width.value[0]/self.height.value[0]
+            width = self.width.value[0] / self.height.value[0]
                     
-        points = {}
+        points = dict()
         points['border'] = [None, None, None, None]
         points['center'] = [None]
         
         # Points of face
-        points['right_eye'] = [mathutils.Vector((0.25, 0.25, self.distance.value[0] - dist)), \
-            mathutils.Vector((0.3, 0.25, self.distance.value[0] - dist)), \
-            mathutils.Vector((0.3, 0.0, self.distance.value[0] - dist)), \
-            mathutils.Vector((0.25, 0.0, self.distance.value[0] - dist)), \
-            mathutils.Vector((0.25, 0.25, self.distance.value[0] - dist))]
-        points['left_eye'] = [mathutils.Vector((-0.25, 0.25, self.distance.value[0] - dist)), \
-            mathutils.Vector((-0.3, 0.25, self.distance.value[0] - dist)), \
-            mathutils.Vector((-0.3, 0.0, self.distance.value[0] - dist)), \
-            mathutils.Vector((-0.25, 0.0, self.distance.value[0] - dist)), \
-            mathutils.Vector((-0.25, 0.25, self.distance.value[0] - dist))]
+        points['right_eye'] = [
+            mathutils.Vector((0.25, 0.25, self.distance.value[0] - dist)),
+            mathutils.Vector((0.3, 0.25, self.distance.value[0] - dist)),
+            mathutils.Vector((0.3, 0.0, self.distance.value[0] - dist)),
+            mathutils.Vector((0.25, 0.0, self.distance.value[0] - dist)),
+            mathutils.Vector((0.25, 0.25, self.distance.value[0] - dist))
+        ]
+        points['left_eye'] = [
+            mathutils.Vector((-0.25, 0.25, self.distance.value[0] - dist)),
+            mathutils.Vector((-0.3, 0.25, self.distance.value[0] - dist)),
+            mathutils.Vector((-0.3, 0.0, self.distance.value[0] - dist)),
+            mathutils.Vector((-0.25, 0.0, self.distance.value[0] - dist)),
+            mathutils.Vector((-0.25, 0.25, self.distance.value[0] - dist))
+        ]
         
-        points['mouth'] = [mathutils.Vector((-0.40912365913391113, -0.11777058243751526, self.distance.value[0] - dist)), \
-            mathutils.Vector((-0.3441678285598755, -0.15873458981513977, self.distance.value[0] - dist)), \
-            mathutils.Vector((-0.2563667893409729, -0.1998385488986969, self.distance.value[0] - dist)), \
-            mathutils.Vector((-0.18191590905189514, -0.22385218739509583, self.distance.value[0] - dist)), \
-            mathutils.Vector((-0.10375960171222687, -0.23957833647727966, self.distance.value[0] - dist)), \
-            mathutils.Vector((0.0, -0.2464955747127533, self.distance.value[0] - dist)), \
-            mathutils.Vector((0.10375960171222687, -0.23957833647727966, self.distance.value[0] - dist)), \
-            mathutils.Vector((0.18191590905189514, -0.22385218739509583, self.distance.value[0] - dist)), \
-            mathutils.Vector((0.2563667893409729, -0.1998385488986969, self.distance.value[0] - dist)), \
-            mathutils.Vector((0.3441678285598755, -0.15873458981513977, self.distance.value[0] - dist)), \
-            mathutils.Vector((0.40912365913391113, -0.11777058243751526, self.distance.value[0] - dist))]            
+        points['mouth'] = [
+            mathutils.Vector((-0.40912365913391113, -0.11777058243751526, self.distance.value[0] - dist)),
+            mathutils.Vector((-0.3441678285598755, -0.15873458981513977, self.distance.value[0] - dist)),
+            mathutils.Vector((-0.2563667893409729, -0.1998385488986969, self.distance.value[0] - dist)),
+            mathutils.Vector((-0.18191590905189514, -0.22385218739509583, self.distance.value[0] - dist)),
+            mathutils.Vector((-0.10375960171222687, -0.23957833647727966, self.distance.value[0] - dist)),
+            mathutils.Vector((0.0, -0.2464955747127533, self.distance.value[0] - dist)),
+            mathutils.Vector((0.10375960171222687, -0.23957833647727966, self.distance.value[0] - dist)),
+            mathutils.Vector((0.18191590905189514, -0.22385218739509583, self.distance.value[0] - dist)),
+            mathutils.Vector((0.2563667893409729, -0.1998385488986969, self.distance.value[0] - dist)),
+            mathutils.Vector((0.3441678285598755, -0.15873458981513977, self.distance.value[0] - dist)),
+            mathutils.Vector((0.40912365913391113, -0.11777058243751526, self.distance.value[0] - dist))
+        ]
                 
         # Put border points of camera to basic position
-        points['border'][0] = mathutils.Vector((-width/2.0, \
-            -0.5, \
+        points['border'][0] = mathutils.Vector((
+            -width / 2.0,
+            -0.5,
             self.distance.value[0] - dist,
-            1.0))
-        points['border'][1] = mathutils.Vector((width/2.0, \
-            -0.5, \
+            1.0
+        ))
+        points['border'][1] = mathutils.Vector((
+            width / 2.0,
+            -0.5,
             self.distance.value[0] - dist,
-            1.0))
-        points['border'][2] = mathutils.Vector((width/2.0, \
-            0.5, \
-            self.distance.value[0] - dist, \
-            1.0))
-        points['border'][3] = mathutils.Vector((-width/2.0, \
-            0.5, \
-            self.distance.value[0] - dist, \
-            1.0))
+            1.0
+        ))
+        points['border'][2] = mathutils.Vector((
+            width / 2.0,
+            0.5,
+            self.distance.value[0] - dist,
+            1.0
+        ))
+        points['border'][3] = mathutils.Vector((
+            -width / 2.0,
+            0.5,
+            self.distance.value[0] - dist,
+            1.0
+        ))
         
         # Center of view
-        points['center'][0] = mathutils.Vector((0.0, \
-            0.0, \
-            self.distance.value[0], \
-            1.0))        
+        points['center'][0] = mathutils.Vector((
+            0.0,
+            0.0,
+            self.distance.value[0],
+            1.0
+        ))
         
         # Create transformation (rotation) matrix
         rot_matrix = mathutils.Quaternion(self.rotation.value).to_matrix().to_4x4()
@@ -482,29 +527,29 @@ class AvatarView(vrsent.VerseAvatar):
         for point_group in points.values():
             for index in range(len(point_group)):
                 # Rotate points
-                point_group[index] = (rot_matrix*point_group[index]).to_3d()
+                point_group[index] = (rot_matrix * point_group[index]).to_3d()
                 # Move points
                 point_group[index] += mathutils.Vector(self.location.value)
         
         # Get & convert the Perspective Matrix of the current view/region.
-        perspMatrix = region_data.perspective_matrix
-        tempMat = [perspMatrix[j][i] for i in range(4) for j in range(4)]
-        perspBuff = bgl.Buffer(bgl.GL_FLOAT, 16, tempMat)
+        persp_matrix = region_data.perspective_matrix
+        temp_mat = [persp_matrix[j][i] for i in range(4) for j in range(4)]
+        persp_buff = bgl.Buffer(bgl.GL_FLOAT, 16, temp_mat)
     
         # Store previous OpenGL settings.
         # Store MatrixMode
-        MatrixMode_prev = bgl.Buffer(bgl.GL_INT, [1])
-        bgl.glGetIntegerv(bgl.GL_MATRIX_MODE, MatrixMode_prev)
-        MatrixMode_prev = MatrixMode_prev[0]
+        matrix_mode_prev = bgl.Buffer(bgl.GL_INT, [1])
+        bgl.glGetIntegerv(bgl.GL_MATRIX_MODE, matrix_mode_prev)
+        matrix_mode_prev = matrix_mode_prev[0]
     
         # Store projection matrix
-        ProjMatrix_prev = bgl.Buffer(bgl.GL_DOUBLE, [16])
-        bgl.glGetFloatv(bgl.GL_PROJECTION_MATRIX, ProjMatrix_prev)
+        proj_matrix_prev = bgl.Buffer(bgl.GL_DOUBLE, [16])
+        bgl.glGetFloatv(bgl.GL_PROJECTION_MATRIX, proj_matrix_prev)
     
         # Store Line width
-        lineWidth_prev = bgl.Buffer(bgl.GL_FLOAT, [1])
-        bgl.glGetFloatv(bgl.GL_LINE_WIDTH, lineWidth_prev)
-        lineWidth_prev = lineWidth_prev[0]
+        line_width_prev = bgl.Buffer(bgl.GL_FLOAT, [1])
+        bgl.glGetFloatv(bgl.GL_LINE_WIDTH, line_width_prev)
+        line_width_prev = line_width_prev[0]
     
         # Store GL_BLEND
         blend_prev = bgl.Buffer(bgl.GL_BYTE, [1])
@@ -528,7 +573,7 @@ class AvatarView(vrsent.VerseAvatar):
         # Prepare for 3D drawing
         bgl.glLoadIdentity()
         bgl.glMatrixMode(bgl.GL_PROJECTION)
-        bgl.glLoadMatrixf(perspBuff)
+        bgl.glLoadMatrixf(persp_buff)
         bgl.glEnable(bgl.GL_BLEND)
         bgl.glEnable(bgl.GL_DEPTH_TEST)
                 
@@ -537,26 +582,38 @@ class AvatarView(vrsent.VerseAvatar):
         bgl.glBegin(bgl.GL_LINES)
         bgl.glColor4f(color[0], color[1], color[2], color[3])
         
-        bgl.glVertex3f(self.location.value[0]+0.1, \
-            self.location.value[1], \
-            self.location.value[2])
-        bgl.glVertex3f(self.location.value[0]-0.1, \
-            self.location.value[1], \
-            self.location.value[2])
+        bgl.glVertex3f(
+            self.location.value[0] + 0.1,
+            self.location.value[1],
+            self.location.value[2]
+        )
+        bgl.glVertex3f(
+            self.location.value[0] - 0.1,
+            self.location.value[1],
+            self.location.value[2]
+        )
         
-        bgl.glVertex3f(self.location.value[0], \
-            self.location.value[1]+0.1, \
-            self.location.value[2])
-        bgl.glVertex3f(self.location.value[0], \
-            self.location.value[1]-0.1, \
-            self.location.value[2])
+        bgl.glVertex3f(
+            self.location.value[0],
+            self.location.value[1] + 0.1,
+            self.location.value[2]
+        )
+        bgl.glVertex3f(
+            self.location.value[0],
+            self.location.value[1] - 0.1,
+            self.location.value[2]
+        )
         
-        bgl.glVertex3f(self.location.value[0], \
-            self.location.value[1], \
-            self.location.value[2]+0.1)
-        bgl.glVertex3f(self.location.value[0], \
-            self.location.value[1], \
-            self.location.value[2]-0.1)
+        bgl.glVertex3f(
+            self.location.value[0],
+            self.location.value[1],
+            self.location.value[2] + 0.1
+        )
+        bgl.glVertex3f(
+            self.location.value[0],
+            self.location.value[1],
+            self.location.value[2] - 0.1
+        )
         
         bgl.glEnd()
         
@@ -605,18 +662,20 @@ class AvatarView(vrsent.VerseAvatar):
         
         # Draw dashed line from Look At point and center of camera
         bgl.glBegin(bgl.GL_LINES)
-        bgl.glVertex3f(self.location.value[0], \
-            self.location.value[1], \
-            self.location.value[2])
+        bgl.glVertex3f(
+            self.location.value[0],
+            self.location.value[1],
+            self.location.value[2]
+        )
         bgl.glVertex3f(center[0][0], center[0][1], center[0][2])
         bgl.glEnd()
         bgl.glDisable(bgl.GL_LINE_STIPPLE)    
 
         # Restore previous OpenGL settings
         bgl.glLoadIdentity()
-        bgl.glMatrixMode(MatrixMode_prev)
-        bgl.glLoadMatrixf(ProjMatrix_prev)
-        bgl.glLineWidth(lineWidth_prev)
+        bgl.glMatrixMode(matrix_mode_prev)
+        bgl.glLoadMatrixf(proj_matrix_prev)
+        bgl.glLineWidth(line_width_prev)
         if not blend_prev:
             bgl.glDisable(bgl.GL_BLEND)
         if not line_stipple_prev:
@@ -629,9 +688,10 @@ class AvatarView(vrsent.VerseAvatar):
             area.regions[4],
             region_data,
             center[0])
-        font_id, font_size, my_dpi = 0, 12, 72 # TODO: add to addon options
+        # TODO: add to Add-on options
+        font_id, font_size, my_dpi = 0, 12, 72
         blf.size(font_id, font_size, my_dpi)
-        text_width, text_height = blf.dimensions(font_id, self.username)
+        # text_width, text_height = blf.dimensions(font_id, self.username)
         blf.position(font_id, coord_2d[0], coord_2d[1], 0)
         blf.draw(font_id, self.username)
 
