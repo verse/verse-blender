@@ -688,11 +688,13 @@ class AvatarView(vrsent.VerseAvatar):
             area.regions[4],
             region_data,
             center[0])
-        # TODO: add to Add-on options
-        font_id, font_size, my_dpi = 0, 12, 72
-        blf.size(font_id, font_size, my_dpi)
-        # text_width, text_height = blf.dimensions(font_id, self.username)
-        blf.position(font_id, coord_2d[0], coord_2d[1], 0)
-        blf.draw(font_id, self.username)
+        # When coordinates are not outside window, then draw the name of avatar
+        if coord_2d is not None:
+            # TODO: add to Add-on options
+            font_id, font_size, my_dpi = 0, 12, 72
+            blf.size(font_id, font_size, my_dpi)
+            # text_width, text_height = blf.dimensions(font_id, self.username)
+            blf.position(font_id, coord_2d[0], coord_2d[1], 0)
+            blf.draw(font_id, self.username)
 
         bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
