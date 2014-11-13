@@ -27,7 +27,7 @@ import bgl
 import mathutils
 import verse as vrs
 from .vrsent import vrsent
-from . import session
+from . import session as vrs_session
 from . import ui
 
 
@@ -59,9 +59,9 @@ def object_update(node_id):
     shared object is changed by user.
     """
     # Send changed properties to Verse server
-    vrs_session = session.VerseSession.instance()
+    session = vrs_session.VerseSession.instance()
     try:
-        object_node = vrs_session.nodes[node_id]
+        object_node = session.nodes[node_id]
     except KeyError:
         pass
     else:
@@ -176,7 +176,8 @@ class VerseObjectBoundingBox(vrsent.VerseLayer):
         """
         This method is called, when new value of verse layer was set
         """
-        layer = super(VerseObjectBoundingBox, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
+        layer = super(VerseObjectBoundingBox, cls).cb_receive_layer_set_value(
+            session, node_id, layer_id, item_id, value)
         update_3dview(layer.node)
         return layer
 
@@ -287,7 +288,8 @@ class VerseObject(vrsent.VerseNode):
         When new object node is created or verse server, then this callback method is called.
         """
         # Call parent class
-        object_node = super(VerseObject, cls).cb_receive_node_create(session=session,
+        object_node = super(VerseObject, cls).cb_receive_node_create(
+            session=session,
             node_id=node_id,
             parent_id=parent_id,
             user_id=user_id,

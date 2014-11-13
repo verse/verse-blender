@@ -33,7 +33,7 @@ HANDLER = None
 
 def draw3d_cb(context):
     """
-    This draw callback for io_verse addon is called, when view to 3D is
+    This draw callback for io_verse Add-on is called, when view to 3D is
     changed.
     """
 

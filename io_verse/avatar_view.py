@@ -310,12 +310,12 @@ class AvatarView(vrsent.VerseAvatar):
         self.scene_node = None
         view_initialized = False
         self.visualized = True
+        self.cur_area = None
+        self.cur_space = None
 
         if self.id == self.session.avatar_id:
             # Initialize default values
             self.cur_screen = bpy.context.screen
-            self.cur_area = None
-            self.cur_space = None
             self.__class__.__my_view = self
 
             # Try to find current 3D view 
@@ -331,47 +331,58 @@ class AvatarView(vrsent.VerseAvatar):
             if self.cur_area.type == 'VIEW_3D' and self.cur_space.type == 'VIEW_3D':
                 view_initialized = True
                 # Create tag group containing information about view
-                self.view_tg = vrsent.VerseTagGroup(node=self,
+                self.view_tg = vrsent.VerseTagGroup(
+                    node=self,
                     custom_type=TG_INFO_CT)
                 # Create tags with data of view to 3D view
                 # Location
-                self.location = AvatarLocation(tg=self.view_tg,
+                self.location = AvatarLocation(
+                    tg=self.view_tg,
                     value=tuple(self.cur_space.region_3d.view_location))
                 # Rotation
-                self.rotation = AvatarRotation(tg=self.view_tg,
+                self.rotation = AvatarRotation(
+                    tg=self.view_tg,
                     value=tuple(self.cur_space.region_3d.view_rotation))
                 # Distance
-                self.distance = AvatarDistance(tg=self.view_tg,
+                self.distance = AvatarDistance(
+                    tg=self.view_tg,
                     value=(self.cur_space.region_3d.view_distance,))
                 # Perspective/Orthogonal
-                self.perspective = AvatarPerspective(tg=self.view_tg,
+                self.perspective = AvatarPerspective(
+                    tg=self.view_tg,
                     value=(self.cur_space.region_3d.view_perspective,))
                 # Width
-                self.width = AvatarWidth(tg=self.view_tg,
+                self.width = AvatarWidth(
+                    tg=self.view_tg,
                     value=(self.cur_area.width,))
                 # Height
-                self.height = AvatarHeight(tg=self.view_tg,
+                self.height = AvatarHeight(
+                    tg=self.view_tg,
                     value=(self.cur_area.height,))
                 # Lens
-                self.lens = AvatarLens(tg=self.view_tg,
+                self.lens = AvatarLens(
+                    tg=self.view_tg,
                     value=(self.cur_space.lens,))
                 # Get current Scene ID
-                self.scene_node_id = AvatarScene(tg=self.view_tg,
+                self.scene_node_id = AvatarScene(
+                    tg=self.view_tg,
                     value=(bpy.context.scene.verse_node_id,))
             
-                # Start capturing of current view to 3D View
-                # Save current context to 3d view, start capturing and
-                # then restore original context
+                # TODO: check following code (may be not needed anymore)
                 original_type = bpy.context.area.type
                 bpy.context.area.type = 'VIEW_3D'
                 bpy.ops.view3d.verse_avatar()
                 bpy.context.area.type = original_type
+            else:
+                # TODO: Add some assert, because this should not happen.
+                pass
         else:
             self.__class__.__other_views[self.id] = self
         
         if view_initialized is False:
             # Create tag group containing information about view
-            self.view_tg = vrsent.VerseTagGroup(node=self,
+            self.view_tg = vrsent.VerseTagGroup(
+                node=self,
                 custom_type=TG_INFO_CT)
             # Create tags with data of view to 3D view
             self.location = AvatarLocation(tg=self.view_tg)

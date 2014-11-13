@@ -41,10 +41,10 @@ def cb_scene_update(context):
     when something is changed in the scene
     """
 
-    objects = bpy.data.objects
     wm = bpy.context.window_manager
 
     if wm.verse_connected is True:
+        objects = bpy.data.objects
         # Was any object updated?
         if objects.is_updated:
             for obj in objects:
@@ -71,7 +71,7 @@ class VerseSceneData(vrsent.VerseNode):
 
     def _auto_subscribe(self):
         """
-        User has to subscribe to this node manualy, when it is node created by
+        User has to subscribe to this node manually, when it is node created by
         other Blender.
         """
         try:
@@ -153,7 +153,8 @@ class VerseSceneData(vrsent.VerseNode):
         for current scene, than this callback method is called.
         """
         # Call parent class
-        scene_data_node = super(VerseSceneData, cls).cb_receive_node_create(session=session,
+        scene_data_node = super(VerseSceneData, cls).cb_receive_node_create(
+            session=session,
             node_id=node_id,
             parent_id=parent_id,
             user_id=user_id,
@@ -168,7 +169,8 @@ class VerseSceneData(vrsent.VerseNode):
         this callback method is called, when corresponding command is received.
         """
         # Call parent class
-        scene_data_node = super(VerseSceneData, cls).cb_receive_node_link(session=session,
+        scene_data_node = super(VerseSceneData, cls).cb_receive_node_link(
+            session=session,
             parent_node_id=parent_node_id,
             child_node_id=child_node_id)
         scene_data_node.__update_item_slot()
@@ -248,7 +250,8 @@ class VerseScene(vrsent.VerseNode):
         """
 
         # Call parent class
-        scene_node = super(VerseScene, cls).cb_receive_node_create(session=session,
+        scene_node = super(VerseScene, cls).cb_receive_node_create(
+            session=session,
             node_id=node_id,
             parent_id=parent_id,
             user_id=user_id,
