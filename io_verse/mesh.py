@@ -24,6 +24,7 @@ This module implements sharing Blender meshes at Verse server
 
 import bpy
 import mathutils
+import bmesh
 import verse as vrs
 from .vrsent import vrsent
 from . import object3d
@@ -56,15 +57,16 @@ class VerseVertices(vrsent.VerseLayer):
         This method is called, when new value of verse layer was set
         """
         layer = super(VerseVertices, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
-        mesh = layer.node.mesh
-        if mesh is not None:
-            if item_id < len(mesh.vertices):
-                if mesh.vertices[item_id].co != mathutils.Vector(value):
-                    mesh.vertices[item_id].co = mathutils.Vector(value)
-            else:
-                mesh.vertices.add(count=1)
-                mesh.vertices[item_id].co = mathutils.Vector(value)
-            mesh.update()
+
+        _bmesh = layer.node.bmesh
+        # When this is known vertex ID, then update position. Otherwise create new vertex.
+        if item_id < len(_bmesh.verts):
+            _bmesh.verts[item_id].co = mathutils.Vector(value)
+        else:
+            _bmesh.verts.new(value)
+        _bmesh.to_mesh(layer.node.mesh)
+        layer.node.mesh.update()
+
         return layer
 
 
@@ -116,7 +118,21 @@ class VerseFaces(vrsent.VerseLayer):
         This method is called, when new value of verse layer was set
         """
         layer = super(VerseFaces, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
-        # TODO: create new polygon, when all fragments of tessellated polygon were received
+
+        _bmesh = layer.node.bmesh
+        if item_id < len(_bmesh.faces):
+            pass
+        else:
+            try:
+                if value[3] == 0:
+                    _bmesh.faces.new([_bmesh.verts[vert_id] for vert_id in value[0:3]])
+                else:
+                    _bmesh.faces.new([_bmesh.verts[vert_id] for vert_id in value])
+            except IndexError:
+                print('Wrong index of vertex')
+        _bmesh.to_mesh(layer.node.mesh)
+        layer.node.mesh.update()
+
         return layer
 
 
@@ -139,10 +155,12 @@ class VerseMesh(vrsent.VerseNode):
         self.edges = VerseEdges(node=self)
         self.quads = VerseFaces(node=self)
         self._autosubscribe = autosubscribe
+        self.bmesh = bmesh.new()
 
-        # TODO: do not do it in this way for huge mesh
         if self.mesh is not None:
             self.mesh.update(calc_tessface=True)
+            self.bmesh.from_mesh(self.mesh)
+            # TODO: do not do it in this way for huge mesh
             # Vertices
             for vert in mesh.vertices:
                 self.vertices.items[vert.index] = tuple(vert.co)
@@ -151,7 +169,10 @@ class VerseMesh(vrsent.VerseNode):
                 self.edges.items[edge.index] = (edge.vertices[0], edge.vertices[1])
             # Faces
             for face in mesh.tessfaces:
-                self.quads.items[face.index] = tuple(vert for vert in face.vertices)
+                if len(face.vertices) == 3:
+                    self.quads.items[face.index] = (face.vertices[0], face.vertices[1], face.vertices[2], 0)
+                else:
+                    self.quads.items[face.index] = tuple(vert for vert in face.vertices)
 
     @classmethod
     def cb_receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -165,9 +186,12 @@ class VerseMesh(vrsent.VerseNode):
             user_id=user_id,
             custom_type=custom_type)
 
+        # When this mesh was created at different Blender, then mesh_node does
+        # not have valid reference at blender mesh data block
         if mesh_node.mesh is None:
             object_node = object3d.VerseObject.objects[parent_id]
             mesh_node.mesh = object_node.obj.data
+            mesh_node.bmesh.from_mesh(mesh_node.mesh)
 
         mesh_node.mesh.verse_node_id = node_id
         return mesh_node
