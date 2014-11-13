@@ -33,10 +33,10 @@ def sorted_edge(edge):
 
 def extend_polygon(polygon, face, inner_edge):
     """
-    This function extend polygon by unique verticies from face that
+    This function extend polygon by unique vertices from face that
     are not part of shared inner edge
     """
-    polygon.extend([ vert for vert in face if vert not in inner_edge ])
+    polygon.extend([vert for vert in face if vert not in inner_edge])
 
 
 class EdgeLooper(object):
@@ -96,17 +96,17 @@ class Mesh(object):
         """
         Constructor
         """
-        self.verticies = {}
+        self.vertices = {}
         self.edges = []
         self.polygons = []
         self.tess_faces = {}
 
-    def add_verticies(self, verts):
+    def add_vertices(self, verts):
         """
-        This method adds verticies to mesh
+        This method adds vertices to mesh
         """
         for index, vert in enumerate(verts):
-            self.verticies[index] = vert
+            self.vertices[index] = vert
 
     def add_edges(self, edges):
         """
@@ -121,11 +121,11 @@ class Mesh(object):
         # Create iterator of all face edges
         edge_looper = EdgeLooper(face)
         # Create list of inner edges of polygon from face
-        inner_edges = [ edge for edge in edge_looper if edge not in self.edges ]
+        inner_edges = [edge for edge in edge_looper if edge not in self.edges]
         # Add tesselated face to list of faces
         for inner_edge in inner_edges:
             # When there is already tesselated face with same inner edge, then
-            # extend this tesselated face with unique verticies from current face
+            # extend this tesselated face with unique vertices from current face
             if inner_edge in self.tess_faces.keys():
                 polygon = self.tess_faces[inner_edge]
                 extend_polygon(polygon, face, inner_edge)
@@ -146,11 +146,11 @@ def main():
     Main function for testing
     """
     mesh = Mesh()
-    mesh.add_verticies(((0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)))
+    mesh.add_vertices(((0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)))
     mesh.add_edges(((0, 1), (1, 2), (2, 3), (3, 0)))
     mesh.add_tess_face((0, 1, 2))
     mesh.add_tess_face((0, 2, 3))
-    print(mesh.verticies)
+    print(mesh.vertices)
     print(mesh.edges)
     print(mesh.tess_faces)
     print(mesh.polygons)

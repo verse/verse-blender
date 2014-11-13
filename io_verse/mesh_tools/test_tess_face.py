@@ -24,46 +24,50 @@ Module with unit tests for tess_face module
 
 import tess_faces as tf
 
-VERTICIES = ((0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0))
+VERTICES = ((0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0))
 EDGES = ((0, 1), (1, 2), (2, 3), (3, 0))
 TESS_FACES = ((0, 1, 2), (0, 2, 3))
 POLYGONS = ((0, 1, 2, 3),)
 INNER_EDGES = ((0, 2),)
 
-def test_mesh_construcor():
+
+def test_mesh_constructor():
     """
     Test creating new mesh
     """
     mesh = tf.Mesh()
-    assert len(mesh.verticies) == 0
+    assert len(mesh.vertices) == 0
     assert len(mesh.edges) == 0
     assert len(mesh.polygons) == 0
     assert len(mesh.tess_faces) == 0
 
-def test_add_verticies():
+
+def test_add_vertices():
     """
-    Test adding verticies to the mesh
+    Test adding vertices to the mesh
     """
     mesh = tf.Mesh()
-    mesh.add_verticies(VERTICIES)
-    assert list(VERTICIES) == mesh.verticies.values()
+    mesh.add_vertices(VERTICES)
+    assert list(VERTICES) == list(mesh.vertices.values())
+
 
 def test_add_edges():
     """
     Test adding edges to the mesh
     """
     mesh = tf.Mesh()
-    mesh.add_verticies(VERTICIES)
+    mesh.add_vertices(VERTICES)
     mesh.add_edges(EDGES)
-    edges = [ tuple(sorted(edge)) for edge in EDGES ]
+    edges = [tuple(sorted(edge)) for edge in EDGES]
     assert edges == mesh.edges
+
 
 def test_add_tess_face():
     """
     Test adding tessellated edges
     """
     mesh = tf.Mesh()
-    mesh.add_verticies(VERTICIES)
+    mesh.add_vertices(VERTICES)
     mesh.add_edges(EDGES)
     for tess_face in TESS_FACES:
         mesh.add_tess_face(tess_face)
