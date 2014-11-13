@@ -139,7 +139,7 @@ class VERSE_SCENE_OT_unsubscribe(bpy.types.Operator):
         # data node is selected
         wm = context.window_manager
         scene = context.scene
-        if wm.verse_connected == True and scene.cur_verse_scene_index != -1:
+        if wm.verse_connected is True and scene.cur_verse_scene_index != -1:
             scene_item = scene.verse_scenes[scene.cur_verse_scene_index]
             vrs_session = session.VerseSession.instance()
             try:

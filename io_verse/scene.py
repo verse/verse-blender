@@ -59,7 +59,8 @@ class VerseSceneData(vrsent.VerseNode):
 
     custom_type = VERSE_SCENE_DATA_CT
 
-    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_SCENE_DATA_CT, autosubscribe=False):
+    def __init__(self, session, node_id=None, parent=None, user_id=None,
+                 custom_type=VERSE_SCENE_DATA_CT, autosubscribe=False):
         """
         Constructor of VerseSceneData
         """
@@ -146,13 +147,13 @@ class VerseSceneData(vrsent.VerseNode):
                 scene_item.data_node_id = self.id
 
     @classmethod
-    def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
+    def cb_receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
         """
         When new node is created or verse server confirms creating of data node
         for current scene, than this callback method is called.
         """
         # Call parent class
-        scene_data_node = super(VerseSceneData, cls)._receive_node_create(session=session,
+        scene_data_node = super(VerseSceneData, cls).cb_receive_node_create(session=session,
             node_id=node_id,
             parent_id=parent_id,
             user_id=user_id,
@@ -161,13 +162,13 @@ class VerseSceneData(vrsent.VerseNode):
         return scene_data_node
 
     @classmethod
-    def _receive_node_link(cls, session, parent_node_id, child_node_id):
+    def cb_receive_node_link(cls, session, parent_node_id, child_node_id):
         """
         When parent node of this type of node is changed at Verse server, then
         this callback method is called, when corresponding command is received.
         """
         # Call parent class
-        scene_data_node = super(VerseSceneData, cls)._receive_node_link(session=session,
+        scene_data_node = super(VerseSceneData, cls).cb_receive_node_link(session=session,
             parent_node_id=parent_node_id,
             child_node_id=child_node_id)
         scene_data_node.__update_item_slot()
@@ -192,11 +193,11 @@ class VerseSceneName(vrsent.VerseTag):
                                              count=count, custom_type=custom_type, value=value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when name of scene is set
         """
-        tag = super(VerseSceneName, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(VerseSceneName, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update name of scene, when name of current scene was changed by other Blender
         if node_id == bpy.context.scene.verse_node_id:
             try:
@@ -240,14 +241,14 @@ class VerseScene(vrsent.VerseNode):
             self.data_node = None
 
     @classmethod
-    def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
+    def cb_receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
         """
         When new node is created or verse server confirms creating of node for current
         scene, than this callback method is called.
         """
 
         # Call parent class
-        scene_node = super(VerseScene, cls)._receive_node_create(session=session,
+        scene_node = super(VerseScene, cls).cb_receive_node_create(session=session,
             node_id=node_id,
             parent_id=parent_id,
             user_id=user_id,

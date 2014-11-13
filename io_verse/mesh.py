@@ -43,18 +43,19 @@ class VerseVertices(vrsent.VerseLayer):
     node_custom_type = VERSE_MESH_CT
     custom_type = LAYER_VERTEXES_CT
 
-    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_REAL64, count=3, custom_type=LAYER_VERTEXES_CT):
+    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_REAL64,
+                 count=3, custom_type=LAYER_VERTEXES_CT):
         """
         Constructor of VerseVertices
         """
         super(VerseVertices, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
 
     @classmethod
-    def _receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
+    def cb_receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
         """
         This method is called, when new value of verse layer was set
         """
-        layer = super(VerseVertices, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
+        layer = super(VerseVertices, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
         mesh = layer.node.mesh
         if mesh is not None:
             if item_id < len(mesh.vertices):
@@ -75,18 +76,19 @@ class VerseEdges(vrsent.VerseLayer):
     node_custom_type = VERSE_MESH_CT
     custom_type = LAYER_EDGES_CT
 
-    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_UINT32, count=2, custom_type=LAYER_EDGES_CT):
+    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_UINT32,
+                 count=2, custom_type=LAYER_EDGES_CT):
         """
         Constructor of VerseEdges
         """
         super(VerseEdges, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
 
     @classmethod
-    def _receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
+    def cb_receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
         """
         This method is called, when new value of verse layer was set
         """
-        layer = super(VerseEdges, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
+        layer = super(VerseEdges, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
         # TODO: not sure, what to do here. Probably only check, if new face could be created from
         # fragments of tessellated polygon
         return layer
@@ -101,18 +103,19 @@ class VerseFaces(vrsent.VerseLayer):
     node_custom_type = VERSE_MESH_CT
     custom_type = LAYER_QUADS_CT
 
-    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_UINT32, count=4, custom_type=LAYER_QUADS_CT):
+    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_UINT32,
+                 count=4, custom_type=LAYER_QUADS_CT):
         """
         Constructor of VerseFaces
         """
         super(VerseFaces, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
 
     @classmethod
-    def _receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
+    def cb_receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
         """
         This method is called, when new value of verse layer was set
         """
-        layer = super(VerseFaces, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
+        layer = super(VerseFaces, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
         # TODO: create new polygon, when all fragments of tessellated polygon were received
         return layer
 
@@ -124,7 +127,8 @@ class VerseMesh(vrsent.VerseNode):
 
     custom_type = VERSE_MESH_CT
     
-    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_MESH_CT, mesh=None, autosubscribe=False):
+    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_MESH_CT,
+                 mesh=None, autosubscribe=False):
         """
         Constructor of VerseMesh
         """
@@ -150,12 +154,12 @@ class VerseMesh(vrsent.VerseNode):
                 self.quads.items[face.index] = tuple(vert for vert in face.vertices)
 
     @classmethod
-    def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
+    def cb_receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
         """
         When new mesh node is created or verse server, then this callback method is called.
         """
         # Call parent class
-        mesh_node = super(VerseMesh, cls)._receive_node_create(session=session,
+        mesh_node = super(VerseMesh, cls).cb_receive_node_create(session=session,
             node_id=node_id,
             parent_id=parent_id,
             user_id=user_id,

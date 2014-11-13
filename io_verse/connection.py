@@ -115,7 +115,7 @@ class VerseClientConnect(bpy.types.Operator):
     """
     This class will try to connect Blender to Verse server
     """
-    bl_idname = "scene.verse_client_connect" # NOT sure about this
+    bl_idname = "scene.verse_client_connect"
     bl_label = "Connect ..."
     bl_description = "Connect to Verse server"
 

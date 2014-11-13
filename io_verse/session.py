@@ -65,17 +65,17 @@ class VerseSession(vrsent.VerseSession):
         """
         self.__class__.__instance = None
 
-    def _receive_connect_terminate(self, error):
+    def cb_receive_connect_terminate(self, error):
         """
         receive_connect_terminate(error) -> none
         """
         # Call parent method to print debug information
-        super(VerseSession, self)._receive_connect_terminate(error)
+        super(VerseSession, self).cb_receive_connect_terminate(error)
         self.__class__.__instance = None
         # Clear dictionary of nodes
         self.nodes.clear()
 
-        # Stop capturing of curent view to 3D View
+        # Stop capturing of current view to 3D View
         # Save current context to 3d view, start capturing and
         # then restore original context
         if bpy.context.window_manager.verse_connected is True:
@@ -94,18 +94,18 @@ class VerseSession(vrsent.VerseSession):
 
         ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
 
-    def _receive_connect_accept(self, user_id, avatar_id):
+    def cb_receive_connect_accept(self, user_id, avatar_id):
         """
         _receive_connect_accept(self, user_id, avatar_id) -> None
         """
-        super(VerseSession, self)._receive_connect_accept(user_id, avatar_id)
+        super(VerseSession, self).cb_receive_connect_accept(user_id, avatar_id)
 
         # Set Blender property
         bpy.context.window_manager.verse_connected = True
 
         ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
 
-    def _receive_user_authenticate(self, username, methods):
+    def cb_receive_user_authenticate(self, username, methods):
         """
         _receive_user_authenticate(self, username, methods) -> None
         """
@@ -115,67 +115,68 @@ class VerseSession(vrsent.VerseSession):
             if username == self.my_username:
                 self.send_user_authenticate(self.my_username, vrs.UA_METHOD_PASSWORD, self.my_password)
 
-    def _receive_node_create(self, node_id, parent_id, user_id, custom_type):
+    def cb_receive_node_create(self, node_id, parent_id, user_id, custom_type):
         """
         _receive_node_create(self, node_id, parent_id, user_id, type) -> None
         """
-        return super(VerseSession, self)._receive_node_create(node_id, parent_id, user_id, custom_type)    
+        return super(VerseSession, self).cb_receive_node_create(node_id, parent_id, user_id, custom_type)
 
-    def _receive_node_destroy(self, node_id):
+    def cb_receive_node_destroy(self, node_id):
         """
         _receive_node_destroy(self, node_id) -> None
         """
         # Call parent method to print debug information
-        return super(VerseSession, self)._receive_node_destroy(node_id)
+        return super(VerseSession, self).cb_receive_node_destroy(node_id)
 
-    def _receive_node_link(self, parent_node_id, child_node_id):
+    def cb_receive_node_link(self, parent_node_id, child_node_id):
         """
          _receive_node_link(self, parent_node_id, child_node_id) -> None
         """
         # Call parent method to print debug information
-        return super(VerseSession, self)._receive_node_link(parent_node_id, child_node_id)
+        return super(VerseSession, self).cb_receive_node_link(parent_node_id, child_node_id)
 
-    def _receive_node_perm(self, node_id, user_id, perm):
+    def cb_receive_node_perm(self, node_id, user_id, perm):
         """
         _receive_node_perm(self, node_id, user_id, perm) -> None
         """
         # Call parent method to print debug information
-        return super(VerseSession, self)._receive_node_perm(node_id, user_id, perm)
+        return super(VerseSession, self).cb_receive_node_perm(node_id, user_id, perm)
 
-    def _receive_taggroup_create(self, node_id, taggroup_id, custom_type):
+    def cb_receive_taggroup_create(self, node_id, taggroup_id, custom_type):
         """
         _receive_taggroup_create(self, node_id, taggroup_id, custom_type) -> None
         """
         # Call parent method to print debug information
-        return super(VerseSession, self)._receive_taggroup_create(node_id, taggroup_id, custom_type)
+        return super(VerseSession, self).cb_receive_taggroup_create(node_id, taggroup_id, custom_type)
 
-    def _receive_taggroup_destroy(self, node_id, taggroup_id):
+    def cb_receive_taggroup_destroy(self, node_id, taggroup_id):
         """
         _receive_taggroup_destroy(self, node_id, taggroup_id) -> None
         """
         # Call parent method to print debug information
-        return super(VerseSession, self)._receive_taggroup_destroy(node_id, taggroup_id)
+        return super(VerseSession, self).cb_receive_taggroup_destroy(node_id, taggroup_id)
 
-    def _receive_tag_create(self, node_id, taggroup_id, tag_id, data_type, count, custom_type):
+    def cb_receive_tag_create(self, node_id, taggroup_id, tag_id, data_type, count, custom_type):
         """
         _receive_tag_create(self, node_id, taggroup_id, tag_id, data_type, count, custom_type) -> None
         """
         # Call parent method to print debug information
-        return super(VerseSession, self)._receive_tag_create(node_id, taggroup_id, tag_id, data_type, count, custom_type)
+        return super(VerseSession, self).cb_receive_tag_create(node_id, taggroup_id, tag_id,
+                                                               data_type, count, custom_type)
 
-    def _receive_tag_destroy(self, node_id, taggroup_id, tag_id):
+    def cb_receive_tag_destroy(self, node_id, taggroup_id, tag_id):
         """
         _receive_tag_destroy(self, node_id, taggroup_id, tag_id) -> None
         """
         # Call parent method to print debug information
-        return super(VerseSession, self)._receive_tag_destroy(node_id, taggroup_id, tag_id)
+        return super(VerseSession, self).cb_receive_tag_destroy(node_id, taggroup_id, tag_id)
 
-    def _receive_tag_set_values(self, node_id, taggroup_id, tag_id, value):
+    def cb_receive_tag_set_values(self, node_id, taggroup_id, tag_id, value):
         """
-        Custom callback method that is called, when client reveived command tag set value
+        Custom callback method that is called, when client received command tag set value
         """
         # Call parent method to print debug information and get modified tag
-        return super(VerseSession, self)._receive_tag_set_values(node_id, taggroup_id, tag_id, value)
+        return super(VerseSession, self).cb_receive_tag_set_values(node_id, taggroup_id, tag_id, value)
 
 
 class ModalTimerOperator(bpy.types.Operator):
@@ -189,7 +190,7 @@ class ModalTimerOperator(bpy.types.Operator):
 
     def modal(self, context, event):
         """
-        This method is called periodicaly and it is used to call callback
+        This method is called periodically and it is used to call callback
         methods, when appropriate command is received.
         """
         if event.type == 'TIMER':
@@ -206,7 +207,7 @@ class ModalTimerOperator(bpy.types.Operator):
         """
         This method add timer
         """
-        self._timer = context.window_manager.event_timer_add(1.0/FPS, context.window)
+        self._timer = context.window_manager.event_timer_add(1.0 / FPS, context.window)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 

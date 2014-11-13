@@ -63,12 +63,12 @@ class BlenderUserNameTag(vrsent.verse_user.UserNameTag):
     """
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set.
         It should force to redraw all visible 3D views.
         """
-        tag = super(BlenderUserNameTag, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(BlenderUserNameTag, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         ui.update_all_views(('VIEW_3D',))
         return tag
 
@@ -79,12 +79,12 @@ class BlenderHostnameTag(vrsent.verse_avatar.HostnameTag):
     """
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set.
         It should force to redraw all visible 3D views.
         """
-        tag = super(BlenderHostnameTag, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(BlenderHostnameTag, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         ui.update_all_views(('VIEW_3D',))
         return tag
 
@@ -102,11 +102,11 @@ class AvatarLocation(vrsent.VerseTag):
                                              count=count, custom_type=custom_type, value=value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(AvatarLocation, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(AvatarLocation, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         update_3dview(tag.tg.node)
         return tag
 
@@ -124,11 +124,11 @@ class AvatarRotation(vrsent.VerseTag):
                                              count=count, custom_type=custom_type, value=value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(AvatarRotation, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(AvatarRotation, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         update_3dview(tag.tg.node)
         return tag
 
@@ -146,11 +146,11 @@ class AvatarDistance(vrsent.VerseTag):
                                              count=count, custom_type=custom_type, value=value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(AvatarDistance, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(AvatarDistance, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         update_3dview(tag.tg.node)
         return tag
 
@@ -168,11 +168,11 @@ class AvatarPerspective(vrsent.VerseTag):
                                                 count=count, custom_type=custom_type, value=value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(AvatarPerspective, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(AvatarPerspective, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         update_3dview(tag.tg.node)
         return tag
 
@@ -190,11 +190,11 @@ class AvatarWidth(vrsent.VerseTag):
                                           count=count, custom_type=custom_type, value=value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(AvatarWidth, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(AvatarWidth, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         update_3dview(tag.tg.node)
         return tag
 
@@ -212,11 +212,11 @@ class AvatarHeight(vrsent.VerseTag):
                                            count=count, custom_type=custom_type, value=value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(AvatarHeight, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(AvatarHeight, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         update_3dview(tag.tg.node)
         return tag
 
@@ -234,11 +234,11 @@ class AvatarLens(vrsent.VerseTag):
                                          count=count, custom_type=custom_type, value=value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(AvatarLens, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(AvatarLens, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         update_3dview(tag.tg.node)
         return tag
 
@@ -256,11 +256,11 @@ class AvatarScene(vrsent.VerseTag):
                                           count=count, custom_type=custom_type, value=value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(AvatarScene, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(AvatarScene, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         update_3dview(tag.tg.node)
         return tag
 
@@ -285,7 +285,6 @@ class AvatarView(vrsent.VerseAvatar):
         Getter of class member __my_view
         """
         return cls.__my_view
-
 
     @classmethod
     def other_views(cls):
@@ -316,6 +315,7 @@ class AvatarView(vrsent.VerseAvatar):
             # Initialize default values
             self.cur_screen = bpy.context.screen
             self.cur_area = None
+            self.cur_space = None
             self.__class__.__my_view = self
 
             # Try to find current 3D view 
@@ -324,10 +324,11 @@ class AvatarView(vrsent.VerseAvatar):
                     self.cur_area = area
                     for space in area.spaces.values():
                         if space.type == 'VIEW_3D':
+                            self.cur_space = space
                             break
                     break
 
-            if area.type == 'VIEW_3D' and space.type == 'VIEW_3D':
+            if self.cur_area.type == 'VIEW_3D' and self.cur_space.type == 'VIEW_3D':
                 view_initialized = True
                 # Create tag group containing information about view
                 self.view_tg = vrsent.VerseTagGroup(node=self,
@@ -335,25 +336,25 @@ class AvatarView(vrsent.VerseAvatar):
                 # Create tags with data of view to 3D view
                 # Location
                 self.location = AvatarLocation(tg=self.view_tg,
-                    value=tuple(space.region_3d.view_location))
+                    value=tuple(self.cur_space.region_3d.view_location))
                 # Rotation
                 self.rotation = AvatarRotation(tg=self.view_tg,
-                    value=tuple(space.region_3d.view_rotation))
+                    value=tuple(self.cur_space.region_3d.view_rotation))
                 # Distance
                 self.distance = AvatarDistance(tg=self.view_tg,
-                    value=(space.region_3d.view_distance,))
+                    value=(self.cur_space.region_3d.view_distance,))
                 # Perspective/Orthogonal
                 self.perspective = AvatarPerspective(tg=self.view_tg,
-                    value=(space.region_3d.view_perspective,))
+                    value=(self.cur_space.region_3d.view_perspective,))
                 # Width
                 self.width = AvatarWidth(tg=self.view_tg,
-                    value=(area.width,))
+                    value=(self.cur_area.width,))
                 # Height
                 self.height = AvatarHeight(tg=self.view_tg,
-                    value=(area.height,))
+                    value=(self.cur_area.height,))
                 # Lens
                 self.lens = AvatarLens(tg=self.view_tg,
-                    value=(space.lens,))
+                    value=(self.cur_space.lens,))
                 # Get current Scene ID
                 self.scene_node_id = AvatarScene(tg=self.view_tg,
                     value=(bpy.context.scene.verse_node_id,))
@@ -382,9 +383,8 @@ class AvatarView(vrsent.VerseAvatar):
             self.lens = AvatarLens(tg=self.view_tg)
             self.scene_node_id = AvatarScene(tg=self.view_tg)
 
-
     @classmethod
-    def _receive_node_destroy(cls, session, node_id):
+    def cb_receive_node_destroy(cls, session, node_id):
         """
         This method is called, when server destroyed avatar with node_id
         """
@@ -401,7 +401,7 @@ class AvatarView(vrsent.VerseAvatar):
         cls.__other_views.pop(node_id)
         # Force redraw of 3D view
         ui.update_all_views(('VIEW_3D',))
-        return super(AvatarView, cls)._receive_node_destroy(session, node_id)
+        return super(AvatarView, cls).cb_receive_node_destroy(session, node_id)
 
     def update(self, context):
         """

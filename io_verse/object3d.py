@@ -53,7 +53,6 @@ def update_3dview(node):
         ui.update_all_views(('VIEW_3D',))
 
 
-
 def object_update(node_id):
     """
     This function is called by Blender callback function, when
@@ -78,18 +77,19 @@ class VerseObjectPosition(vrsent.VerseTag):
     tg_custom_type = TG_TRANSFORM_CT
     custom_type = TAG_POSITION_CT
 
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3, custom_type=TAG_POSITION_CT, value=None):
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3,
+                 custom_type=TAG_POSITION_CT, value=None):
         """
         Constructor of VerseObjectPosition
         """
         super(VerseObjectPosition, self).__init__(tg, tag_id, data_type, count, custom_type, value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(VerseObjectPosition, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(VerseObjectPosition, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update position of Blender object that are not locked (not selected)
         if tag.tg.node.locked is False:
             tag.tg.node.obj.location = mathutils.Vector(value)
@@ -107,18 +107,19 @@ class VerseObjectRotation(vrsent.VerseTag):
     tg_custom_type = TG_TRANSFORM_CT
     custom_type = TAG_ROTATION_CT
 
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=4, custom_type=TAG_ROTATION_CT, value=None):
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32,
+                 count=4, custom_type=TAG_ROTATION_CT, value=None):
         """
         Constructor of VerseObjectRotation
         """
         super(VerseObjectRotation, self).__init__(tg, tag_id, data_type, count, custom_type, value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(VerseObjectRotation, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(VerseObjectRotation, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update rotation of Blender object that are not locked (not selected)
         if tag.tg.node.locked is False:
             tag.tg.node.obj.rotation_quaternion = mathutils.Quaternion(value)
@@ -135,18 +136,19 @@ class VerseObjectScale(vrsent.VerseTag):
     tg_custom_type = TG_TRANSFORM_CT
     custom_type = TAG_SCALE_CT
 
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3, custom_type=TAG_SCALE_CT, value=None):
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_REAL32,
+                 count=3, custom_type=TAG_SCALE_CT, value=None):
         """
         Constructor of VerseObjectScale
         """
         super(VerseObjectScale, self).__init__(tg, tag_id, data_type, count, custom_type, value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when new value of verse tag was set
         """
-        tag = super(VerseObjectScale, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(VerseObjectScale, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update scale of Blender object that are not locked (not selected)
         if tag.tg.node.locked is False:
             tag.tg.node.obj.scale = mathutils.Vector(value)
@@ -162,18 +164,19 @@ class VerseObjectBoundingBox(vrsent.VerseLayer):
     node_custom_type = VERSE_OBJECT_CT
     custom_type = LAYER_BB_CT
 
-    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_REAL32, count=3, custom_type=LAYER_BB_CT):
+    def __init__(self, node, parent_layer=None, layer_id=None, data_type=vrs.VALUE_TYPE_REAL32,
+                 count=3, custom_type=LAYER_BB_CT):
         """
         Constructor of VerseObjectBoundingBox
         """
         super(VerseObjectBoundingBox, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
 
     @classmethod
-    def _receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
+    def cb_receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
         """
         This method is called, when new value of verse layer was set
         """
-        layer = super(VerseObjectBoundingBox, cls)._receive_layer_set_value(session, node_id, layer_id, item_id, value)
+        layer = super(VerseObjectBoundingBox, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
         update_3dview(layer.node)
         return layer
 
@@ -187,18 +190,19 @@ class VerseObjectName(vrsent.VerseTag):
     tg_custom_type = TG_INFO_CT
     custom_type = TAG_NAME_CT
 
-    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_STRING8, count=1, custom_type=TAG_NAME_CT, value=None):
+    def __init__(self, tg, tag_id=None, data_type=vrs.VALUE_TYPE_STRING8,
+                 count=1, custom_type=TAG_NAME_CT, value=None):
         """
         Constructor of VerseObjectName
         """
         super(VerseObjectName, self).__init__(tg, tag_id, data_type, count, custom_type, value)
 
     @classmethod
-    def _receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
+    def cb_receive_tag_set_values(cls, session, node_id, tg_id, tag_id, value):
         """
         This method is called, when name of object is set
         """
-        tag = super(VerseObjectName, cls)._receive_tag_set_values(session, node_id, tg_id, tag_id, value)
+        tag = super(VerseObjectName, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update name of object, when name of the object was changed by other Blender
         try:
             node = session.nodes[node_id]
@@ -236,11 +240,19 @@ class VerseObject(vrsent.VerseNode):
         self.mesh_node = None
         if obj is not None:
             # Transformation
-            self.transform.pos = VerseObjectPosition(tg=self.transform, value=tuple(obj.location))
-            self.transform.rot = VerseObjectRotation(tg=self.transform, value=tuple(obj.matrix_local.to_quaternion().normalized()))
-            self.transform.scale = VerseObjectScale(tg=self.transform, value=tuple(obj.scale))
+            self.transform.pos = VerseObjectPosition(
+                tg=self.transform,
+                value=tuple(obj.location))
+            self.transform.rot = VerseObjectRotation(
+                tg=self.transform,
+                value=tuple(obj.matrix_local.to_quaternion().normalized()))
+            self.transform.scale = VerseObjectScale(
+                tg=self.transform,
+                value=tuple(obj.scale))
             # Information
-            self.info.name = VerseObjectName(tg=self.info, value=(str(obj.name),))
+            self.info.name = VerseObjectName(
+                tg=self.info,
+                value=(str(obj.name),))
             # Bounding Box
             item_id = 0
             for bb_point in obj.bound_box:
@@ -270,12 +282,12 @@ class VerseObject(vrsent.VerseNode):
                 return ""
 
     @classmethod
-    def _receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
+    def cb_receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
         """
         When new object node is created or verse server, then this callback method is called.
         """
         # Call parent class
-        object_node = super(VerseObject, cls)._receive_node_create(session=session,
+        object_node = super(VerseObject, cls).cb_receive_node_create(session=session,
             node_id=node_id,
             parent_id=parent_id,
             user_id=user_id,
@@ -297,12 +309,12 @@ class VerseObject(vrsent.VerseNode):
         return object_node
 
     @classmethod
-    def _receive_node_lock(cls, session, node_id, avatar_id):
+    def cb_receive_node_lock(cls, session, node_id, avatar_id):
         """
         When some object is locked by other user, then it should not
         be selectable
         """
-        object_node = super(VerseObject, cls)._receive_node_lock(session, node_id, avatar_id)
+        object_node = super(VerseObject, cls).cb_receive_node_lock(session, node_id, avatar_id)
         if object_node.session.avatar_id != avatar_id:
             # Only in case, that two clients tried to select one object
             # at the same time and this client didn't win
@@ -314,11 +326,11 @@ class VerseObject(vrsent.VerseNode):
         return object_node
 
     @classmethod
-    def _receive_node_unlock(cls, session, node_id, avatar_id):
+    def cb_receive_node_unlock(cls, session, node_id, avatar_id):
         """
         When some object was unlocked, then it should be able to select it again
         """
-        object_node = super(VerseObject, cls)._receive_node_unlock(session, node_id, avatar_id)
+        object_node = super(VerseObject, cls).cb_receive_node_unlock(session, node_id, avatar_id)
         if object_node.session.avatar_id != avatar_id:
             object_node.obj.hide_select = False
         ui.update_all_views(('PROPERTIES', 'VIEW_3D'))

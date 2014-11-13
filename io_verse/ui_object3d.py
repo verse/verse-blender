@@ -55,7 +55,7 @@ class VERSE_OBJECT_OT_unlock(bpy.types.Operator):
         """
         # Return true only in situation, when client is connected to Verse server
         wm = context.window_manager
-        if wm.verse_connected == True and \
+        if wm.verse_connected is True and \
                 context.active_object is not None and \
                 context.active_object.verse_node_id != -1:
             vrs_session = session.VerseSession.instance()
@@ -99,7 +99,7 @@ class VERSE_OBJECT_OT_lock(bpy.types.Operator):
         """
         # Return true only in situation, when client is connected to Verse server
         wm = context.window_manager
-        if wm.verse_connected == True and \
+        if wm.verse_connected is True and \
                 context.active_object is not None and \
                 context.active_object.verse_node_id != -1:
             vrs_session = session.VerseSession.instance()
