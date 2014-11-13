@@ -90,8 +90,9 @@ class VerseObjectPosition(vrsent.VerseTag):
         This method is called, when new value of verse tag was set
         """
         tag = super(VerseObjectPosition, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
-        # Update position of Blender object that are not locked (not selected)
-        if tag.tg.node.locked is False:
+        # Update position of Blender object that are not locked by this client
+        session = vrs_session.VerseSession.instance()
+        if tag.tg.node.locker_id != session.avatar_id:
             tag.tg.node.obj.location = mathutils.Vector(value)
         # Redraw all 3D views
         update_3dview(tag.tg.node)
@@ -120,9 +121,14 @@ class VerseObjectRotation(vrsent.VerseTag):
         This method is called, when new value of verse tag was set
         """
         tag = super(VerseObjectRotation, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
-        # Update rotation of Blender object that are not locked (not selected)
-        if tag.tg.node.locked is False:
+        # Update rotation of Blender object that are not locked by this client
+        session = vrs_session.VerseSession.instance()
+        if tag.tg.node.locker_id != session.avatar_id:
+            # It is necessary to have right rotation_mode to set rotation using quaternion
+            prev_rot_mode = tag.tg.node.obj.rotation_mode
+            tag.tg.node.obj.rotation_mode = 'QUATERNION'
             tag.tg.node.obj.rotation_quaternion = mathutils.Quaternion(value)
+            tag.tg.node.obj.rotation_mode = prev_rot_mode
         update_3dview(tag.tg.node)
         return tag
 
@@ -149,8 +155,9 @@ class VerseObjectScale(vrsent.VerseTag):
         This method is called, when new value of verse tag was set
         """
         tag = super(VerseObjectScale, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
-        # Update scale of Blender object that are not locked (not selected)
-        if tag.tg.node.locked is False:
+        # Update scale of Blender object that are not locked by this client
+        session = vrs_session.VerseSession.instance()
+        if tag.tg.node.locker_id != session.avatar_id:
             tag.tg.node.obj.scale = mathutils.Vector(value)
         update_3dview(tag.tg.node)
         return tag
