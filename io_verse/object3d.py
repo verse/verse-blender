@@ -358,15 +358,18 @@ class VerseObject(vrsent.VerseNode):
         """
 
         # Position
-        if self.transform.pos.value != tuple(self.obj.location):
+        if self.transform.pos.value is not None and \
+                        self.transform.pos.value != tuple(self.obj.location):
             self.transform.pos.value = tuple(self.obj.location)
 
         # Rotation
-        if self.transform.rot.value != tuple(self.obj.matrix_local.to_quaternion().normalized()):
+        if self.transform.rot.value is not None and \
+                        self.transform.rot.value != tuple(self.obj.matrix_local.to_quaternion().normalized()):
             self.transform.rot.value = tuple(self.obj.matrix_local.to_quaternion().normalized())
 
         # Scale
-        if self.transform.scale.value != tuple(self.obj.scale):
+        if self.transform.scale.value is not None and \
+                        self.transform.scale.value != tuple(self.obj.scale):
             self.transform.scale.value = tuple(self.obj.scale)
 
         # Bounding box
@@ -379,21 +382,6 @@ class VerseObject(vrsent.VerseNode):
                 # Bounding box was not received yet
                 break
             item_id += 1
-
-        # TODO: Blender doesn't mark object as changed, when object is selected or
-        # unselected :-(. Thus following block of code is not called :-(
-        #
-        # # When object is selected and it is not locket yet, then try to lock it
-        # if self.locked is False and \
-        #         self.obj.select is True:
-        #     self.lock()
-        #
-        # # When object is locked by this client and it is not selected anymore,
-        # # then unlock it. Other users will be able to work with it.
-        # if self.locked is True:
-        #     if self.locker == self.session.avatar:
-        #         if self.obj.select is False:
-        #             self.unlock()
 
     def draw(self, area, region_data):
         """
