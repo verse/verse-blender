@@ -286,6 +286,16 @@ class VerseObject(vrsent.VerseNode):
             except TypeError:
                 return ""
 
+    @property
+    def can_be_selected(self):
+        """
+        :return: True, when current client can select object
+        """
+        if self.can_write(self.session.user_id) is True:
+            return True
+        else:
+            return False
+
     @classmethod
     def cb_receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
         """
@@ -390,7 +400,12 @@ class VerseObject(vrsent.VerseNode):
         Draw bounding box of object with unsubscribed mesh
         """
         if self.locked is True:
-            color = (1.0, 0.0, 0.0, 1.0)
+            # When object is locked by current client, then visualize it by green color.
+            # Otherwise visualize it by red color
+            if self.locked_by_me is True:
+                color = (0.0, 1.0, 0.0, 1.0)
+            else:
+                color = (1.0, 0.0, 0.0, 1.0)
         else:
             color = (0.0, 1.0, 1.0, 1.0)
 
