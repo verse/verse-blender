@@ -91,8 +91,7 @@ class VerseObjectPosition(vrsent.VerseTag):
         """
         tag = super(VerseObjectPosition, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update position of Blender object that are not locked by this client
-        session = vrs_session.VerseSession.instance()
-        if tag.tg.node.locker_id != session.avatar_id:
+        if tag.tg.node.locked_by_me is False:
             tag.tg.node.obj.location = mathutils.Vector(value)
         # Redraw all 3D views
         update_3dview(tag.tg.node)
@@ -122,8 +121,7 @@ class VerseObjectRotation(vrsent.VerseTag):
         """
         tag = super(VerseObjectRotation, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update rotation of Blender object that are not locked by this client
-        session = vrs_session.VerseSession.instance()
-        if tag.tg.node.locker_id != session.avatar_id:
+        if tag.tg.node.locked_by_me is False:
             # It is necessary to have right rotation_mode to set rotation using quaternion
             prev_rot_mode = tag.tg.node.obj.rotation_mode
             tag.tg.node.obj.rotation_mode = 'QUATERNION'
@@ -156,8 +154,7 @@ class VerseObjectScale(vrsent.VerseTag):
         """
         tag = super(VerseObjectScale, cls).cb_receive_tag_set_values(session, node_id, tg_id, tag_id, value)
         # Update scale of Blender object that are not locked by this client
-        session = vrs_session.VerseSession.instance()
-        if tag.tg.node.locker_id != session.avatar_id:
+        if tag.tg.node.locked_by_me is False:
             tag.tg.node.obj.scale = mathutils.Vector(value)
         update_3dview(tag.tg.node)
         return tag
