@@ -58,14 +58,27 @@ class VerseVertices(vrsent.VerseLayer):
         """
         layer = super(VerseVertices, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
 
-        _bmesh = layer.node.bmesh
-        # When this is known vertex ID, then update position. Otherwise create new vertex.
-        if item_id < len(_bmesh.verts):
-            _bmesh.verts[item_id].co = mathutils.Vector(value)
-        else:
-            _bmesh.verts.new(value)
-        _bmesh.to_mesh(layer.node.mesh)
-        layer.node.mesh.update()
+        # Update mesh only in situation, when it was changed by someone else
+        if layer.node.locked_by_me is False:
+            _bmesh = layer.node.bmesh
+            # When this is known vertex ID, then update position. Otherwise create new vertex.
+            if item_id < len(_bmesh.verts):
+                _bmesh.verts[item_id].co = mathutils.Vector(value)
+            else:
+                _bmesh.verts.new(value)
+            _bmesh.to_mesh(layer.node.mesh)
+            layer.node.mesh.update()
+
+        return layer
+
+    @classmethod
+    def cb_receive_layer_unset_value(cls, session, node_id, layer_id, item_id):
+        """
+        This method is called, when some vertex was deleted
+        """
+        layer = super(VerseVertices, cls).cb_receive_layer_unset_value(session, node_id, layer_id, item_id)
+
+        # TODO: delete vertex
 
         return layer
 
@@ -95,6 +108,17 @@ class VerseEdges(vrsent.VerseLayer):
         # fragments of tessellated polygon
         return layer
 
+    @classmethod
+    def cb_receive_layer_unset_value(cls, session, node_id, layer_id, item_id):
+        """
+        This method is called, when some vertex was deleted
+        """
+        layer = super(VerseEdges, cls).cb_receive_layer_unset_value(session, node_id, layer_id, item_id)
+
+        # TODO: delete edge
+
+        return layer
+
 
 class VerseFaces(vrsent.VerseLayer):
     """
@@ -119,19 +143,32 @@ class VerseFaces(vrsent.VerseLayer):
         """
         layer = super(VerseFaces, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
 
-        _bmesh = layer.node.bmesh
-        if item_id < len(_bmesh.faces):
-            pass
-        else:
-            try:
-                if value[3] == 0:
-                    _bmesh.faces.new([_bmesh.verts[vert_id] for vert_id in value[0:3]])
-                else:
-                    _bmesh.faces.new([_bmesh.verts[vert_id] for vert_id in value])
-            except IndexError:
-                print('Wrong index of vertex')
-        _bmesh.to_mesh(layer.node.mesh)
-        layer.node.mesh.update()
+        # Update mesh only in situation, when it was changed by someone else
+        if layer.node.locked_by_me is False:
+            _bmesh = layer.node.bmesh
+            if item_id < len(_bmesh.faces):
+                pass
+            else:
+                try:
+                    if value[3] == 0:
+                        _bmesh.faces.new([_bmesh.verts[vert_id] for vert_id in value[0:3]])
+                    else:
+                        _bmesh.faces.new([_bmesh.verts[vert_id] for vert_id in value])
+                except IndexError:
+                    print('Wrong index of vertex')
+            _bmesh.to_mesh(layer.node.mesh)
+            layer.node.mesh.update()
+
+        return layer
+
+    @classmethod
+    def cb_receive_layer_unset_value(cls, session, node_id, layer_id, item_id):
+        """
+        This method is called, when some vertex was deleted
+        """
+        layer = super(VerseFaces, cls).cb_receive_layer_unset_value(session, node_id, layer_id, item_id)
+
+        # TODO: delete vertex
 
         return layer
 
