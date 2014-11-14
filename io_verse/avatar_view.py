@@ -436,7 +436,7 @@ class AvatarView(vrsent.VerseAvatar):
         
         # Perspective/Orthogonal
         if context.space_data.region_3d.view_perspective != self.perspective.value[0]:
-            self.persp.value = (context.space_data.region_3d.view_perspective,)
+            self.perspective.value = (context.space_data.region_3d.view_perspective,)
         
         # Lens
         if context.space_data.lens != self.lens.value[0]:
