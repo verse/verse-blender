@@ -284,6 +284,235 @@ class VerseObjectPanel(bpy.types.Panel):
         col.menu('object.verse_object_menu', icon='DOWNARROW_HLT', text="")
 
 
+class VerseObjectOtAddWritePerm(bpy.types.Operator):
+    """
+    This operator tries to subscribe to Blender Mesh object at Verse server.
+    """
+    bl_idname = 'object.object_add_write_perm'
+    bl_label = "Add Write Permission"
+    bl_description = "Adds write permission to the user"
+
+    def invoke(self, context, event):
+        """
+        This method will try to create new node representing Mesh Object
+        at Verse server
+        """
+        # TODO: add something here
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected is True and \
+                context.scene.subscribed is not False and \
+                context.active_object is not None and \
+                context.active_object.verse_node_id != -1:
+            vrs_session = session.VerseSession.instance()
+            try:
+                node = vrs_session.nodes[context.active_object.verse_node_id]
+            except KeyError:
+                return False
+            else:
+                # TODO: do something here
+                print(node)
+                return False
+        else:
+            return False
+
+
+class VerseObjectOtRemWritePerm(bpy.types.Operator):
+    """
+    This operator tries to subscribe to Blender Mesh object at Verse server.
+    """
+    bl_idname = 'object.object_rem_write_perm'
+    bl_label = "Remove Write Permission"
+    bl_description = "Removes write permission to the user"
+
+    def invoke(self, context, event):
+        """
+        This method will try to create new node representing Mesh Object
+        at Verse server
+        """
+        # TODO: add something here
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected is True and \
+                context.scene.subscribed is not False and \
+                context.active_object is not None and \
+                context.active_object.verse_node_id != -1:
+            vrs_session = session.VerseSession.instance()
+            try:
+                node = vrs_session.nodes[context.active_object.verse_node_id]
+            except KeyError:
+                return False
+            else:
+                # TODO: do something here
+                print(node)
+                return False
+        else:
+            return False
+
+
+class VerseObjectOtSetOwner(bpy.types.Operator):
+    """
+    This operator tries to subscribe to Blender Mesh object at Verse server.
+    """
+    bl_idname = 'object.set_owner'
+    bl_label = "Set Owner"
+    bl_description = "Sets new owner of object"
+
+    def invoke(self, context, event):
+        """
+        This method will try to create new node representing Mesh Object
+        at Verse server
+        """
+        # TODO: add something here
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        # Return true only in situation, when client is connected to Verse server
+        wm = context.window_manager
+        if wm.verse_connected is True and \
+                context.scene.subscribed is not False and \
+                context.active_object is not None and \
+                context.active_object.verse_node_id != -1:
+            vrs_session = session.VerseSession.instance()
+            try:
+                node = vrs_session.nodes[context.active_object.verse_node_id]
+            except KeyError:
+                return False
+            else:
+                # TODO: do something here
+                print(node)
+                return False
+        else:
+            return False
+
+
+class VerseObjectPermMtMenu(bpy.types.Menu):
+    """
+    Menu for object list
+    """
+    bl_idname = 'object.verse_object_perm_menu'
+    bl_label = 'Verse Object Permission Specials'
+    bl_description = 'Menu for Verse objects permissions'
+
+    def draw(self, context):
+        """
+        Draw menu
+        """
+        layout = self.layout
+        layout.operator('object.object_add_write_perm')
+        layout.operator('object.object_rem_write_perm')
+        layout.operator('object.set_owner')
+
+    @classmethod
+    def poll(cls, context):
+        """
+        This class method is used, when Blender check, if this operator can be
+        executed
+        """
+        wm = context.window_manager
+
+        # Return true only in situation, when client is connected to Verse server
+        if wm.cur_verse_user_index >= 0 and \
+                len(wm.verse_user) > 0:
+            return True
+        else:
+            return False
+
+
+class VerseObjectPermUlSlot(bpy.types.UIList):
+    """
+    A custom slot with information about Verse object node
+    """
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        vrs_session = session.VerseSession.instance()
+        if vrs_session is not None:
+            try:
+                verse_user = vrs_session.users[item.node_id]
+            except KeyError:
+                return
+            if self.layout_type in {'DEFAULT', 'COMPACT'}:
+                if verse_user.id == vrs_session.user_id:
+                    layout.label('Me', icon='ARMATURE_DATA')
+                else:
+                    layout.label(str(verse_user.name), icon='ARMATURE_DATA')
+            elif self.layout_type in {'GRID'}:
+                layout.alignment = 'CENTER'
+                layout.label(verse_user.name)
+
+
+class VerseObjectPermPanel(bpy.types.Panel):
+    """
+    GUI of Blender objects shared at Verse server
+    """
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'object'
+    bl_label = 'Verse Permissions'
+    bl_description = 'Panel with Verse access permissions of the object'
+
+    @classmethod
+    def poll(cls, context):
+        """
+        Can be this panel visible
+        """
+        # Return true only in situation, when client is connected
+        # to Verse server and it is subscribed to data of some scene
+        wm = context.window_manager
+        obj = context.active_object
+        if wm.verse_connected is True and \
+                obj is not None and \
+                obj.type == 'MESH' and \
+                obj.verse_node_id != -1:
+            return True
+        else:
+            return False
+
+    def draw(self, context):
+        """
+        This method draw panel of Verse scenes
+        """
+        wm = context.window_manager
+        layout = self.layout
+
+        row = layout.row()
+
+        # TODO: draw name of node owner
+
+        row.template_list(
+            'VerseObjectPermUlSlot',
+            'verse_object_perms_widget_id',
+            wm,
+            'verse_users',
+            wm,
+            'cur_verse_user_index',
+            rows=3
+        )
+
+        col = row.column(align=True)
+        col.menu('object.verse_object_perm_menu', icon='DOWNARROW_HLT', text="")
+
+
 # List of Blender classes in this submodule
 classes = (
     VerseObjectOtShare,
@@ -291,7 +520,13 @@ classes = (
     View3DPanelToolsVerseObject,
     VerseObjectPanel,
     VerseObjectUlSlot,
-    VerseObjectMtMenu
+    VerseObjectMtMenu,
+    VerseObjectPermUlSlot,
+    VerseObjectPermPanel,
+    VerseObjectOtAddWritePerm,
+    VerseObjectOtRemWritePerm,
+    VerseObjectOtSetOwner,
+    VerseObjectPermMtMenu
 )
 
 
@@ -302,6 +537,7 @@ def register():
     for c in classes:
         bpy.utils.register_class(c)
     ui.init_object_properties()
+    ui.init_user_properties()
 
 
 def unregister():
@@ -311,6 +547,7 @@ def unregister():
     for c in classes:
         bpy.utils.unregister_class(c)
     ui.reset_object_properties()
+    ui.reset_user_properties()
 
 
 if __name__ == '__main__':

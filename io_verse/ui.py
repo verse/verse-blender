@@ -125,6 +125,17 @@ class VERSE_AVATAR_NODES_list_item(bpy.types.PropertyGroup):
     )
 
 
+class VERSE_USER_NODES_list_item(bpy.types.PropertyGroup):
+    """
+    Group of properties with representation of Verse avatar node
+    """
+    node_id = bpy.props.IntProperty(
+        name="Node ID",
+        description="Node ID of user node",
+        default=-1
+    )
+
+
 def init_avatar_properties():
     """
     Initialize properties used by this module
@@ -149,6 +160,25 @@ def init_avatar_properties():
     )
 
 
+def init_user_properties():
+    """
+    Initialize properties used for users
+    """
+    wm = bpy.types.WindowManager
+    wm.verse_users = bpy.props.CollectionProperty(
+        type=VERSE_USER_NODES_list_item,
+        name="Verse Users",
+        description="The list of verse user nodes representing valid users at Verse server"
+    )
+    wm.cur_verse_user_index = bpy.props.IntProperty(
+        name="Index of current Verse user",
+        default=-1,
+        min=-1,
+        max=1000,
+        description="The index of currently selected Verse user node"
+    )
+
+
 def reset_avatar_properties():
     """
     Reset properties used by this module
@@ -157,6 +187,15 @@ def reset_avatar_properties():
     wm.verse_avatar_capture = False
     wm.verse_avatars.clear()
     wm.cur_verse_avatar_index = -1
+
+
+def reset_user_properties():
+    """
+    Reset properties used by this module
+    """
+    wm = bpy.context.window_manager
+    wm.verse_users.clear()
+    wm.cur_verse_user_index = -1
 
 
 class VERSE_OBJECT_NODES_list_item(bpy.types.PropertyGroup):
@@ -215,7 +254,8 @@ def reset_object_properties():
 classes = (
     VERSE_SCENE_NODES_list_item,
     VERSE_AVATAR_NODES_list_item,
-    VERSE_OBJECT_NODES_list_item
+    VERSE_OBJECT_NODES_list_item,
+    VERSE_USER_NODES_list_item
 )
 
 

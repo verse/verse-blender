@@ -33,32 +33,19 @@ bl_info = {
     "category": "System"}
 
 
-if "bpy" in locals():
-    import imp
-    imp.reload(vrs)
-    imp.reload(session)
-    imp.reload(connection)
-    imp.reload(scene)
-    imp.reload(ui_scene)
-    imp.reload(avatar_view)
-    imp.reload(ui_avatar_view)
-    imp.reload(object3d)
-    imp.reload(ui_object3d)
-    imp.reload(mesh)
-    imp.reload(ui)
-else:
-    import bpy
-    import verse as vrs
-    from . import session
-    from . import connection
-    from . import scene
-    from . import ui_scene
-    from . import avatar_view
-    from . import ui_avatar_view
-    from . import object3d
-    from . import ui_object3d
-    from . import mesh
-    from . import ui
+import bpy
+import verse as vrs
+from . import session
+from . import connection
+from . import scene
+from . import ui_scene
+from . import avatar_view
+from . import ui_avatar_view
+from . import object3d
+from . import ui_object3d
+from . import mesh
+from . import ui
+from . import user
 
 
 def register():
