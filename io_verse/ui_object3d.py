@@ -29,7 +29,7 @@ from . import mesh
 from . import ui
 
 
-class VERSE_OBJECT_OT_subscribe(bpy.types.Operator):
+class VerseObjectOtSubscribe(bpy.types.Operator):
     """
     This operator tries to subscribe to Blender Mesh object at Verse server.
     """
@@ -71,7 +71,7 @@ class VERSE_OBJECT_OT_subscribe(bpy.types.Operator):
             return False
 
 
-class VERSE_OBJECT_OT_share(bpy.types.Operator):
+class VerseObjectOtShare(bpy.types.Operator):
     """
     This operator tries to share Blender Mesh object at Verse server.
     """
@@ -125,7 +125,7 @@ class VERSE_OBJECT_OT_share(bpy.types.Operator):
             return False
 
 
-class VERSE_OBJECT_MT_menu(bpy.types.Menu):
+class VerseObjectMtMenu(bpy.types.Menu):
     """
     Menu for object list
     """
@@ -156,7 +156,7 @@ class VERSE_OBJECT_MT_menu(bpy.types.Menu):
             return False
 
 
-class VERSE_OBJECT_UL_slot(bpy.types.UIList):
+class VerseObjectUlSlot(bpy.types.UIList):
     """
     A custom slot with information about Verse object node
     """
@@ -201,7 +201,7 @@ class VERSE_OBJECT_UL_slot(bpy.types.UIList):
                 layout.label(verse_object.name)
 
 
-class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
+class View3DPanelToolsVerseObject(bpy.types.Panel):
     """
     Panel with Verse tools for Mesh Object
     """
@@ -237,7 +237,7 @@ class VIEW3D_PT_tools_VERSE_object(bpy.types.Panel):
         col.operator("object.mesh_object_subscribe")
 
 
-class VERSE_OBJECT_panel(bpy.types.Panel):
+class VerseObjectPanel(bpy.types.Panel):
     """
     GUI of Blender objects shared at Verse server
     """
@@ -271,7 +271,7 @@ class VERSE_OBJECT_panel(bpy.types.Panel):
         row = layout.row()
 
         row.template_list(
-            'VERSE_OBJECT_UL_slot',
+            'VerseObjectUlSlot',
             'verse_objects_widget_id',
             scene,
             'verse_objects',
@@ -286,12 +286,12 @@ class VERSE_OBJECT_panel(bpy.types.Panel):
 
 # List of Blender classes in this submodule
 classes = (
-    VERSE_OBJECT_OT_share,
-    VERSE_OBJECT_OT_subscribe,
-    VIEW3D_PT_tools_VERSE_object,
-    VERSE_OBJECT_panel,
-    VERSE_OBJECT_UL_slot,
-    VERSE_OBJECT_MT_menu
+    VerseObjectOtShare,
+    VerseObjectOtSubscribe,
+    View3DPanelToolsVerseObject,
+    VerseObjectPanel,
+    VerseObjectUlSlot,
+    VerseObjectMtMenu
 )
 
 
@@ -315,4 +315,3 @@ def unregister():
 
 if __name__ == '__main__':
     register()
-
