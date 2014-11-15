@@ -23,6 +23,7 @@ This module implements sharing Blender objects at Verse server
 
 
 import bpy
+import verse as vrs
 from . import session
 from . import object3d
 from . import mesh
@@ -297,7 +298,12 @@ class VerseObjectOtAddWritePerm(bpy.types.Operator):
         This method will try to create new node representing Mesh Object
         at Verse server
         """
-        # TODO: add something here
+        wm = context.window_manager
+        vrs_session = session.VerseSession.instance()
+        user_item = wm.verse_users[wm.cur_verse_user_index]
+        user_id = user_item.node_id
+        node = vrs_session.nodes[context.active_object.verse_node_id]
+        vrs_session.send_node_perm(node.prio, node.id, user_id, vrs.PERM_NODE_WRITE | vrs.PERM_NODE_READ)
         return {'FINISHED'}
 
     @classmethod
@@ -306,7 +312,7 @@ class VerseObjectOtAddWritePerm(bpy.types.Operator):
         This class method is used, when Blender check, if this operator can be
         executed
         """
-        # Return true only in situation, when client is connected to Verse server
+        # Return true only in situation, when client is owner of node representing object
         wm = context.window_manager
         if wm.verse_connected is True and \
                 context.scene.subscribed is not False and \
@@ -318,9 +324,7 @@ class VerseObjectOtAddWritePerm(bpy.types.Operator):
             except KeyError:
                 return False
             else:
-                # TODO: do something here
-                print(node)
-                return False
+                return node.owned_by_me
         else:
             return False
 
@@ -338,7 +342,12 @@ class VerseObjectOtRemWritePerm(bpy.types.Operator):
         This method will try to create new node representing Mesh Object
         at Verse server
         """
-        # TODO: add something here
+        wm = context.window_manager
+        vrs_session = session.VerseSession.instance()
+        user_item = wm.verse_users[wm.cur_verse_user_index]
+        user_id = user_item.node_id
+        node = vrs_session.nodes[context.active_object.verse_node_id]
+        vrs_session.send_node_perm(node.prio, node.id, user_id, vrs.PERM_NODE_READ)
         return {'FINISHED'}
 
     @classmethod
@@ -347,7 +356,7 @@ class VerseObjectOtRemWritePerm(bpy.types.Operator):
         This class method is used, when Blender check, if this operator can be
         executed
         """
-        # Return true only in situation, when client is connected to Verse server
+        # Return true only in situation, when client is owner of node representing object
         wm = context.window_manager
         if wm.verse_connected is True and \
                 context.scene.subscribed is not False and \
@@ -359,9 +368,7 @@ class VerseObjectOtRemWritePerm(bpy.types.Operator):
             except KeyError:
                 return False
             else:
-                # TODO: do something here
-                print(node)
-                return False
+                return node.owned_by_me
         else:
             return False
 
@@ -379,7 +386,12 @@ class VerseObjectOtSetOwner(bpy.types.Operator):
         This method will try to create new node representing Mesh Object
         at Verse server
         """
-        # TODO: add something here
+        wm = context.window_manager
+        vrs_session = session.VerseSession.instance()
+        user_item = wm.verse_users[wm.cur_verse_user_index]
+        user_id = user_item.node_id
+        node = vrs_session.nodes[context.active_object.verse_node_id]
+        vrs_session.send_node_owner(node.prio, node.id, user_id)
         return {'FINISHED'}
 
     @classmethod
@@ -388,7 +400,7 @@ class VerseObjectOtSetOwner(bpy.types.Operator):
         This class method is used, when Blender check, if this operator can be
         executed
         """
-        # Return true only in situation, when client is connected to Verse server
+        # Return true only in situation, when client is owner of node representing object
         wm = context.window_manager
         if wm.verse_connected is True and \
                 context.scene.subscribed is not False and \
@@ -400,9 +412,7 @@ class VerseObjectOtSetOwner(bpy.types.Operator):
             except KeyError:
                 return False
             else:
-                # TODO: do something here
-                print(node)
-                return False
+                return node.owned_by_me
         else:
             return False
 
@@ -444,6 +454,9 @@ class VerseObjectPermUlSlot(bpy.types.UIList):
     """
     A custom slot with information about Verse object node
     """
+
+    # TODO: highlight owner of the node
+
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         vrs_session = session.VerseSession.instance()
         if vrs_session is not None:
@@ -494,10 +507,11 @@ class VerseObjectPermPanel(bpy.types.Panel):
         """
         wm = context.window_manager
         layout = self.layout
+        vrs_session = session.VerseSession.instance()
+        node = vrs_session.nodes[context.active_object.verse_node_id]
 
         row = layout.row()
-
-        # TODO: draw name of node owner
+        row.active = node.owned_by_me
 
         row.template_list(
             'VerseObjectPermUlSlot',

@@ -352,6 +352,30 @@ class VerseObject(vrsent.VerseNode):
         ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
         return object_node
 
+    @classmethod
+    def cb_receive_node_owner(cls, session, node_id, user_id):
+        """
+        """
+        object_node = super(VerseObject, cls).cb_receive_node_owner(session, node_id, user_id)
+        if object_node.can_read is True:
+            object_node.obj.hide_select = False
+        else:
+            object_node.obj.hide_select = True
+        ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
+        return object_node
+
+    @classmethod
+    def cb_receive_node_perm(cls, session, node_id, user_id, perm):
+        """
+        """
+        object_node = super(VerseObject, cls).cb_receive_node_perm(session, node_id, user_id, perm)
+        if object_node.can_write is True:
+            object_node.obj.hide_select = False
+        else:
+            object_node.obj.hide_select = True
+        ui.update_all_views(('PROPERTIES', 'VIEW_3D'))
+        return object_node
+
     def update(self):
         """
         This method tries to send fresh properties of mesh object to Verse server

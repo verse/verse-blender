@@ -74,7 +74,6 @@ def cb_scene_update(context):
                     vrs_obj.unlock()
 
 
-
 class VerseSceneData(vrsent.VerseNode):
     """
     Custom VerseNode subclass storing Blender data
