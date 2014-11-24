@@ -46,32 +46,43 @@ def cb_scene_update(context):
     if wm.verse_connected is True:
         # Some following actions has to be checked regularly (selection)
 
-        for obj in bpy.data.objects:
-            # Is object shared at verse server
-            if obj.verse_node_id != -1:
-                # Was any object updated?
-                if obj.is_updated:
-                    object3d.object_update(obj.verse_node_id)
-                # Check if object can be selected
-                vrs_obj = object3d.VerseObject.objects[obj.verse_node_id]
-                if obj.select is True:
-                    # Check if current client has permission to selection
-                    if vrs_obj.can_be_selected is False:
-                        obj.select = False
-                        obj.hide_select = True
-                    # When object is selected and it is not locked, then try to
-                    # lock this object
-                    elif vrs_obj.locked is False:
-                        vrs_obj.lock()
-                    # When client has permission to select, then it can not be
-                    # locked by other client
-                    elif vrs_obj.locked_by_me is False:
-                        obj.select = False
-                        obj.hide_select = True
-                # When object is not selected, but it is still locked,
-                # then unlock this node
-                elif vrs_obj.locked_by_me is True:
-                    vrs_obj.unlock()
+        # TODO: check if scene was renamed
+
+        edit_obj = bpy.context.edit_object
+
+        if edit_obj is not None and \
+                edit_obj.type == 'MESH' and \
+                edit_obj.verse_node_id != -1 and \
+                edit_obj.is_updated_data is True:
+            pass
+            # TODO: try to send updated data
+        else:
+            for obj in bpy.data.objects:
+                # Is object shared at verse server
+                if obj.verse_node_id != -1:
+                    # Was any object updated?
+                    if obj.is_updated:
+                        object3d.object_update(obj.verse_node_id)
+                    # Check if object can be selected
+                    vrs_obj = object3d.VerseObject.objects[obj.verse_node_id]
+                    if obj.select is True:
+                        # Check if current client has permission to selection
+                        if vrs_obj.can_be_selected is False:
+                            obj.select = False
+                            obj.hide_select = True
+                        # When object is selected and it is not locked, then try to
+                        # lock this object
+                        elif vrs_obj.locked is False:
+                            vrs_obj.lock()
+                        # When client has permission to select, then it can not be
+                        # locked by other client
+                        elif vrs_obj.locked_by_me is False:
+                            obj.select = False
+                            obj.hide_select = True
+                    # When object is not selected, but it is still locked,
+                    # then unlock this node
+                    elif vrs_obj.locked_by_me is True:
+                        vrs_obj.unlock()
 
 
 class VerseSceneData(vrsent.VerseNode):
