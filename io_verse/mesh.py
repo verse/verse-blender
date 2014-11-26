@@ -173,6 +173,29 @@ class VerseFaces(vrsent.VerseLayer):
         return layer
 
 
+class VerseMeshCache(object):
+    """
+    This class stores last state of edit mesh that was sent to Verse server.
+    Instance of this class could be only one in memory, when MESH object is in edit mode.
+    """
+
+    def __init__(self, verse_mesh):
+        """
+        Constructor of VerseMeshCache
+        """
+        self.verse_mesh = verse_mesh
+        self.verse_mesh.bmesh = bmesh.from_edit_mesh(self.verse_mesh.mesh)
+        # Create dictionary of vertices
+        self.vertices = {vert.index: tuple(vert.co)
+                         for vert in self.verse_mesh.bmesh.verts}
+        # Create dictionary of edges
+        self.edges = {edge.index: tuple(edge.verts[0].index, edge.verts[1].index)
+                      for edge in self.verse_mesh.bmesh.edges}
+        # Create dictionary of faces
+        self.faces = {face.index: tuple(vert.index for vert in face.verts)
+                      for face in self.verse_mesh.bmesh.faces}
+
+
 class VerseMesh(vrsent.VerseNode):
     """
     Custom VerseNode subclass representing Blender mesh data structure
@@ -197,14 +220,16 @@ class VerseMesh(vrsent.VerseNode):
         if self.mesh is not None:
             self.mesh.update(calc_tessface=True)
             self.bmesh.from_mesh(self.mesh)
-            # TODO: do not do it in this way for huge mesh
-            # Vertices
+            # TODO: do not do it in this way for huge mesh (do not send whole mesh), but use
+            # vrs.get to get free space in outgoing queue.
+
+            # Send all Vertices
             for vert in mesh.vertices:
                 self.vertices.items[vert.index] = tuple(vert.co)
-            # Edges
+            # Send all Edges
             for edge in mesh.edges:
                 self.edges.items[edge.index] = (edge.vertices[0], edge.vertices[1])
-            # Faces
+            # Send all Faces
             for face in mesh.tessfaces:
                 if len(face.vertices) == 3:
                     self.quads.items[face.index] = (face.vertices[0], face.vertices[1], face.vertices[2], 0)
