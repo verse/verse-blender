@@ -24,6 +24,7 @@ import bpy
 import verse as vrs
 from .vrsent import vrsent
 from . import object3d
+from . import mesh
 from . import avatar_view
 from . import ui
 
@@ -46,16 +47,24 @@ def cb_scene_update(context):
     if wm.verse_connected is True:
         # Some following actions has to be checked regularly (selection)
 
-        # TODO: check if scene was renamed
+        # TODO: check if scene was renamed and refactor following code
 
         edit_obj = bpy.context.edit_object
 
+        # Is shared mesh object in edit mode?
         if edit_obj is not None and \
                 edit_obj.type == 'MESH' and \
-                edit_obj.verse_node_id != -1 and \
-                edit_obj.is_updated_data is True:
-            pass
-            # TODO: try to send updated data
+                edit_obj.verse_node_id != -1:
+            # When shared mesh object is in edit mode, then check if there is
+            # cached geometry
+            vrs_obj = object3d.VerseObject.objects[edit_obj.verse_node_id]
+            if vrs_obj.mesh_node is not None:
+                if vrs_obj.mesh_node.cache is None:
+                    # When no cache exist, then create one
+                    vrs_obj.mesh_node.cache = mesh.VerseMeshCache(vrs_obj.mesh_node)
+                elif edit_obj.is_updated_data is True:
+                    # Send updated data
+                    vrs_obj.mesh_node.cache.send_updates()
         else:
             for obj in bpy.data.objects:
                 # Is object shared at verse server
@@ -74,6 +83,7 @@ def cb_scene_update(context):
                         # lock this object
                         elif vrs_obj.locked is False:
                             vrs_obj.lock()
+                            vrs_obj.mesh_node.lock()
                         # When client has permission to select, then it can not be
                         # locked by other client
                         elif vrs_obj.locked_by_me is False:
@@ -83,6 +93,7 @@ def cb_scene_update(context):
                     # then unlock this node
                     elif vrs_obj.locked_by_me is True:
                         vrs_obj.unlock()
+                        vrs_obj.mesh_node.unlock()
 
 
 class VerseSceneData(vrsent.VerseNode):

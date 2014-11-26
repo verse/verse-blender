@@ -189,11 +189,47 @@ class VerseMeshCache(object):
         self.vertices = {vert.index: tuple(vert.co)
                          for vert in self.verse_mesh.bmesh.verts}
         # Create dictionary of edges
-        self.edges = {edge.index: tuple(edge.verts[0].index, edge.verts[1].index)
+        self.edges = {edge.index: (edge.verts[0].index, edge.verts[1].index)
                       for edge in self.verse_mesh.bmesh.edges}
         # Create dictionary of faces
         self.faces = {face.index: tuple(vert.index for vert in face.verts)
                       for face in self.verse_mesh.bmesh.faces}
+
+    def __send_vertex_updates(self):
+        """
+        Try to send updates of geometry (positions of vertices)
+        """
+
+        # Go through bmesh and try to detec new positions of vertexes
+        # and newly created vertexes
+        for b3d_vert in self.verse_mesh.bmesh.verts:
+            try:
+                cache_vert_co = self.vertices[b3d_vert.index]
+            except KeyError:
+                # TODO: new vertex was created send it to Verse server and store
+                # it in cached mesh
+                pass
+            else:
+                if cache_vert_co != tuple(b3d_vert.co):
+                    self.verse_mesh.vertices.items[b3d_vert.index] = \
+                        self.vertices[b3d_vert.index] = \
+                        tuple(b3d_vert.co)
+        # When length of vertexes and cached vertexes differs now, then
+        # it means that some vertex was deleted in bmesh. Find cached
+        # vertex/vertices and destroy them at Verse server
+        if len(self.verse_mesh.bmesh.verts) != len(self.vertices):
+            for vert_id,vert_co in self.vertices.items():
+                try:
+                    b3d_vert = self.verse_mesh.bmesh.verts[vert_id]
+                except KeyError:
+                    # TODO: vertex was deleted send layer_unset command
+                    pass
+
+    def send_updates(self):
+        """
+        Try to send update of edit mesh to Verse server
+        """
+        self.__send_vertex_updates()
 
 
 class VerseMesh(vrsent.VerseNode):
@@ -216,6 +252,7 @@ class VerseMesh(vrsent.VerseNode):
         self.quads = VerseFaces(node=self)
         self._autosubscribe = autosubscribe
         self.bmesh = bmesh.new()
+        self.cache = None
 
         if self.mesh is not None:
             self.mesh.update(calc_tessface=True)
