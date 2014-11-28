@@ -173,68 +173,6 @@ class VerseFaces(vrsent.VerseLayer):
         return layer
 
 
-class VerseMeshCache(object):
-    """
-    This class stores last state of edit mesh that was sent to Verse server.
-    Instance of this class could be only one in memory, when MESH object is in edit mode.
-    """
-
-    def __init__(self, verse_mesh):
-        """
-        Constructor of VerseMeshCache
-        """
-        self.verse_mesh = verse_mesh
-        self.verse_mesh.bmesh = bmesh.from_edit_mesh(self.verse_mesh.mesh)
-        # Create dictionary of vertices
-        self.vertices = {vert.index: tuple(vert.co)
-                         for vert in self.verse_mesh.bmesh.verts}
-        # Create dictionary of edges
-        self.edges = {edge.index: (edge.verts[0].index, edge.verts[1].index)
-                      for edge in self.verse_mesh.bmesh.edges}
-        # Create dictionary of faces
-        self.faces = {face.index: tuple(vert.index for vert in face.verts)
-                      for face in self.verse_mesh.bmesh.faces}
-
-    def __send_vertex_updates(self):
-        """
-        Try to send updates of geometry (positions of vertices)
-        """
-
-        # Go through bmesh and try to detect new positions of vertices
-        # and newly created vertexes
-        for b3d_vert in self.verse_mesh.bmesh.verts:
-            verse_ID = self.verse_mesh.get_verse_id_of_vertex(b3d_vert)
-            if verse_ID is None:
-                # TODO: new vertex was created. Send it to Verse server, store in cache and save verse ID
-                pass
-            else:
-                cache_vert_co = self.vertices[verse_ID]
-                if cache_vert_co != tuple(b3d_vert.co):
-                    self.verse_mesh.vertices.items[verse_ID] = \
-                        self.vertices[verse_ID] = \
-                        tuple(b3d_vert.co)
-
-        # When length of vertices and cached vertices differs now, then
-        # it means that some vertex was deleted in bmesh. Find cached
-        # vertex/vertices and destroy them at Verse server too
-        if len(self.verse_mesh.bmesh.verts) != len(self.vertices):
-            # TODO: at least one vertex was deleted. Find it and send layer_unset command
-            pass
-            # for vert_id, vert_co in self.vertices.items():
-
-    def send_updates(self):
-        """
-        Try to send update of edit mesh to Verse server
-        """
-        # Check if bmesh is still fresh
-        try:
-            self.verse_mesh.bmesh.verts
-        except ReferenceError:
-            self.verse_mesh.bmesh = bmesh.from_edit_mesh(self.verse_mesh.mesh)
-        self.__send_vertex_updates()
-        # TODO: send edge and face updates too
-
-
 class VerseMesh(vrsent.VerseNode):
     """
     Custom VerseNode subclass representing Blender mesh data structure
@@ -254,11 +192,16 @@ class VerseMesh(vrsent.VerseNode):
         self.edges = VerseEdges(node=self)
         self.quads = VerseFaces(node=self)
         self._autosubscribe = autosubscribe
-        self.bmesh = bmesh.new()
+        self.bmesh = None
         self.cache = None
+        self.last_vert_ID = None
+        self.last_edge_ID = None
+        self.last_face_ID = None
 
         if self.mesh is not None:
+            # TODO: make following code working in edit mode too
             self.mesh.update(calc_tessface=True)
+            self.bmesh = bmesh.new()
             self.bmesh.from_mesh(self.mesh)
             # TODO: do not do it in this way for huge mesh (do not send whole mesh), but use
             # vrs.get to get free space in outgoing queue.
@@ -277,59 +220,171 @@ class VerseMesh(vrsent.VerseNode):
                     self.quads.items[face.index] = tuple(vert for vert in face.vertices)
 
             # Create blender layers storing Verse IDs of vertices, edges and faces
-            self.__create_bpy_layer_ids('verts', 'VertIDs')
-            self.__create_bpy_layer_ids('edges', 'EdgeIDs')
-            self.__create_bpy_layer_ids('faces', 'FaceIDs')
-            # Safe blender layers with to original mesh
+            self.last_vert_ID = self.__create_bpy_layer_ids('verts', 'VertIDs')
+            self.last_edge_ID = self.__create_bpy_layer_ids('edges', 'EdgeIDs')
+            self.last_face_ID = self.__create_bpy_layer_ids('faces', 'FaceIDs')
+
+            # Safe blender layers containing IDs to original mesh
             self.bmesh.to_mesh(self.mesh)
+            self.bmesh.free()
 
     def __create_bpy_layer_ids(self, elems_name, layer_name):
         """
         This method create Blender layer storing IDs of vertices or edges or faces
         :elems_name: this could be 'verts', 'edges' or 'faces'
         """
-        lay = self.bmesh.loops.layers.int.new(layer_name)
-        # Set values in layer
         elems_iter = getattr(self.bmesh, elems_name)
+        lay = elems_iter.layers.int.new(layer_name)
+        # Set values in layer
+        last_elem_id = None
         for elem in elems_iter:
-            if elems_name == 'faces':
-                for loop in elem.loops:
-                    # Value 0 is always default value
-                    loop[lay] = elem.index + 1
-            else:
-                for loop in elem.link_loops:
-                    # Value 0 is always default value
-                    loop[lay] = elem.index + 1
+            last_elem_id = elem.index
+            elem[lay] = elem.index + 1
+
+        return last_elem_id
 
     def get_verse_id_of_vertex(self, bpy_vert):
         """
         Return ID of blender vertex at Verse server
         """
-        layer = self.bmesh.loops.layers.int.get('VertIDs')
-        for loop in bpy_vert.link_loops:
-            if loop[layer] != 0:
-                return loop[layer] - 1
-        return None
+        layer = self.bmesh.verts.layers.int.get('VertIDs')
+        # TODO: this will not work, because Blender copies values of layer for duplicated vertices :-(
+        return bpy_vert[layer] - 1
 
     def get_verse_id_of_edge(self, bpy_edge):
         """
         Return ID of blender edge at Verse server
         """
-        layer = self.bmesh.loops.layers.int.get('EdgeIDs')
-        for loop in bpy_edge.link_loops:
-            if loop[layer] != 0:
-                return loop[layer] - 1
-        return None
+        layer = self.bmesh.edges.layers.int.get('EdgeIDs')
+        return bpy_edge[layer] - 1
 
     def get_verse_id_of_face(self, bpy_face):
         """
         Return ID of blender face at Verse server
         """
-        layer = self.bmesh.loops.layers.int.get('FaceIDs')
-        for loop in bpy_face.link_loops:
-            if loop[layer] != 0:
-                return loop[layer] - 1
-        return None
+        layer = self.bmesh.faces.layers.int.get('FaceIDs')
+        return bpy_face[layer] - 1
+
+    def __send_vertex_updates(self):
+        """
+        Try to send updates of geometry and positions of vertices
+        """
+
+        alive_verts = {}
+
+        # Go through bmesh and try to detect new positions of vertices,
+        # deleted vertices and newly created vertices
+        for b3d_vert in self.bmesh.verts:
+            verse_id = self.get_verse_id_of_vertex(b3d_vert)
+            # New vertex was created. Try to send it to Verse server, store it in cache and save verse ID
+            if verse_id == -1:
+                # Update the last vertex ID
+                self.last_vert_ID += 1
+                verse_id = self.last_vert_ID
+                # Send new vertex position to Verse server
+                self.vertices.items[verse_id] = tuple(b3d_vert.co)
+                # Store verse vertex ID in bmesh layer
+                layer = self.bmesh.verts.layers.int.get('VertIDs')
+                b3d_vert[layer] = verse_id + 1
+            # Position of vertex was changed?
+            elif self.vertices.items[verse_id] != tuple(b3d_vert.co):
+                # This will send updated position of vertex
+                self.vertices.items[verse_id] = tuple(b3d_vert.co)
+
+            # Mark vertex as alive
+            alive_verts[verse_id] = True
+
+        # When length of vertices and cached vertices differs now, then
+        # it means that some vertex was deleted in bmesh. Find cached
+        # vertex/vertices and destroy them at Verse server too
+        if len(self.bmesh.verts) != len(self.vertices.items):
+            for vert_id in self.vertices.items.keys():
+                if vert_id not in alive_verts.keys():
+                    # This will send unset command
+                    self.vertices.items.pop(vert_id)
+
+    def __send_edge_updates(self):
+        """
+        Try to send updates of topology (edges)
+        """
+
+        alive_edges = {}
+
+        # Go through bmesh and try to detect changes in edges (new created edges or deleted edges)
+        for b3d_edge in self.bmesh.edges:
+            verse_id = self.get_verse_id_of_edge(b3d_edge)
+            # New edge was created. Try to send it to Verse server
+            if verse_id == -1:
+                self.last_edge_ID += 1
+                verse_id = self.last_edge_ID
+                # Send new edge to Verse server
+                self.edges.items[verse_id] = tuple(
+                    self.get_verse_id_of_vertex(b3d_edge.vertices[0]),
+                    self.get_verse_id_of_vertex(b3d_edge.vertices[1])
+                )
+                # Store edge ID in bmesh layer
+                layer = self.bmesh.edges.layers.int.get('EdgeIDs')
+                b3d_edge[layer] = verse_id + 1
+
+            alive_edges[verse_id] = True
+
+        if len(self.bmesh.edges) != len(self.edges.items):
+            for edge_id in self.edges.items.keys():
+                if edge_id not in alive_edges.keys():
+                    # This will send unset command
+                    self.edges.items.pop(edge_id)
+
+    def __send_face_updates(self):
+        """
+        Try to send updates of topology (faces)
+        """
+
+        alive_faces = {}
+
+        # Go through bmesh faces and try to detect changes (newly created or destroyed faces)
+        for b3d_face in self.bmesh.faces:
+            verse_id = self.get_verse_id_of_face(b3d_face)
+            # New face was created. Try to send it to Verse server
+            if verse_id == -1:
+                self.last_edge_ID += 1
+                verse_id = self.last_edge_ID
+                # Send new face to Verse server
+                if len(b3d_face.verts) == 3:
+                    self.quads.items[verse_id] = (
+                        self.get_verse_id_of_vertex(b3d_face.verts[0]),
+                        self.get_verse_id_of_vertex(b3d_face.verts[1]),
+                        self.get_verse_id_of_vertex(b3d_face.verts[2]),
+                        0
+                    )
+                elif len(b3d_face.verts) == 4:
+                    self.quads.items[verse_id] = tuple(self.get_verse_id_of_vertex(vert) for vert in b3d_face.verts)
+                else:
+                    # TODO: tesselate face
+                    print('Error: Face with more than 4 vertices not supported')
+                # Store edge ID in bmesh layer
+                layer = self.bmesh.faces.layers.int.get('FaceIDs')
+                b3d_face[layer] = verse_id + 1
+
+            alive_faces[verse_id] = True
+
+        if len(self.bmesh.faces) != len(self.quads.items):
+            for face_id in self.quads.items.keys():
+                if face_id not in alive_faces.keys():
+                    # This will send unset command
+                    self.edges.items.pop(face_id)
+
+    def send_updates(self):
+        """
+        Try to send update of edit mesh to Verse server
+        """
+        # Check if bmesh is still fresh
+        try:
+            self.bmesh.verts
+        except ReferenceError:
+            self.bmesh = bmesh.from_edit_mesh(self.mesh)
+        self.__send_vertex_updates()
+        self.__send_edge_updates()
+        self.__send_face_updates()
 
     @classmethod
     def cb_receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
@@ -337,11 +392,13 @@ class VerseMesh(vrsent.VerseNode):
         When new mesh node is created or verse server, then this callback method is called.
         """
         # Call parent class
-        mesh_node = super(VerseMesh, cls).cb_receive_node_create(session=session,
+        mesh_node = super(VerseMesh, cls).cb_receive_node_create(
+            session=session,
             node_id=node_id,
             parent_id=parent_id,
             user_id=user_id,
-            custom_type=custom_type)
+            custom_type=custom_type
+        )
 
         # When this mesh was created at different Blender, then mesh_node does
         # not have valid reference at blender mesh data block

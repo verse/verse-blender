@@ -59,12 +59,7 @@ def cb_scene_update(context):
             # cached geometry
             vrs_obj = object3d.VerseObject.objects[edit_obj.verse_node_id]
             if vrs_obj.mesh_node is not None:
-                if vrs_obj.mesh_node.cache is None:
-                    # When no cache exist, then create one
-                    vrs_obj.mesh_node.cache = mesh.VerseMeshCache(vrs_obj.mesh_node)
-                elif edit_obj.is_updated_data is True:
-                    # Send updated data
-                    vrs_obj.mesh_node.cache.send_updates()
+                vrs_obj.mesh_node.send_updates()
         else:
             for obj in bpy.data.objects:
                 # Is object shared at verse server
