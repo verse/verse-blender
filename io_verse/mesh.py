@@ -248,22 +248,36 @@ class VerseMesh(vrsent.VerseNode):
         Return ID of blender vertex at Verse server
         """
         layer = self.bmesh.verts.layers.int.get('VertIDs')
-        # TODO: this will not work, because Blender copies values of layer for duplicated vertices :-(
-        return bpy_vert[layer] - 1
+        # Fast hack (probably not reliable), because Blender duplicates values in layers :-(
+        verse_id = bpy_vert[layer] - 1
+        if verse_id < bpy_vert.index:
+            return -1
+        else:
+            return verse_id
 
     def get_verse_id_of_edge(self, bpy_edge):
         """
         Return ID of blender edge at Verse server
         """
         layer = self.bmesh.edges.layers.int.get('EdgeIDs')
-        return bpy_edge[layer] - 1
+        # Fast hack
+        verse_id = bpy_edge[layer] - 1
+        if verse_id < bpy_edge.index:
+            return -1
+        else:
+            return verse_id
 
     def get_verse_id_of_face(self, bpy_face):
         """
         Return ID of blender face at Verse server
         """
         layer = self.bmesh.faces.layers.int.get('FaceIDs')
-        return bpy_face[layer] - 1
+        # Fast hack
+        verse_id = bpy_face[layer] - 1
+        if verse_id < bpy_face.index:
+            return -1
+        else:
+            return verse_id
 
     def __send_vertex_updates(self):
         """
@@ -318,9 +332,9 @@ class VerseMesh(vrsent.VerseNode):
                 self.last_edge_ID += 1
                 verse_id = self.last_edge_ID
                 # Send new edge to Verse server
-                self.edges.items[verse_id] = tuple(
-                    self.get_verse_id_of_vertex(b3d_edge.vertices[0]),
-                    self.get_verse_id_of_vertex(b3d_edge.vertices[1])
+                self.edges.items[verse_id] = (
+                    self.get_verse_id_of_vertex(b3d_edge.verts[0]),
+                    self.get_verse_id_of_vertex(b3d_edge.verts[1])
                 )
                 # Store edge ID in bmesh layer
                 layer = self.bmesh.edges.layers.int.get('EdgeIDs')
