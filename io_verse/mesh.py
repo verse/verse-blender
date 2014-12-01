@@ -243,38 +243,37 @@ class VerseMesh(vrsent.VerseNode):
 
         return last_elem_id
 
-    def get_verse_id_of_vertex(self, bpy_vert):
+    def get_verse_id_of_vertex(self, bpy_vert, alive_verts):
         """
         Return ID of blender vertex at Verse server
         """
         layer = self.bmesh.verts.layers.int.get('VertIDs')
-        # Fast hack (probably not reliable), because Blender duplicates values in layers :-(
         verse_id = bpy_vert[layer] - 1
-        if verse_id < bpy_vert.index:
+        # It is necessary to detect uniqueness of vertex verse IDs, because Blender
+        # duplicates values of layers, when vertex/edge/face is duplicated
+        if verse_id in alive_verts:
             return -1
         else:
             return verse_id
 
-    def get_verse_id_of_edge(self, bpy_edge):
+    def get_verse_id_of_edge(self, bpy_edge, alive_edges):
         """
         Return ID of blender edge at Verse server
         """
         layer = self.bmesh.edges.layers.int.get('EdgeIDs')
-        # Fast hack
         verse_id = bpy_edge[layer] - 1
-        if verse_id < bpy_edge.index:
+        if verse_id in alive_edges:
             return -1
         else:
             return verse_id
 
-    def get_verse_id_of_face(self, bpy_face):
+    def get_verse_id_of_face(self, bpy_face, alive_faces):
         """
         Return ID of blender face at Verse server
         """
         layer = self.bmesh.faces.layers.int.get('FaceIDs')
-        # Fast hack
         verse_id = bpy_face[layer] - 1
-        if verse_id < bpy_face.index:
+        if verse_id in alive_faces:
             return -1
         else:
             return verse_id
@@ -289,7 +288,7 @@ class VerseMesh(vrsent.VerseNode):
         # Go through bmesh and try to detect new positions of vertices,
         # deleted vertices and newly created vertices
         for b3d_vert in self.bmesh.verts:
-            verse_id = self.get_verse_id_of_vertex(b3d_vert)
+            verse_id = self.get_verse_id_of_vertex(b3d_vert, alive_verts)
             # New vertex was created. Try to send it to Verse server, store it in cache and save verse ID
             if verse_id == -1:
                 # Update the last vertex ID
@@ -306,16 +305,13 @@ class VerseMesh(vrsent.VerseNode):
                 self.vertices.items[verse_id] = tuple(b3d_vert.co)
 
             # Mark vertex as alive
-            alive_verts[verse_id] = True
+            alive_verts[verse_id] = b3d_vert.index
 
-        # When length of vertices and cached vertices differs now, then
-        # it means that some vertex was deleted in bmesh. Find cached
-        # vertex/vertices and destroy them at Verse server too
-        if len(self.bmesh.verts) != len(self.vertices.items):
-            for vert_id in self.vertices.items.keys():
-                if vert_id not in alive_verts.keys():
-                    # This will send unset command
-                    self.vertices.items.pop(vert_id)
+        # Try to find deleted vertices
+        rem_verts = [vert_id for vert_id in self.vertices.items.keys() if vert_id not in alive_verts]
+        # This will send unset commands for deleted vertices
+        for vert_id in rem_verts:
+            self.vertices.items.pop(vert_id)
 
     def __send_edge_updates(self):
         """
@@ -326,27 +322,35 @@ class VerseMesh(vrsent.VerseNode):
 
         # Go through bmesh and try to detect changes in edges (new created edges or deleted edges)
         for b3d_edge in self.bmesh.edges:
-            verse_id = self.get_verse_id_of_edge(b3d_edge)
+            verse_id = self.get_verse_id_of_edge(b3d_edge, alive_edges)
             # New edge was created. Try to send it to Verse server
             if verse_id == -1:
                 self.last_edge_ID += 1
                 verse_id = self.last_edge_ID
                 # Send new edge to Verse server
                 self.edges.items[verse_id] = (
-                    self.get_verse_id_of_vertex(b3d_edge.verts[0]),
-                    self.get_verse_id_of_vertex(b3d_edge.verts[1])
+                    self.get_verse_id_of_vertex(b3d_edge.verts[0], {}),
+                    self.get_verse_id_of_vertex(b3d_edge.verts[1], {})
                 )
                 # Store edge ID in bmesh layer
                 layer = self.bmesh.edges.layers.int.get('EdgeIDs')
                 b3d_edge[layer] = verse_id + 1
+            else:
+                # Was edge changed?
+                edge = (
+                    self.get_verse_id_of_vertex(b3d_edge.verts[0], {}),
+                    self.get_verse_id_of_vertex(b3d_edge.verts[1], {})
+                )
+                if self.edges.items[verse_id] != edge:
+                    self.edges.items[verse_id] = edge
 
-            alive_edges[verse_id] = True
+            alive_edges[verse_id] = b3d_edge.index
 
-        if len(self.bmesh.edges) != len(self.edges.items):
-            for edge_id in self.edges.items.keys():
-                if edge_id not in alive_edges.keys():
-                    # This will send unset command
-                    self.edges.items.pop(edge_id)
+        # Try to find deleted edges
+        rem_edges = [edge_id for edge_id in self.edges.items.keys() if edge_id not in alive_edges]
+        # This will send unset commands for deleted edges
+        for edge_id in rem_edges:
+            self.edges.items.pop(edge_id)
 
     def __send_face_updates(self):
         """
@@ -355,37 +359,46 @@ class VerseMesh(vrsent.VerseNode):
 
         alive_faces = {}
 
+        def b3d_face_to_tuple(_b3d_face):
+            _face = None
+            if len(_b3d_face.verts) == 3:
+                _face = (
+                    self.get_verse_id_of_vertex(_b3d_face.verts[0], {}),
+                    self.get_verse_id_of_vertex(_b3d_face.verts[1], {}),
+                    self.get_verse_id_of_vertex(_b3d_face.verts[2], {}),
+                    0
+                )
+            elif len(b3d_face.verts) == 4:
+                _face = tuple(self.get_verse_id_of_vertex(vert, {}) for vert in _b3d_face.verts)
+            else:
+                # TODO: tesselate face
+                print('Error: Face with more than 4 vertices not supported')
+            return _face
+
         # Go through bmesh faces and try to detect changes (newly created or destroyed faces)
         for b3d_face in self.bmesh.faces:
-            verse_id = self.get_verse_id_of_face(b3d_face)
+            verse_id = self.get_verse_id_of_face(b3d_face, alive_faces)
             # New face was created. Try to send it to Verse server
             if verse_id == -1:
                 self.last_edge_ID += 1
                 verse_id = self.last_edge_ID
-                # Send new face to Verse server
-                if len(b3d_face.verts) == 3:
-                    self.quads.items[verse_id] = (
-                        self.get_verse_id_of_vertex(b3d_face.verts[0]),
-                        self.get_verse_id_of_vertex(b3d_face.verts[1]),
-                        self.get_verse_id_of_vertex(b3d_face.verts[2]),
-                        0
-                    )
-                elif len(b3d_face.verts) == 4:
-                    self.quads.items[verse_id] = tuple(self.get_verse_id_of_vertex(vert) for vert in b3d_face.verts)
-                else:
-                    # TODO: tesselate face
-                    print('Error: Face with more than 4 vertices not supported')
+                self.quads.items[verse_id] = b3d_face_to_tuple(b3d_face)
                 # Store edge ID in bmesh layer
                 layer = self.bmesh.faces.layers.int.get('FaceIDs')
                 b3d_face[layer] = verse_id + 1
+            else:
+                # Was face changed?
+                face = b3d_face_to_tuple(b3d_face)
+                if self.quads.items[verse_id] != face:
+                    self.quads.items[verse_id] = face
 
-            alive_faces[verse_id] = True
+            alive_faces[verse_id] = b3d_face.index
 
-        if len(self.bmesh.faces) != len(self.quads.items):
-            for face_id in self.quads.items.keys():
-                if face_id not in alive_faces.keys():
-                    # This will send unset command
-                    self.edges.items.pop(face_id)
+        # Try to find deleted faces
+        rem_faces = [face_id for face_id in self.quads.items.keys() if face_id not in alive_faces]
+        # This will send unset commands for deleted faces
+        for face_id in rem_faces:
+            self.quads.items.pop(face_id)
 
     def send_updates(self):
         """

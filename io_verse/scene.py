@@ -78,7 +78,8 @@ def cb_scene_update(context):
                         # lock this object
                         elif vrs_obj.locked is False:
                             vrs_obj.lock()
-                            vrs_obj.mesh_node.lock()
+                            if vrs_obj.mesh_node is not None:
+                                vrs_obj.mesh_node.lock()
                         # When client has permission to select, then it can not be
                         # locked by other client
                         elif vrs_obj.locked_by_me is False:
@@ -88,7 +89,8 @@ def cb_scene_update(context):
                     # then unlock this node
                     elif vrs_obj.locked_by_me is True:
                         vrs_obj.unlock()
-                        vrs_obj.mesh_node.unlock()
+                        if vrs_obj.mesh_node is not None:
+                            vrs_obj.mesh_node.unlock()
 
 
 class VerseSceneData(vrsent.VerseNode):
