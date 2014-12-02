@@ -203,45 +203,29 @@ class VerseFaces(vrsent.VerseLayer):
         """
         This method tries to find Blender vertex in bmesh and cache
         """
-        print('>>> 0')
         _bmesh = self.node.bmesh
-        print('>>> 0.0')
         try:
             # Try to find blender face at cache first
-            print('>>> 1')
             b3d_face = self.id_cache[item_id]
-            print('>>> 1.0')
         except KeyError:
             try:
                 # Then try to find it in bmesh at the index==item_id
-                print('>>> 2')
                 b3d_face = _bmesh.faces[item_id]
-                print('>>> 2.0')
             except IndexError:
                 # When face was not found in cache nor bmesh, then try to
                 # find it using loop over all faces
-                print('>>> 3')
                 id_layer = _bmesh.faces.layers.int.get('FaceIDs')
-                print('>>> 4')
                 for b3d_face in _bmesh.faces:
-                    print('>>> 5')
                     verse_id = b3d_face[id_layer]
-                    print('>>> 6')
                     self.id_cache[item_id] = b3d_face
-                    print('>>> 7')
                     if verse_id == item_id:
-                        print('>>> 8')
                         return b3d_face
-                print('>>> 9')
                 return None
             else:
                 # Update cache
-                print('>>> 10')
                 self.id_cache[item_id] = b3d_face
-                print('>>> 11')
                 return b3d_face
         else:
-            print('>>> 12')
             return b3d_face
 
     @classmethod
@@ -256,32 +240,23 @@ class VerseFaces(vrsent.VerseLayer):
 
             _bmesh = face_layer.node.bmesh
 
-            print('>>> Finding face')
             b3d_face = face_layer.find_b3d_face(item_id)
 
             # When face already exists, then remove the face
             if b3d_face is not None:
-                print('>>> Found')
                 _bmesh.faces.remove(b3d_face)
 
-            print('>>> Vert layer')
             vert_layer = face_layer.node.vertices
 
             # Add new one
             if value[3] == 0:
-                print('>>> Creating triangle')
-                _bmesh.faces.new([vert_layer.b3d_vert(vert_id) for vert_id in value[0:3]])
+                _bmesh.faces.new([vert_layer.b3d_vertex(vert_id) for vert_id in value[0:3]])
             else:
-                print('>>> Creating quad')
-                _bmesh.faces.new([vert_layer.b3d_vert(vert_id) for vert_id in value])
+                _bmesh.faces.new([vert_layer.b3d_vertex(vert_id) for vert_id in value])
 
-            print('>>> X')
             b3d_face = face_layer.id_cache[item_id] = _bmesh.faces[-1]
-            print('>>> Y')
             id_layer = _bmesh.faces.layers.int.get('FaceIDs')
-            print('>>> Z')
             b3d_face[id_layer] = item_id
-            print('>>> ZZZ')
 
             # Update Blender mesh
             _bmesh.to_mesh(face_layer.node.mesh)
