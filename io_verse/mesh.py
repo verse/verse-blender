@@ -69,7 +69,7 @@ class VerseVertices(vrsent.VerseLayer):
                 # find it using loop over all vertices
                 id_layer = _bmesh.verts.layers.int.get('VertIDs')
                 for b3d_vert in _bmesh.verts:
-                    verse_id = b3d_vert[id_layer]
+                    verse_id = b3d_vert[id_layer] - 1
                     self.id_cache[item_id] = b3d_vert
                     if verse_id == item_id:
                         return b3d_vert
@@ -99,6 +99,11 @@ class VerseVertices(vrsent.VerseLayer):
 
             b3d_vert = layer.b3d_vertex(item_id)
 
+            # Try to update last vertex ID
+            if layer.node.last_vert_ID is None or \
+                            layer.node.last_vert_ID < item_id:
+                layer.node.last_vert_ID = item_id
+
             if b3d_vert is not None:
                 # Update position
                 b3d_vert.co = mathutils.Vector(value)
@@ -107,7 +112,7 @@ class VerseVertices(vrsent.VerseLayer):
                 _bmesh.verts.new(value)
                 b3d_vert = layer.id_cache[item_id] = _bmesh.verts[-1]
                 id_layer = _bmesh.verts.layers.int.get('VertIDs')
-                b3d_vert[id_layer] = item_id
+                b3d_vert[id_layer] = item_id + 1
 
             # Update Blender mesh
             _bmesh.to_mesh(layer.node.mesh)
@@ -216,7 +221,7 @@ class VerseFaces(vrsent.VerseLayer):
                 # find it using loop over all faces
                 id_layer = _bmesh.faces.layers.int.get('FaceIDs')
                 for b3d_face in _bmesh.faces:
-                    verse_id = b3d_face[id_layer]
+                    verse_id = b3d_face[id_layer] - 1
                     self.id_cache[item_id] = b3d_face
                     if verse_id == item_id:
                         return b3d_face
@@ -254,9 +259,14 @@ class VerseFaces(vrsent.VerseLayer):
             else:
                 _bmesh.faces.new([vert_layer.b3d_vertex(vert_id) for vert_id in value])
 
+            # Try to update last face ID
+            if face_layer.node.last_face_ID is None or \
+                            face_layer.node.last_face_ID < item_id:
+                face_layer.node.last_face_ID = item_id
+
             b3d_face = face_layer.id_cache[item_id] = _bmesh.faces[-1]
             id_layer = _bmesh.faces.layers.int.get('FaceIDs')
-            b3d_face[id_layer] = item_id
+            b3d_face[id_layer] = item_id + 1
 
             # Update Blender mesh
             _bmesh.to_mesh(face_layer.node.mesh)
@@ -491,13 +501,13 @@ class VerseMesh(vrsent.VerseNode):
                 print('Error: Face with more than 4 vertices not supported')
             return _face
 
-        # Go through bmesh faces and try to detect changes (newly created or destroyed faces)
+        # Go through bmesh faces and try to detect changes (newly created)
         for b3d_face in self.bmesh.faces:
             verse_id = self.get_verse_id_of_face(b3d_face, alive_faces)
             # New face was created. Try to send it to Verse server
             if verse_id == -1:
-                self.last_edge_ID += 1
-                verse_id = self.last_edge_ID
+                self.last_face_ID += 1
+                verse_id = self.last_face_ID
                 self.quads.items[verse_id] = b3d_face_to_tuple(b3d_face)
                 # Store edge ID in bmesh layer
                 layer = self.bmesh.faces.layers.int.get('FaceIDs')
