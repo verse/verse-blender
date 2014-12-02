@@ -302,8 +302,10 @@ class VerseObjectOtAddWritePerm(bpy.types.Operator):
         vrs_session = session.VerseSession.instance()
         user_item = wm.verse_users[wm.cur_verse_user_index]
         user_id = user_item.node_id
-        node = vrs_session.nodes[context.active_object.verse_node_id]
-        vrs_session.send_node_perm(node.prio, node.id, user_id, vrs.PERM_NODE_WRITE | vrs.PERM_NODE_READ)
+        obj_node = vrs_session.nodes[context.active_object.verse_node_id]
+        vrs_session.send_node_perm(obj_node.prio, obj_node.id, user_id, vrs.PERM_NODE_WRITE | vrs.PERM_NODE_READ)
+        mesh_node = obj_node.mesh_node
+        vrs_session.send_node_perm(mesh_node.prio, mesh_node.id, user_id, vrs.PERM_NODE_WRITE | vrs.PERM_NODE_READ)
         return {'FINISHED'}
 
     @classmethod
@@ -346,8 +348,10 @@ class VerseObjectOtRemWritePerm(bpy.types.Operator):
         vrs_session = session.VerseSession.instance()
         user_item = wm.verse_users[wm.cur_verse_user_index]
         user_id = user_item.node_id
-        node = vrs_session.nodes[context.active_object.verse_node_id]
-        vrs_session.send_node_perm(node.prio, node.id, user_id, vrs.PERM_NODE_READ)
+        obj_node = vrs_session.nodes[context.active_object.verse_node_id]
+        vrs_session.send_node_perm(obj_node.prio, obj_node.id, user_id, vrs.PERM_NODE_READ)
+        mesh_node = obj_node.mesh_node
+        vrs_session.send_node_perm(mesh_node.prio, mesh_node.id, user_id, vrs.PERM_NODE_READ)
         return {'FINISHED'}
 
     @classmethod

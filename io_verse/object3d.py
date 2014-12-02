@@ -468,14 +468,18 @@ class VerseObject(vrsent.VerseNode):
         bgl.glEnable(bgl.GL_DEPTH_TEST)
 
         # Compute transformation matrix
-        matrix = mathutils.Matrix().Translation(self.transform.pos.value) * \
-            mathutils.Quaternion(self.transform.rot.value).to_matrix().to_4x4() * \
-            mathutils.Matrix((
-                (self.transform.scale.value[0], 0, 0, 0),
-                (0, self.transform.scale.value[1], 0, 0),
-                (0, 0, self.transform.scale.value[2], 0),
-                (0, 0, 0, 1)
-            ))
+        try:
+            matrix = mathutils.Matrix().Translation(self.transform.pos.value) * \
+                mathutils.Quaternion(self.transform.rot.value).to_matrix().to_4x4() * \
+                mathutils.Matrix((
+                    (self.transform.scale.value[0], 0, 0, 0),
+                    (0, self.transform.scale.value[1], 0, 0),
+                    (0, 0, self.transform.scale.value[2], 0),
+                    (0, 0, 0, 1)
+                ))
+        except TypeError:
+            # When some values of transformation are not received yet, then use one matrix
+            matrix = mathutils.Matrix()
 
         # Transform points of bounding box
         points = tuple(matrix * mathutils.Vector(item) for item in self.bb.items.values())
