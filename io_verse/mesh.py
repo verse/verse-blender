@@ -69,7 +69,7 @@ class VerseVertices(vrsent.VerseLayer):
                 # find it using loop over all vertices
                 id_layer = _bmesh.verts.layers.int.get('VertIDs')
                 for b3d_vert in _bmesh.verts:
-                    verse_id = b3d_vert[id_layer] - 1
+                    verse_id = b3d_vert[id_layer]
                     self.id_cache[item_id] = b3d_vert
                     if verse_id == item_id:
                         return b3d_vert
@@ -101,7 +101,7 @@ class VerseVertices(vrsent.VerseLayer):
 
             # Try to update last vertex ID
             if layer.node.last_vert_ID is None or \
-                            layer.node.last_vert_ID < item_id:
+                    layer.node.last_vert_ID < item_id:
                 layer.node.last_vert_ID = item_id
 
             if b3d_vert is not None:
@@ -112,7 +112,7 @@ class VerseVertices(vrsent.VerseLayer):
                 _bmesh.verts.new(value)
                 b3d_vert = layer.id_cache[item_id] = _bmesh.verts[-1]
                 id_layer = _bmesh.verts.layers.int.get('VertIDs')
-                b3d_vert[id_layer] = item_id + 1
+                b3d_vert[id_layer] = item_id
 
             # Update Blender mesh
             _bmesh.to_mesh(layer.node.mesh)
@@ -165,26 +165,107 @@ class VerseEdges(vrsent.VerseLayer):
         super(VerseEdges, self).__init__(node, parent_layer, layer_id, data_type, count, custom_type)
         self.id_cache = {}
 
+    def b3d_edge(self, item_id):
+        """
+        This method tries to find Blender edge in bmesh and cache
+        """
+        _bmesh = self.node.bmesh
+        try:
+            # Try to find blender vertex at cache first
+            b3d_edge = self.id_cache[item_id]
+        except KeyError:
+            try:
+                # Then try to find it in bmesh at the index==item_id
+                b3d_edge = _bmesh.edges[item_id]
+            except IndexError:
+                # When edge was not found in cache nor bmesh, then try to
+                # find it using loop over all edges
+                id_layer = _bmesh.edges.layers.int.get('EdgeIDs')
+                for b3d_edge in _bmesh.edges:
+                    verse_id = b3d_edge[id_layer]
+                    self.id_cache[item_id] = b3d_edge
+                    if verse_id == item_id:
+                        return b3d_edge
+                return None
+            else:
+                # Update cache
+                self.id_cache[item_id] = b3d_edge
+                return b3d_edge
+        else:
+            return b3d_edge
+
     @classmethod
     def cb_receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
         """
         This method is called, when new value of verse layer was set
         """
-        layer = super(VerseEdges, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
-        # TODO: not sure, what to do here. Probably only check, if new face could be created from
-        # fragments of tessellated polygon
-        return layer
+        edge_layer = super(VerseEdges, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
+
+        # Update mesh only in situation, when it was changed by someone else
+        if edge_layer.node.locked_by_me is False:
+
+            if edge_layer.node.bmesh is None:
+                edge_layer.node.bmesh = bmesh.new()
+                edge_layer.node.bmesh.from_mesh(edge_layer.node.mesh)
+
+            _bmesh = edge_layer.node.bmesh
+
+            b3d_edge = edge_layer.b3d_edge(item_id)
+
+            # Try to update last vertex ID
+            if edge_layer.node.last_edge_ID is None or \
+                    edge_layer.node.last_edge_ID < item_id:
+                edge_layer.node.last_edge_ID = item_id
+
+            if b3d_edge is not None:
+                # Delete edge
+                _bmesh.edges.remove(b3d_edge)
+
+            vert_layer = edge_layer.node.vertices
+
+            # When vertex was not found, then it is new vertex. Create it.
+            _bmesh.edges.new([vert_layer.b3d_vertex(vert_id) for vert_id in value])
+            b3d_edge = edge_layer.id_cache[item_id] = _bmesh.edges[-1]
+            id_layer = _bmesh.edges.layers.int.get('EdgeIDs')
+            b3d_edge[id_layer] = item_id
+
+            # Update Blender mesh
+            _bmesh.to_mesh(edge_layer.node.mesh)
+            edge_layer.node.mesh.update()
+
+        return edge_layer
 
     @classmethod
     def cb_receive_layer_unset_value(cls, session, node_id, layer_id, item_id):
         """
         This method is called, when some vertex was deleted
         """
-        layer = super(VerseEdges, cls).cb_receive_layer_unset_value(session, node_id, layer_id, item_id)
+        edge_layer = super(VerseEdges, cls).cb_receive_layer_unset_value(session, node_id, layer_id, item_id)
 
-        # TODO: try to delete edge
+        # Update mesh only in situation, when it was changed by someone else
+        if edge_layer.node.locked_by_me is False:
 
-        return layer
+            if edge_layer.node.bmesh is None:
+                edge_layer.node.bmesh = bmesh.new()
+                edge_layer.node.bmesh.from_mesh(edge_layer.node.mesh)
+
+            _bmesh = edge_layer.node.bmesh
+
+            b3d_edge = edge_layer.b3d_edge(item_id)
+
+            # Try to update last vertex ID
+            if edge_layer.node.last_vert_ID is None or \
+                    edge_layer.node.last_edge_ID < item_id:
+                edge_layer.node.last_edge_ID = item_id
+
+            if b3d_edge is not None:
+                # Delete edge
+                _bmesh.edges.remove(b3d_edge)
+                # Update Blender mesh
+                _bmesh.to_mesh(edge_layer.node.mesh)
+                edge_layer.node.mesh.update()
+
+        return edge_layer
 
 
 class VerseFaces(vrsent.VerseLayer):
@@ -221,7 +302,7 @@ class VerseFaces(vrsent.VerseLayer):
                 # find it using loop over all faces
                 id_layer = _bmesh.faces.layers.int.get('FaceIDs')
                 for b3d_face in _bmesh.faces:
-                    verse_id = b3d_face[id_layer] - 1
+                    verse_id = b3d_face[id_layer]
                     self.id_cache[item_id] = b3d_face
                     if verse_id == item_id:
                         return b3d_face
@@ -261,12 +342,12 @@ class VerseFaces(vrsent.VerseLayer):
 
             # Try to update last face ID
             if face_layer.node.last_face_ID is None or \
-                            face_layer.node.last_face_ID < item_id:
+                    face_layer.node.last_face_ID < item_id:
                 face_layer.node.last_face_ID = item_id
 
             b3d_face = face_layer.id_cache[item_id] = _bmesh.faces[-1]
             id_layer = _bmesh.faces.layers.int.get('FaceIDs')
-            b3d_face[id_layer] = item_id + 1
+            b3d_face[id_layer] = item_id
 
             # Update Blender mesh
             _bmesh.to_mesh(face_layer.node.mesh)
@@ -365,7 +446,7 @@ class VerseMesh(vrsent.VerseNode):
         last_elem_id = None
         for elem in elems_iter:
             last_elem_id = elem.index
-            elem[lay] = elem.index + 1
+            elem[lay] = elem.index
 
         return last_elem_id
 
@@ -374,7 +455,7 @@ class VerseMesh(vrsent.VerseNode):
         Return ID of blender vertex at Verse server
         """
         layer = self.bmesh.verts.layers.int.get('VertIDs')
-        verse_id = bpy_vert[layer] - 1
+        verse_id = bpy_vert[layer]
         # It is necessary to detect uniqueness of vertex verse IDs, because Blender
         # duplicates values of layers, when vertex/edge/face is duplicated
         if verse_id in alive_verts:
@@ -387,7 +468,7 @@ class VerseMesh(vrsent.VerseNode):
         Return ID of blender edge at Verse server
         """
         layer = self.bmesh.edges.layers.int.get('EdgeIDs')
-        verse_id = bpy_edge[layer] - 1
+        verse_id = bpy_edge[layer]
         if verse_id in alive_edges:
             return -1
         else:
@@ -398,7 +479,7 @@ class VerseMesh(vrsent.VerseNode):
         Return ID of blender face at Verse server
         """
         layer = self.bmesh.faces.layers.int.get('FaceIDs')
-        verse_id = bpy_face[layer] - 1
+        verse_id = bpy_face[layer]
         if verse_id in alive_faces:
             return -1
         else:
@@ -424,7 +505,7 @@ class VerseMesh(vrsent.VerseNode):
                 self.vertices.items[verse_id] = tuple(b3d_vert.co)
                 # Store verse vertex ID in bmesh layer
                 layer = self.bmesh.verts.layers.int.get('VertIDs')
-                b3d_vert[layer] = verse_id + 1
+                b3d_vert[layer] = verse_id
             # Position of vertex was changed?
             elif self.vertices.items[verse_id] != tuple(b3d_vert.co):
                 # This will send updated position of vertex
@@ -460,7 +541,7 @@ class VerseMesh(vrsent.VerseNode):
                 )
                 # Store edge ID in bmesh layer
                 layer = self.bmesh.edges.layers.int.get('EdgeIDs')
-                b3d_edge[layer] = verse_id + 1
+                b3d_edge[layer] = verse_id
             else:
                 # Was edge changed?
                 edge = (
@@ -483,8 +564,6 @@ class VerseMesh(vrsent.VerseNode):
         Try to send updates of topology (faces)
         """
 
-        alive_faces = {}
-
         def b3d_face_to_tuple(_b3d_face):
             _face = None
             if len(_b3d_face.verts) == 3:
@@ -496,10 +575,16 @@ class VerseMesh(vrsent.VerseNode):
                 )
             elif len(b3d_face.verts) == 4:
                 _face = tuple(self.get_verse_id_of_vertex(vert, {}) for vert in _b3d_face.verts)
+                # The last item of tuple can not be zero, because it indicates triangle.
+                if _face[3] == 0:
+                    # Rotate the face to get zero to the beginning of the tuple
+                    _face = (_face[3], _face[0], _face[1], _face[2])
             else:
                 # TODO: tesselate face
-                print('Error: Face with more than 4 vertices not supported')
+                print('Error: Face with more than 4 vertices is not supported')
             return _face
+
+        alive_faces = {}
 
         # Go through bmesh faces and try to detect changes (newly created)
         for b3d_face in self.bmesh.faces:
@@ -511,7 +596,7 @@ class VerseMesh(vrsent.VerseNode):
                 self.quads.items[verse_id] = b3d_face_to_tuple(b3d_face)
                 # Store edge ID in bmesh layer
                 layer = self.bmesh.faces.layers.int.get('FaceIDs')
-                b3d_face[layer] = verse_id + 1
+                b3d_face[layer] = verse_id
             else:
                 # Was face changed?
                 face = b3d_face_to_tuple(b3d_face)
@@ -542,6 +627,45 @@ class VerseMesh(vrsent.VerseNode):
         self.__send_edge_updates()
         self.__send_face_updates()
 
+    def create_empty_b3d_mesh(self, object_node):
+        """
+        Create empty mesh and create blender layers for entity IDs
+        """
+        # Mesh should be empty ATM
+        self.mesh = object_node.obj.data
+        self.bmesh = bmesh.new()
+        self.bmesh.from_mesh(self.mesh)
+        # Create layers for verse IDs
+        self.bmesh.verts.layers.int.new('VertIDs')
+        self.bmesh.edges.layers.int.new('EdgeIDs')
+        self.bmesh.faces.layers.int.new('FaceIDs')
+        # Safe blender layers containing IDs to original mesh
+        self.bmesh.to_mesh(self.mesh)
+        self.bmesh.free()
+        self.bmesh = None
+
+    @classmethod
+    def cb_receive_node_link(cls, session, parent_node_id, child_node_id):
+        """
+        When link between nodes is changed, then try to create mesh.
+        """
+        mesh_node = super(VerseMesh, cls).cb_receive_node_link(
+            session=session,
+            parent_node_id=parent_node_id,
+            child_node_id=child_node_id
+        )
+
+        try:
+            object_node = object3d.VerseObject.objects[parent_node_id]
+        except KeyError:
+            pass
+        else:
+            mesh_node.create_empty_b3d_mesh(object_node)
+            mesh_node.mesh.verse_node_id = child_node_id
+            object_node.mesh_node = mesh_node
+
+        return mesh_node
+
     @classmethod
     def cb_receive_node_create(cls, session, node_id, parent_id, user_id, custom_type):
         """
@@ -559,21 +683,16 @@ class VerseMesh(vrsent.VerseNode):
         # When this mesh was created at different Blender, then mesh_node does
         # not have valid reference at blender mesh data block
         if mesh_node.mesh is None:
-            object_node = object3d.VerseObject.objects[parent_id]
-            # Mesh should be empty
-            mesh_node.mesh = object_node.obj.data
-            mesh_node.bmesh = bmesh.new()
-            mesh_node.bmesh.from_mesh(mesh_node.mesh)
-            # Create layers for verse IDs
-            mesh_node.bmesh.verts.layers.int.new('VertIDs')
-            mesh_node.bmesh.edges.layers.int.new('EdgeIDs')
-            mesh_node.bmesh.faces.layers.int.new('FaceIDs')
-            # Safe blender layers containing IDs to original mesh
-            mesh_node.bmesh.to_mesh(mesh_node.mesh)
-            mesh_node.bmesh.free()
-            mesh_node.bmesh = None
+            try:
+                object_node = object3d.VerseObject.objects[parent_id]
+            except KeyError:
+                # The object was not created yet
+                pass
+            else:
+                mesh_node.create_empty_b3d_mesh(object_node)
+                mesh_node.mesh.verse_node_id = node_id
+                object_node.mesh_node = mesh_node
 
-        mesh_node.mesh.verse_node_id = node_id
         return mesh_node
 
 
