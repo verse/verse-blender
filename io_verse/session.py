@@ -24,7 +24,7 @@ one session in one Blender instance.
 """
 
 # Default FPS for timer operator
-FPS = 60
+FPS = 15
 
 
 import bpy
