@@ -275,7 +275,10 @@ class VerseScene(vrsent.VerseNode):
 
         # Create tag group and tag with name of scene
         self.tg_info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
-        self.tg_info.tag_name = VerseSceneName(tg=self.tg_info, value=name)
+        if name != "":
+            self.tg_info.tag_name = VerseSceneName(tg=self.tg_info, value=(name,))
+        else:
+            self.tg_info.tag_name = VerseSceneName(tg=self.tg_info)
 
         if node_id is None:
             # Create node with data, when this node was created by this Blender
