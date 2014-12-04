@@ -364,9 +364,13 @@ class AvatarView(vrsent.VerseAvatar):
                     tg=self.view_tg,
                     value=(self.cur_space.lens,))
                 # Get current Scene ID
+                if bpy.context.scene.verse_node_id != -1:
+                    scene_node_id = bpy.context.scene.verse_node_id
+                else:
+                    scene_node_id = 0
                 self.scene_node_id = AvatarScene(
                     tg=self.view_tg,
-                    value=(bpy.context.scene.verse_node_id,))
+                    value=(scene_node_id,))
             
                 # TODO: check following code (may be not needed anymore)
                 original_type = bpy.context.area.type
