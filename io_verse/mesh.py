@@ -86,23 +86,36 @@ class VerseVertices(vrsent.VerseLayer):
         """
         This method is called, when new value of verse layer was set
         """
-        layer = super(VerseVertices, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
+        vert_layer = super(VerseVertices, cls).cb_receive_layer_set_value(session, node_id, layer_id, item_id, value)
 
         # Update mesh only in situation, when it was changed by someone else
-        if layer.node.locked_by_me is False:
+        if vert_layer.node.locked_by_me is False:
 
-            if layer.node.bmesh is None:
-                layer.node.bmesh = bmesh.new()
-                layer.node.bmesh.from_mesh(layer.node.mesh)
+            edge_layer = vert_layer.node.edges
+            face_layer = vert_layer.node.quads
 
-            _bmesh = layer.node.bmesh
+            if vert_layer.node.bmesh is None:
+                vert_layer.node.bmesh = bmesh.new()
+                vert_layer.node.bmesh.from_mesh(vert_layer.node.mesh)
+                vert_layer.node.bm_from_edit_mesh = False
+            else:
+                try:
+                    vert_layer.node.bmesh.verts
+                except ReferenceError:
+                    vert_layer.node.bmesh = bmesh.new()
+                    vert_layer.node.bmesh = vert_layer.node.bmesh.from_mesh(vert_layer.node.mesh)
+                    vert_layer.id_cache = {}
+                    edge_layer.id_cache = {}
+                    face_layer.id_cache = {}
 
-            b3d_vert = layer.b3d_vertex(item_id)
+            _bmesh = vert_layer.node.bmesh
+
+            b3d_vert = vert_layer.b3d_vertex(item_id)
 
             # Try to update last vertex ID
-            if layer.node.last_vert_ID is None or \
-                    layer.node.last_vert_ID < item_id:
-                layer.node.last_vert_ID = item_id
+            if vert_layer.node.last_vert_ID is None or \
+                    vert_layer.node.last_vert_ID < item_id:
+                vert_layer.node.last_vert_ID = item_id
 
             if b3d_vert is not None:
                 # Update position
@@ -110,43 +123,56 @@ class VerseVertices(vrsent.VerseLayer):
             else:
                 # When vertex was not found, then it is new vertex. Create it.
                 _bmesh.verts.new(value)
-                b3d_vert = layer.id_cache[item_id] = _bmesh.verts[-1]
+                b3d_vert = vert_layer.id_cache[item_id] = _bmesh.verts[-1]
                 id_layer = _bmesh.verts.layers.int.get('VertIDs')
                 b3d_vert[id_layer] = item_id
 
             # Update Blender mesh
-            _bmesh.to_mesh(layer.node.mesh)
-            layer.node.mesh.update()
+            _bmesh.to_mesh(vert_layer.node.mesh)
+            vert_layer.node.mesh.update()
 
-        return layer
+        return vert_layer
 
     @classmethod
     def cb_receive_layer_unset_value(cls, session, node_id, layer_id, item_id):
         """
         This method is called, when some vertex was deleted
         """
-        layer = super(VerseVertices, cls).cb_receive_layer_unset_value(session, node_id, layer_id, item_id)
+        vert_layer = super(VerseVertices, cls).cb_receive_layer_unset_value(session, node_id, layer_id, item_id)
 
         # Update mesh only in situation, when it was changed by someone else
-        if layer.node.locked_by_me is False:
+        if vert_layer.node.locked_by_me is False:
 
-            if layer.node.bmesh is None:
-                layer.node.bmesh = bmesh.new()
-                layer.node.bmesh.from_mesh(layer.node.mesh)
+            edge_layer = vert_layer.node.edges
+            face_layer = vert_layer.node.quads
+
+            if vert_layer.node.bmesh is None:
+                vert_layer.node.bmesh = bmesh.new()
+                vert_layer.node.bmesh.from_mesh(vert_layer.node.mesh)
+                vert_layer.node.bm_from_edit_mesh = False
+            else:
+                try:
+                    vert_layer.node.bmesh.verts
+                except ReferenceError:
+                    vert_layer.node.bmesh = bmesh.new()
+                    vert_layer.node.bmesh = vert_layer.node.bmesh.from_mesh(vert_layer.node.mesh)
+                    vert_layer.id_cache = {}
+                    edge_layer.id_cache = {}
+                    face_layer.id_cache = {}
 
             # Try to delete vertex
-            _bmesh = layer.node.bmesh
+            _bmesh = vert_layer.node.bmesh
 
             # Try to delete vertex
-            b3d_vert = layer.b3d_vertex(item_id)
+            b3d_vert = vert_layer.b3d_vertex(item_id)
             if b3d_vert is not None:
                 bmesh.ops.delete(_bmesh, geom=[b3d_vert], context=1)
 
             # Update Blender mesh
-            _bmesh.to_mesh(layer.node.mesh)
-            layer.node.mesh.update()
+            _bmesh.to_mesh(vert_layer.node.mesh)
+            vert_layer.node.mesh.update()
 
-        return layer
+        return vert_layer
 
 
 class VerseEdges(vrsent.VerseLayer):
@@ -204,9 +230,22 @@ class VerseEdges(vrsent.VerseLayer):
         # Update mesh only in situation, when it was changed by someone else
         if edge_layer.node.locked_by_me is False:
 
+            vert_layer = edge_layer.node.vertices
+            face_layer = edge_layer.node.quads
+
             if edge_layer.node.bmesh is None:
                 edge_layer.node.bmesh = bmesh.new()
                 edge_layer.node.bmesh.from_mesh(edge_layer.node.mesh)
+                edge_layer.node.bm_from_edit_mesh = False
+            else:
+                try:
+                    edge_layer.node.bmesh.edges
+                except ReferenceError:
+                    edge_layer.node.bmesh = bmesh.new()
+                    edge_layer.node.bmesh = edge_layer.node.bmesh.from_mesh(edge_layer.node.mesh)
+                    vert_layer.id_cache = {}
+                    edge_layer.id_cache = {}
+                    face_layer.id_cache = {}
 
             _bmesh = edge_layer.node.bmesh
 
@@ -220,8 +259,6 @@ class VerseEdges(vrsent.VerseLayer):
             if b3d_edge is not None:
                 # Delete edge
                 _bmesh.edges.remove(b3d_edge)
-
-            vert_layer = edge_layer.node.vertices
 
             # When vertex was not found, then it is new vertex. Create it.
             _bmesh.edges.new([vert_layer.b3d_vertex(vert_id) for vert_id in value])
@@ -245,9 +282,22 @@ class VerseEdges(vrsent.VerseLayer):
         # Update mesh only in situation, when it was changed by someone else
         if edge_layer.node.locked_by_me is False:
 
+            vert_layer = edge_layer.node.vertices
+            face_layer = edge_layer.node.quads
+
             if edge_layer.node.bmesh is None:
                 edge_layer.node.bmesh = bmesh.new()
                 edge_layer.node.bmesh.from_mesh(edge_layer.node.mesh)
+                edge_layer.node.bm_from_edit_mesh = False
+            else:
+                try:
+                    edge_layer.node.bmesh.edges
+                except ReferenceError:
+                    edge_layer.node.bmesh = bmesh.new()
+                    edge_layer.node.bmesh = edge_layer.node.bmesh.from_mesh(edge_layer.node.mesh)
+                    vert_layer.id_cache = {}
+                    edge_layer.id_cache = {}
+                    face_layer.id_cache = {}
 
             _bmesh = edge_layer.node.bmesh
 
@@ -324,6 +374,23 @@ class VerseFaces(vrsent.VerseLayer):
         # Update mesh only in situation, when it was changed by someone else
         if face_layer.node.locked_by_me is False:
 
+            vert_layer = face_layer.node.vertices
+            edge_layer = face_layer.node.edges
+
+            if face_layer.node.bmesh is None:
+                face_layer.node.bmesh = bmesh.new()
+                face_layer.node.bmesh.from_mesh(face_layer.node.mesh)
+                face_layer.node.bm_from_edit_mesh = False
+            else:
+                try:
+                    face_layer.node.bmesh.faces
+                except ReferenceError:
+                    face_layer.node.bmesh = bmesh.new()
+                    face_layer.node.bmesh = face_layer.node.bmesh.from_mesh(face_layer.node.mesh)
+                    vert_layer.id_cache = {}
+                    edge_layer.id_cache = {}
+                    face_layer.id_cache = {}
+
             _bmesh = face_layer.node.bmesh
 
             b3d_face = face_layer.find_b3d_face(item_id)
@@ -331,8 +398,6 @@ class VerseFaces(vrsent.VerseLayer):
             # When face already exists, then remove the face
             if b3d_face is not None:
                 _bmesh.faces.remove(b3d_face)
-
-            vert_layer = face_layer.node.vertices
 
             # Add new one
             if value[3] == 0:
@@ -360,23 +425,40 @@ class VerseFaces(vrsent.VerseLayer):
         """
         This method is called, when some vertex was deleted
         """
-        layer = super(VerseFaces, cls).cb_receive_layer_unset_value(session, node_id, layer_id, item_id)
+        face_layer = super(VerseFaces, cls).cb_receive_layer_unset_value(session, node_id, layer_id, item_id)
 
         # Update mesh only in situation, when it was changed by someone else
-        if layer.node.locked_by_me is False:
+        if face_layer.node.locked_by_me is False:
 
-            _bmesh = layer.node.bmesh
+            vert_layer = face_layer.node.vertices
+            edge_layer = face_layer.node.edges
 
-            b3d_face = layer.find_b3d_face(item_id)
+            if face_layer.node.bmesh is None:
+                face_layer.node.bmesh = bmesh.new()
+                face_layer.node.bmesh.from_mesh(face_layer.node.mesh)
+                face_layer.node.bm_from_edit_mesh = False
+            else:
+                try:
+                    face_layer.node.bmesh.faces
+                except ReferenceError:
+                    face_layer.node.bmesh = bmesh.new()
+                    face_layer.node.bmesh = face_layer.node.bmesh.from_mesh(face_layer.node.mesh)
+                    vert_layer.id_cache = {}
+                    edge_layer.id_cache = {}
+                    face_layer.id_cache = {}
+
+            _bmesh = face_layer.node.bmesh
+
+            b3d_face = face_layer.find_b3d_face(item_id)
 
             # Remove face
             if b3d_face is not None:
                 _bmesh.faces.remove(b3d_face)
                 # Update Blender mesh
-                _bmesh.to_mesh(layer.node.mesh)
-                layer.node.mesh.update()
+                _bmesh.to_mesh(face_layer.node.mesh)
+                face_layer.node.mesh.update()
 
-        return layer
+        return face_layer
 
 
 class VerseMesh(vrsent.VerseNode):
@@ -399,6 +481,7 @@ class VerseMesh(vrsent.VerseNode):
         self.quads = VerseFaces(node=self)
         self._autosubscribe = autosubscribe
         self.bmesh = None
+        self.bm_from_edit_mesh = False
         self.cache = None
         self.last_vert_ID = None
         self.last_edge_ID = None
@@ -617,12 +700,17 @@ class VerseMesh(vrsent.VerseNode):
         """
         if self.bmesh is None:
             self.bmesh = bmesh.from_edit_mesh(self.mesh)
+            self.bm_from_edit_mesh = True
         else:
-            # Check if bmesh is still fresh
-            try:
-                self.bmesh.verts
-            except ReferenceError:
+            if self.bm_from_edit_mesh is False:
                 self.bmesh = bmesh.from_edit_mesh(self.mesh)
+                self.bm_from_edit_mesh = True
+            else:
+                # Check if bmesh is still fresh
+                try:
+                    self.bmesh.verts
+                except ReferenceError:
+                    self.bmesh = bmesh.from_edit_mesh(self.mesh)
         self.__send_vertex_updates()
         self.__send_edge_updates()
         self.__send_face_updates()
