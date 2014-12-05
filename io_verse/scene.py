@@ -263,7 +263,7 @@ class VerseScene(vrsent.VerseNode):
 
     scenes = {}
 
-    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_SCENE_CT, name=""):
+    def __init__(self, session, node_id=None, parent=None, user_id=None, custom_type=VERSE_SCENE_CT, name=None):
         """
         Constructor of VerseScene
         """
@@ -275,8 +275,8 @@ class VerseScene(vrsent.VerseNode):
 
         # Create tag group and tag with name of scene
         self.tg_info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
-        if name != "":
-            self.tg_info.tag_name = VerseSceneName(tg=self.tg_info, value=(name,))
+        if name is not None:
+            self.tg_info.tag_name = VerseSceneName(tg=self.tg_info, value=name)
         else:
             self.tg_info.tag_name = VerseSceneName(tg=self.tg_info)
 
