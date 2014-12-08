@@ -802,35 +802,64 @@ class VerseMesh(vrsent.VerseNode):
                 context.space_data.region_3d,
                 obj.matrix_world * mathutils.Vector(vert_co))
 
-            # When coordinates are not outside window, then draw the name of avatar
+            # When coordinates are not outside window, then draw the ID of vertex
             if coord_2d is not None:
-                # TODO: add to Add-on options
                 blf.size(font_id, font_size, my_dpi)
-                # text_width, text_height = blf.dimensions(font_id, self.username)
                 blf.position(font_id, coord_2d[0] + 2, coord_2d[1] + 2, 0)
                 blf.draw(font_id, str(vert_id))
 
         bgl.glColor3f(0.0, 1.0, 0.0)
 
-        for edge_id, edge_ids in self.edges.items.items():
-            vert1 = self.vertices.items[edge_ids[0]]
-            vert2 = self.vertices.items[edge_ids[1]]
+        for edge_id, edge_verts in self.edges.items.items():
+            vert1 = self.vertices.items[edge_verts[0]]
+            vert2 = self.vertices.items[edge_verts[1]]
 
             edge_co = mathutils.Vector(((vert2[0] + vert1[0])/2.0, (vert2[1] + vert1[1])/2.0, (vert2[2] + vert1[2])/2.0))
 
-            # Draw username
             coord_2d = location_3d_to_region_2d(
                 context.region,
                 context.space_data.region_3d,
                 obj.matrix_world * edge_co)
 
-            # When coordinates are not outside window, then draw the name of avatar
+            # When coordinates are not outside window, then draw the ID of edge
             if coord_2d is not None:
-                # TODO: add to Add-on options
                 blf.size(font_id, font_size, my_dpi)
-                # text_width, text_height = blf.dimensions(font_id, self.username)
                 blf.position(font_id, coord_2d[0] + 2, coord_2d[1] + 2, 0)
                 blf.draw(font_id, str(edge_id))
+
+        bgl.glColor3f(0.0, 1.0, 1.0)
+
+        for face_id, face_verts in self.quads.items.items():
+            if face_verts[3] == 0:
+                vert1 = self.vertices.items[face_verts[0]]
+                vert2 = self.vertices.items[face_verts[1]]
+                vert3 = self.vertices.items[face_verts[2]]
+                face_co = mathutils.Vector((
+                    (vert1[0] + vert2[0] + vert3[0]) / 3.0,
+                    (vert1[1] + vert2[1] + vert3[1]) / 3.0,
+                    (vert1[2] + vert2[2] + vert3[2]) / 3.0
+                ))
+            else:
+                vert1 = self.vertices.items[face_verts[0]]
+                vert2 = self.vertices.items[face_verts[1]]
+                vert3 = self.vertices.items[face_verts[2]]
+                vert4 = self.vertices.items[face_verts[3]]
+                face_co = mathutils.Vector((
+                    (vert1[0] + vert2[0] + vert3[0] + vert4[0]) / 4.0,
+                    (vert1[1] + vert2[1] + vert3[1] + vert4[1]) / 4.0,
+                    (vert1[2] + vert2[2] + vert3[2] + vert4[2]) / 4.0
+                ))
+
+            coord_2d = location_3d_to_region_2d(
+                context.region,
+                context.space_data.region_3d,
+                obj.matrix_world * face_co)
+
+            # When coordinates are not outside window, then draw the ID of face
+            if coord_2d is not None:
+                blf.size(font_id, font_size, my_dpi)
+                blf.position(font_id, coord_2d[0] + 2, coord_2d[1] + 2, 0)
+                blf.draw(font_id, str(face_id))
 
 # List of Blender classes in this submodule
 classes = ()
