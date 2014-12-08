@@ -407,10 +407,14 @@ class VerseObject(vrsent.VerseNode):
                 break
             item_id += 1
 
-    def draw(self, area, region_data):
+    def draw(self, context):
         """
         Draw bounding box of object with unsubscribed mesh
         """
+
+        area = context.area
+        region_data = context.region_data
+
         if self.locked is True:
             # When object is locked by current client, then visualize it by green color.
             # Otherwise visualize it by red color
@@ -523,3 +527,7 @@ class VerseObject(vrsent.VerseNode):
         if not depth_test_prev:
             bgl.glDisable(bgl.GL_DEPTH_TEST)
         bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
+
+        # Try to draw mesh IDs
+        if self.mesh_node is not None:
+            self.mesh_node.draw_IDs(context, self.obj)

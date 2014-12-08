@@ -46,7 +46,7 @@ def draw3d_cb(context):
 
     # Draw all shared objects first
     for obj in object3d.VerseObject.objects.values():
-        obj.draw(context.area, context.region_data)
+        obj.draw(context)
 
     # If avatar view of this client doesn't exist yet, then try to 
     # get it

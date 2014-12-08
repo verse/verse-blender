@@ -23,8 +23,11 @@ This module implements sharing Blender meshes at Verse server
 
 
 import bpy
+import blf
+import bgl
 import mathutils
 import bmesh
+from bpy_extras.view3d_utils import location_3d_to_region_2d
 import verse as vrs
 from .vrsent import vrsent
 from . import object3d
@@ -783,6 +786,51 @@ class VerseMesh(vrsent.VerseNode):
 
         return mesh_node
 
+    def draw_IDs(self, context, obj):
+        """
+        This method draws Verse IDs of vertices, edges and faces
+        """
+
+        font_id, font_size, my_dpi = 0, 12, 72
+
+        bgl.glColor3f(1.0, 1.0, 0.0)
+
+        for vert_id, vert_co in self.vertices.items.items():
+
+            coord_2d = location_3d_to_region_2d(
+                context.region,
+                context.space_data.region_3d,
+                obj.matrix_world * mathutils.Vector(vert_co))
+
+            # When coordinates are not outside window, then draw the name of avatar
+            if coord_2d is not None:
+                # TODO: add to Add-on options
+                blf.size(font_id, font_size, my_dpi)
+                # text_width, text_height = blf.dimensions(font_id, self.username)
+                blf.position(font_id, coord_2d[0] + 2, coord_2d[1] + 2, 0)
+                blf.draw(font_id, str(vert_id))
+
+        bgl.glColor3f(0.0, 1.0, 0.0)
+
+        for edge_id, edge_ids in self.edges.items.items():
+            vert1 = self.vertices.items[edge_ids[0]]
+            vert2 = self.vertices.items[edge_ids[1]]
+
+            edge_co = mathutils.Vector(((vert2[0] + vert1[0])/2.0, (vert2[1] + vert1[1])/2.0, (vert2[2] + vert1[2])/2.0))
+
+            # Draw username
+            coord_2d = location_3d_to_region_2d(
+                context.region,
+                context.space_data.region_3d,
+                obj.matrix_world * edge_co)
+
+            # When coordinates are not outside window, then draw the name of avatar
+            if coord_2d is not None:
+                # TODO: add to Add-on options
+                blf.size(font_id, font_size, my_dpi)
+                # text_width, text_height = blf.dimensions(font_id, self.username)
+                blf.position(font_id, coord_2d[0] + 2, coord_2d[1] + 2, 0)
+                blf.draw(font_id, str(edge_id))
 
 # List of Blender classes in this submodule
 classes = ()
