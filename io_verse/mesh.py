@@ -127,8 +127,8 @@ class VerseVertices(vrsent.VerseLayer):
                 b3d_vert.co = mathutils.Vector(value)
             else:
                 # When vertex was not found, then it is new vertex. Create it.
-                _bmesh.verts.new(value)
-                b3d_vert = vert_layer.id_cache[item_id] = _bmesh.verts[-1]
+                b3d_vert = _bmesh.verts.new(value)
+                vert_layer.id_cache[item_id] = b3d_vert
                 id_layer = _bmesh.verts.layers.int.get('VertIDs')
                 b3d_vert[id_layer] = item_id + 1
 
@@ -266,11 +266,15 @@ class VerseEdges(vrsent.VerseLayer):
             # Does edge with same id exist?
             if b3d_edge is not None:
                 # Delete edge
-                _bmesh.edges.remove(b3d_edge)
+                try:
+                    _bmesh.edges.remove(b3d_edge)
+                except ReferenceError:
+                    # Edge was already removed
+                    pass
 
             # Create new edge
-            _bmesh.edges.new([vert_layer.b3d_vertex(vert_id) for vert_id in value])
-            b3d_edge = edge_layer.id_cache[item_id] = _bmesh.edges[-1]
+            b3d_edge = _bmesh.edges.new([vert_layer.b3d_vertex(vert_id) for vert_id in value])
+            edge_layer.id_cache[item_id] = b3d_edge
             id_layer = _bmesh.edges.layers.int.get('EdgeIDs')
             b3d_edge[id_layer] = item_id + 1
 
@@ -318,11 +322,16 @@ class VerseEdges(vrsent.VerseLayer):
 
             if b3d_edge is not None:
                 # Delete edge
-                _bmesh.edges.remove(b3d_edge)
-                # Update Blender mesh
-                _bmesh.to_mesh(edge_layer.node.mesh)
-                edge_layer.node.mesh.update()
-                edge_layer.id_cache.pop(item_id)
+                try:
+                    _bmesh.edges.remove(b3d_edge)
+                except ReferenceError:
+                    # Edge was already removed?
+                    edge_layer.id_cache.pop(item_id)
+                else:
+                    # Update Blender mesh
+                    _bmesh.to_mesh(edge_layer.node.mesh)
+                    edge_layer.node.mesh.update()
+                    edge_layer.id_cache.pop(item_id)
 
         return edge_layer
 
@@ -407,20 +416,24 @@ class VerseFaces(vrsent.VerseLayer):
 
             # When face already exists, then remove the face
             if b3d_face is not None:
-                _bmesh.faces.remove(b3d_face)
+                try:
+                    _bmesh.faces.remove(b3d_face)
+                except ReferenceError:
+                    # Face was already removed
+                    pass
 
             # Add new one
             if value[3] == 0:
-                _bmesh.faces.new([vert_layer.b3d_vertex(vert_id) for vert_id in value[0:3]])
+                b3d_face = _bmesh.faces.new([vert_layer.b3d_vertex(vert_id) for vert_id in value[0:3]])
             else:
-                _bmesh.faces.new([vert_layer.b3d_vertex(vert_id) for vert_id in value])
+                b3d_face = _bmesh.faces.new([vert_layer.b3d_vertex(vert_id) for vert_id in value])
 
             # Try to update last face ID
             if face_layer.node.last_face_ID is None or \
                     face_layer.node.last_face_ID < item_id:
                 face_layer.node.last_face_ID = item_id
 
-            b3d_face = face_layer.id_cache[item_id] = _bmesh.faces[-1]
+            face_layer.id_cache[item_id] = b3d_face
             id_layer = _bmesh.faces.layers.int.get('FaceIDs')
             b3d_face[id_layer] = item_id + 1
 
@@ -463,12 +476,17 @@ class VerseFaces(vrsent.VerseLayer):
 
             # Remove face
             if b3d_face is not None:
-                _bmesh.faces.remove(b3d_face)
-                # Update Blender mesh
-                _bmesh.to_mesh(face_layer.node.mesh)
-                face_layer.node.mesh.update()
-                # Update id_cache
-                face_layer.id_cache.pop(item_id)
+                try:
+                    _bmesh.faces.remove(b3d_face)
+                except ReferenceError:
+                    # Face was already removed
+                    face_layer.id_cache.pop(item_id)
+                else:
+                    # Update Blender mesh
+                    _bmesh.to_mesh(face_layer.node.mesh)
+                    face_layer.node.mesh.update()
+                    # Update id_cache
+                    face_layer.id_cache.pop(item_id)
 
         return face_layer
 
