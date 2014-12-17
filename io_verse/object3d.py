@@ -412,7 +412,6 @@ class VerseObject(vrsent.VerseNode):
         Draw bounding box of object with unsubscribed mesh
         """
 
-        area = context.area
         region_data = context.region_data
 
         if self.locked is True:
