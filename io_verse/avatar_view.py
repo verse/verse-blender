@@ -454,7 +454,7 @@ class AvatarView(vrsent.VerseAvatar):
         if context.area.height != self.height.value[0]:
             self.height.value = (context.area.height,)
 
-    def draw(self, area, region_data):
+    def draw(self, context):
         """
         Draw avatar view in given context
         """
@@ -547,7 +547,7 @@ class AvatarView(vrsent.VerseAvatar):
                 point_group[index] += mathutils.Vector(self.location.value)
         
         # Get & convert the Perspective Matrix of the current view/region.
-        persp_matrix = region_data.perspective_matrix
+        persp_matrix = context.space_data.region_3d.perspective_matrix
         temp_mat = [persp_matrix[j][i] for i in range(4) for j in range(4)]
         persp_buff = bgl.Buffer(bgl.GL_FLOAT, 16, temp_mat)
     
@@ -700,16 +700,16 @@ class AvatarView(vrsent.VerseAvatar):
 
         # Draw username
         coord_2d = location_3d_to_region_2d(
-            area.regions[4],
-            region_data,
+            context.region,
+            context.space_data.region_3d,
             center[0])
+
         # When coordinates are not outside window, then draw the name of avatar
         if coord_2d is not None:
             # TODO: add to Add-on options
             font_id, font_size, my_dpi = 0, 12, 72
             blf.size(font_id, font_size, my_dpi)
-            # text_width, text_height = blf.dimensions(font_id, self.username)
             blf.position(font_id, coord_2d[0], coord_2d[1], 0)
-            blf.draw(font_id, self.username)
+            blf.draw(font_id, str(self.username))
 
         bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
