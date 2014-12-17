@@ -205,5 +205,4 @@ def unregister():
     for c in classes:
         bpy.utils.unregister_class(c)
 
-        # 
     bpy.types.INFO_MT_file.remove(draw_item)
