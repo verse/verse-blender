@@ -61,4 +61,4 @@ def draw3d_cb(context):
                 context.scene.verse_node_id != -1 and \
                 context.scene.subscribed is True and \
                 context.scene.verse_node_id == avatar.scene_node_id.value[0]:
-            avatar.draw(context.area, context.region_data)
+            avatar.draw(context)
