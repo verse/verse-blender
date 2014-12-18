@@ -527,6 +527,6 @@ class VerseObject(vrsent.VerseNode):
             bgl.glDisable(bgl.GL_DEPTH_TEST)
         bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
 
-        # Try to draw mesh IDs
-        if self.mesh_node is not None:
-            self.mesh_node.draw_IDs(context, self.obj)
+        # # Try to draw mesh IDs
+        # if self.mesh_node is not None:
+        #     self.mesh_node.draw_IDs(context, self.obj)
