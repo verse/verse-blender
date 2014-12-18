@@ -357,7 +357,7 @@ class VerseObject(vrsent.VerseNode):
         """
         """
         object_node = super(VerseObject, cls).cb_receive_node_owner(session, node_id, user_id)
-        if object_node.can_read is True:
+        if object_node.can_read() is True:
             object_node.obj.hide_select = False
         else:
             object_node.obj.hide_select = True
@@ -369,7 +369,7 @@ class VerseObject(vrsent.VerseNode):
         """
         """
         object_node = super(VerseObject, cls).cb_receive_node_perm(session, node_id, user_id, perm)
-        if object_node.can_write is True:
+        if object_node.can_write() is True:
             object_node.obj.hide_select = False
         else:
             object_node.obj.hide_select = True
