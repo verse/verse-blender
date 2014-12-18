@@ -545,7 +545,30 @@ class AvatarView(vrsent.VerseAvatar):
                 point_group[index] = (rot_matrix * point_group[index]).to_3d()
                 # Move points
                 point_group[index] += mathutils.Vector(self.location.value)
-        
+
+        border = points['border']
+        center = points['center']
+
+        # Store glColor4f
+        col_prev = bgl.Buffer(bgl.GL_FLOAT, [4])
+        bgl.glGetFloatv(bgl.GL_COLOR, col_prev)
+
+        bgl.glColor4f(color[0], color[1], color[2], color[3])
+
+        # Draw username
+        coord_2d = location_3d_to_region_2d(
+            context.region,
+            context.space_data.region_3d,
+            center[0])
+
+        # When coordinates are not outside window, then draw the name of avatar
+        if coord_2d is not None:
+            # TODO: add to Add-on options
+            font_id, font_size, my_dpi = 0, 12, 72
+            blf.size(font_id, font_size, my_dpi)
+            blf.position(font_id, coord_2d[0] + 2, coord_2d[1] + 2, 0)
+            blf.draw(font_id, str(self.username))
+
         # Get & convert the Perspective Matrix of the current view/region.
         persp_matrix = context.space_data.region_3d.perspective_matrix
         temp_mat = [persp_matrix[j][i] for i in range(4) for j in range(4)]
@@ -580,10 +603,6 @@ class AvatarView(vrsent.VerseAvatar):
         line_stipple_prev = bgl.Buffer(bgl.GL_BYTE, [1])
         bgl.glGetFloatv(bgl.GL_LINE_STIPPLE, line_stipple_prev)
         line_stipple_prev = line_stipple_prev[0]
-    
-        # Store glColor4f
-        col_prev = bgl.Buffer(bgl.GL_FLOAT, [4])
-        bgl.glGetFloatv(bgl.GL_COLOR, col_prev)
         
         # Prepare for 3D drawing
         bgl.glLoadIdentity()
@@ -631,10 +650,7 @@ class AvatarView(vrsent.VerseAvatar):
         )
         
         bgl.glEnd()
-        
-        border = points['border']
-        center = points['center']
-        
+
         # Draw border of camera
         bgl.glBegin(bgl.GL_LINE_STRIP)
         bgl.glVertex3f(border[0][0], border[0][1], border[0][2])
@@ -684,7 +700,7 @@ class AvatarView(vrsent.VerseAvatar):
         )
         bgl.glVertex3f(center[0][0], center[0][1], center[0][2])
         bgl.glEnd()
-        bgl.glDisable(bgl.GL_LINE_STIPPLE)    
+        bgl.glDisable(bgl.GL_LINE_STIPPLE)
 
         # Restore previous OpenGL settings
         bgl.glLoadIdentity()
@@ -697,19 +713,5 @@ class AvatarView(vrsent.VerseAvatar):
             bgl.glDisable(bgl.GL_LINE_STIPPLE)
         if not depth_test_prev:
             bgl.glDisable(bgl.GL_DEPTH_TEST)
-
-        # Draw username
-        coord_2d = location_3d_to_region_2d(
-            context.region,
-            context.space_data.region_3d,
-            center[0])
-
-        # When coordinates are not outside window, then draw the name of avatar
-        if coord_2d is not None:
-            # TODO: add to Add-on options
-            font_id, font_size, my_dpi = 0, 12, 72
-            blf.size(font_id, font_size, my_dpi)
-            blf.position(font_id, coord_2d[0], coord_2d[1], 0)
-            blf.draw(font_id, str(self.username))
 
         bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
