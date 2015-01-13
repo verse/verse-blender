@@ -618,7 +618,8 @@ class VerseMesh(vrsent.VerseNode):
         # This will send unset commands for deleted vertices
         for vert_id in rem_verts:
             self.vertices.items.pop(vert_id)
-            self.vertices.id_cache.pop(vert_id)
+            if vert_id in self.vertices.id_cache:
+                self.vertices.id_cache.pop(vert_id)
 
     def __send_edge_updates(self):
         """
@@ -658,7 +659,8 @@ class VerseMesh(vrsent.VerseNode):
         # This will send unset commands for deleted edges
         for edge_id in rem_edges:
             self.edges.items.pop(edge_id)
-            self.edges.id_cache.pop(edge_id)
+            if edge_id in self.edges.id_cache:
+                self.edges.id_cache.pop(edge_id)
 
     def __send_face_updates(self):
         """
@@ -713,7 +715,8 @@ class VerseMesh(vrsent.VerseNode):
         # This will send unset commands for deleted faces
         for face_id in rem_faces:
             self.quads.items.pop(face_id)
-            self.quads.id_cache.pop(face_id)
+            if face_id in self.quads.id_cache:
+                self.quads.id_cache.pop(face_id)
 
     def update_references(self):
         """
