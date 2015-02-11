@@ -29,6 +29,7 @@ import verse as vrs
 from .vrsent import vrsent
 from . import session as vrs_session
 from . import ui
+from bpy_extras.view3d_utils import location_3d_to_region_2d
 
 
 VERSE_OBJECT_CT = 125
@@ -243,6 +244,7 @@ class VerseObject(vrsent.VerseNode):
         self.info = vrsent.VerseTagGroup(node=self, custom_type=TG_INFO_CT)
         self.bb = VerseObjectBoundingBox(node=self)
         self.mesh_node = None
+        self.icon_angle = 0.0
         if obj is not None:
             # Transformation
             self.transform.pos = VerseObjectPosition(
@@ -409,10 +411,8 @@ class VerseObject(vrsent.VerseNode):
 
     def draw(self, context):
         """
-        Draw bounding box of object with unsubscribed mesh
+        Draw vector icon on position of shared object
         """
-
-        region_data = context.region_data
 
         if self.locked is True:
             # When object is locked by current client, then visualize it by green color.
@@ -424,107 +424,82 @@ class VerseObject(vrsent.VerseNode):
         else:
             color = (0.0, 1.0, 1.0, 1.0)
 
-        # Get & convert the Perspective Matrix of the current view/region.
-        persp_matrix = region_data.perspective_matrix
-        temp_mat = [persp_matrix[j][i] for i in range(4) for j in range(4)]
-        persp_buff = bgl.Buffer(bgl.GL_FLOAT, 16, temp_mat)
-
-        # Store previous OpenGL settings.
-        # Store MatrixMode
-        matrix_mode_prev = bgl.Buffer(bgl.GL_INT, [1])
-        bgl.glGetIntegerv(bgl.GL_MATRIX_MODE, matrix_mode_prev)
-        matrix_mode_prev = matrix_mode_prev[0]
-
-        # Store projection matrix
-        proj_matrix_prev = bgl.Buffer(bgl.GL_DOUBLE, [16])
-        bgl.glGetFloatv(bgl.GL_PROJECTION_MATRIX, proj_matrix_prev)
-
         # Store Line width
         line_width_prev = bgl.Buffer(bgl.GL_FLOAT, [1])
         bgl.glGetFloatv(bgl.GL_LINE_WIDTH, line_width_prev)
         line_width_prev = line_width_prev[0]
 
-        # Store GL_BLEND
-        blend_prev = bgl.Buffer(bgl.GL_BYTE, [1])
-        bgl.glGetFloatv(bgl.GL_BLEND, blend_prev)
-        blend_prev = blend_prev[0]
-
-        # Store GL_DEPTH_TEST
-        depth_test_prev = bgl.Buffer(bgl.GL_BYTE, [1])
-        bgl.glGetFloatv(bgl.GL_DEPTH_TEST, depth_test_prev)
-        depth_test_prev = depth_test_prev[0]
-
-        # Store GL_LINE_STIPPLE
-        line_stipple_prev = bgl.Buffer(bgl.GL_BYTE, [1])
-        bgl.glGetFloatv(bgl.GL_LINE_STIPPLE, line_stipple_prev)
-        line_stipple_prev = line_stipple_prev[0]
-
         # Store glColor4f
         col_prev = bgl.Buffer(bgl.GL_FLOAT, [4])
         bgl.glGetFloatv(bgl.GL_COLOR, col_prev)
 
-        # Prepare for 3D drawing
-        bgl.glLoadIdentity()
-        bgl.glMatrixMode(bgl.GL_PROJECTION)
-        bgl.glLoadMatrixf(persp_buff)
-        bgl.glEnable(bgl.GL_BLEND)
-        bgl.glEnable(bgl.GL_DEPTH_TEST)
+        pos = self.transform.pos.value
+        new_pos = location_3d_to_region_2d(
+            context.region,
+            context.space_data.region_3d,
+            pos)
 
-        # Compute transformation matrix
-        try:
-            matrix = mathutils.Matrix().Translation(self.transform.pos.value) * \
-                mathutils.Quaternion(self.transform.rot.value).to_matrix().to_4x4() * \
-                mathutils.Matrix((
-                    (self.transform.scale.value[0], 0, 0, 0),
-                    (0, self.transform.scale.value[1], 0, 0),
-                    (0, 0, self.transform.scale.value[2], 0),
-                    (0, 0, 0, 1)
-                ))
-        except TypeError:
-            # When some values of transformation are not received yet, then use one matrix
-            matrix = mathutils.Matrix()
+        verts = (
+            (0.20000000298023224, 0.0),
+            (0.19318519532680511, 0.051763709634542465),
+            (0.17320513725280762, 0.09999989718198776),
+            (0.14142143726348877, 0.14142127335071564),
+            (0.10000012069940567, 0.17320501804351807),
+            (0.13000015914440155, 0.22516652941703796),
+            (0.06729313731193542, 0.25114068388938904),
+            (0.0, 0.2600000202655792),
+            (-0.0672929584980011, 0.2511407434940338),
+            (-0.1300000101327896, 0.22516663372516632),
+            (-0.1000000014901161, 0.17320509254932404),
+            (-0.1414213627576828, 0.1414213627576828),
+            (-0.1732050925493240, 0.09999999403953552),
+            (-0.1931851655244827, 0.05176381394267082),
+            (-0.2000000029802322, 0.0),
+            (-0.2600000202655792, 0.0),
+            (-0.2511407434940338, -0.06729292124509811),
+            (-0.2251666486263275, -0.12999996542930603),
+            (-0.1838478147983551, -0.18384772539138794),
+            (-0.1300000697374344, -0.22516658902168274),
+            (-0.1000000461935997, -0.17320506274700165),
+            (-0.0517638735473156, -0.19318515062332153),
+            (0.0, -0.20000000298023224),
+            (0.05176372453570366, -0.19318519532680511),
+            (0.09999991953372955, -0.17320513725280762),
+            (0.12999990582466125, -0.2251666933298111),
+            (0.18384768068790436, -0.18384787440299988),
+            (0.22516657412052155, -0.13000008463859558),
+            (0.25114068388938904, -0.06729305535554886),
+            (0.26000002026557920, 0.0)
+        )
 
-        # Transform points of bounding box
-        points = tuple(matrix * mathutils.Vector(item) for item in self.bb.items.values())
+        bgl.glLineWidth(1)
+        bgl.glColor4f(color[0], color[1], color[2], color[3])
 
-        if len(points) == 8:
-            # TODO: Draw Bounding box only for unsubscribed objects
-            bgl.glLineWidth(1)
-            bgl.glColor4f(color[0], color[1], color[2], color[3])
-            bgl.glBegin(bgl.GL_LINE_LOOP)
-            bgl.glVertex3f(points[0][0], points[0][1], points[0][2])
-            bgl.glVertex3f(points[1][0], points[1][1], points[1][2])
-            bgl.glVertex3f(points[2][0], points[2][1], points[2][2])
-            bgl.glVertex3f(points[3][0], points[3][1], points[3][2])
-            bgl.glEnd()
-            bgl.glBegin(bgl.GL_LINE_LOOP)
-            bgl.glVertex3f(points[4][0], points[4][1], points[4][2])
-            bgl.glVertex3f(points[5][0], points[5][1], points[5][2])
-            bgl.glVertex3f(points[6][0], points[6][1], points[6][2])
-            bgl.glVertex3f(points[7][0], points[7][1], points[7][2])
-            bgl.glEnd()
+        bgl.glPushMatrix()
+
+        bgl.glTranslatef(new_pos[0], new_pos[1], 0)
+
+        # TODO: Rotate this icon, when some other user change something (tranformation, mesh)
+        # bgl.glRotatef(self.icon_angle, 0, 0, 1)
+
+        # Draw icon
+        bgl.glBegin(bgl.GL_LINE_LOOP)
+        for vert in verts:
+            bgl.glVertex2f(100.0 * vert[0], 100.0 * vert[1])
+        bgl.glEnd()
+
+        # When object is locked by someone else, then draw cross over icon
+        if self.locked is True and self.locked_by_me is False:
             bgl.glBegin(bgl.GL_LINES)
-            bgl.glVertex3f(points[0][0], points[0][1], points[0][2])
-            bgl.glVertex3f(points[4][0], points[4][1], points[4][2])
-            bgl.glVertex3f(points[1][0], points[1][1], points[1][2])
-            bgl.glVertex3f(points[5][0], points[5][1], points[5][2])
-            bgl.glVertex3f(points[2][0], points[2][1], points[2][2])
-            bgl.glVertex3f(points[6][0], points[6][1], points[6][2])
-            bgl.glVertex3f(points[3][0], points[3][1], points[3][2])
-            bgl.glVertex3f(points[7][0], points[7][1], points[7][2])
+            bgl.glVertex2f(100.0 * verts[3][0], 100.0 * verts[3][1])
+            bgl.glVertex2f(100.0 * verts[18][0], 100.0 * verts[18][1])
+            bgl.glVertex2f(100.0 * verts[11][0], 100.0 * verts[11][1])
+            bgl.glVertex2f(100.0 * verts[27][0], 100.0 * verts[27][1])
             bgl.glEnd()
 
-        # Restore previous OpenGL settings
-        bgl.glLoadIdentity()
-        bgl.glMatrixMode(matrix_mode_prev)
-        bgl.glLoadMatrixf(proj_matrix_prev)
+        bgl.glPopMatrix()
+
         bgl.glLineWidth(line_width_prev)
-        if not blend_prev:
-            bgl.glDisable(bgl.GL_BLEND)
-        if not line_stipple_prev:
-            bgl.glDisable(bgl.GL_LINE_STIPPLE)
-        if not depth_test_prev:
-            bgl.glDisable(bgl.GL_DEPTH_TEST)
         bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
 
         # # Try to draw mesh IDs
