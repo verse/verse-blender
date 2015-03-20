@@ -554,7 +554,8 @@ class VerseMesh(vrsent.VerseNode):
         :elems_name: this could be 'verts', 'edges' or 'faces'
         """
         elems_iter = getattr(self.bmesh, elems_name)
-        lay = elems_iter.layers.int.new(layer_name, False)
+        lay = elems_iter.layers.int.new(layer_name)
+        lay.use_force_default = True
         # Set values in layer
         last_elem_id = None
         for elem in elems_iter:
@@ -784,9 +785,12 @@ class VerseMesh(vrsent.VerseNode):
         self.bmesh = bmesh.new()
         self.bmesh.from_mesh(self.mesh)
         # Create layers for verse IDs
-        self.bmesh.verts.layers.int.new('VertIDs', False)
-        self.bmesh.edges.layers.int.new('EdgeIDs', False)
-        self.bmesh.faces.layers.int.new('FaceIDs', False)
+        vert_lay = self.bmesh.verts.layers.int.new('VertIDs')
+        vert_lay.use_force_default = True
+        edge_lay = self.bmesh.edges.layers.int.new('EdgeIDs', False)
+        edge_lay.use_force_default = True
+        face_lay = self.bmesh.faces.layers.int.new('FaceIDs', False)
+        face_lay.use_force_default = True
         # Safe blender layers containing IDs to original mesh
         self.bmesh.to_mesh(self.mesh)
         self.bmesh.free()
@@ -884,9 +888,9 @@ class VerseMesh(vrsent.VerseNode):
             vert2 = self.vertices.items[edge_verts[1]]
 
             edge_co = mathutils.Vector((
-                (vert2[0] + vert1[0])/2.0,
-                (vert2[1] + vert1[1])/2.0,
-                (vert2[2] + vert1[2])/2.0))
+                (vert2[0] + vert1[0]) / 2.0,
+                (vert2[1] + vert1[1]) / 2.0,
+                (vert2[2] + vert1[2]) / 2.0))
 
             b3d_edge = self.edges.b3d_edge(edge_id)
             if b3d_edge is not None:
