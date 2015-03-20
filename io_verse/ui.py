@@ -209,6 +209,24 @@ class VERSE_OBJECT_NODES_list_item(bpy.types.PropertyGroup):
     )
 
 
+def cb_set_obj_node_id(self, value):
+    """
+    Callback function for setting property value
+    """
+    self.verse_node_id_ = value
+    return None
+
+
+def cb_get_obj_node_id(self):
+    """
+    Callback function for getting property value
+    """
+    if self.name != self.name_:
+        self.name_ = self.name
+        self.verse_node_id_ = -1
+    return self.verse_node_id_
+
+
 def init_object_properties():
     """
     Init properties related to Blender objects
@@ -228,7 +246,19 @@ def init_object_properties():
     bpy.types.Object.verse_node_id = bpy.props.IntProperty(
         name="ID of verse node",
         default=-1,
-        description="The node ID representing this Object at Verse server"
+        description="The node ID representing this Object at Verse server",
+        set=cb_set_obj_node_id,
+        get=cb_get_obj_node_id
+    )
+    bpy.types.Object.verse_node_id_ = bpy.props.IntProperty(
+        name="Hidden ID of verse node",
+        default=-1,
+        description="Hidden ID of verse node"
+    )
+    bpy.types.Object.name_ = bpy.props.StringProperty(name="SecretName",
+        default="",
+        description="Expected name of object storing properties",
+        options={'HIDDEN'}
     )
     bpy.types.Object.subscribed = bpy.props.BoolProperty(
         name="Subscribed to data of object node",
