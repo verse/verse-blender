@@ -219,7 +219,8 @@ def cb_set_obj_node_id(self, value):
 
 def cb_get_obj_node_id(self):
     """
-    Callback function for getting property value
+    Callback function for getting property value.
+    TODO: renaming object will reset verse_node_id and break sharing
     """
     if self.name != self.name_:
         self.name_ = self.name
@@ -246,16 +247,18 @@ def init_object_properties():
     bpy.types.Object.verse_node_id = bpy.props.IntProperty(
         name="ID of verse node",
         default=-1,
-        description="The node ID representing this Object at Verse server",
-        set=cb_set_obj_node_id,
-        get=cb_get_obj_node_id
+        description="The node ID representing this Object at Verse server"
+        # TODO: use following callback function set=cb_set_obj_node_id,
+        # TODO: use following callback function get=cb_get_obj_node_id
     )
     bpy.types.Object.verse_node_id_ = bpy.props.IntProperty(
         name="Hidden ID of verse node",
         default=-1,
-        description="Hidden ID of verse node"
+        description="Hidden ID of verse node",
+        options={'HIDDEN'}
     )
-    bpy.types.Object.name_ = bpy.props.StringProperty(name="SecretName",
+    bpy.types.Object.name_ = bpy.props.StringProperty(
+        name="SecretName",
         default="",
         description="Expected name of object storing properties",
         options={'HIDDEN'}

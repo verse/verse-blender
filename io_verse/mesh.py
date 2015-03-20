@@ -130,7 +130,7 @@ class VerseVertices(vrsent.VerseLayer):
                 b3d_vert = _bmesh.verts.new(value)
                 vert_layer.id_cache[item_id] = b3d_vert
                 id_layer = _bmesh.verts.layers.int.get('VertIDs')
-                b3d_vert[id_layer] = item_id + 1
+                b3d_vert[id_layer] = item_id
 
             # Update Blender mesh
             _bmesh.to_mesh(vert_layer.node.mesh)
@@ -276,7 +276,7 @@ class VerseEdges(vrsent.VerseLayer):
             b3d_edge = _bmesh.edges.new([vert_layer.b3d_vertex(vert_id) for vert_id in value])
             edge_layer.id_cache[item_id] = b3d_edge
             id_layer = _bmesh.edges.layers.int.get('EdgeIDs')
-            b3d_edge[id_layer] = item_id + 1
+            b3d_edge[id_layer] = item_id
 
             # Update Blender mesh
             _bmesh.to_mesh(edge_layer.node.mesh)
@@ -435,7 +435,7 @@ class VerseFaces(vrsent.VerseLayer):
 
             face_layer.id_cache[item_id] = b3d_face
             id_layer = _bmesh.faces.layers.int.get('FaceIDs')
-            b3d_face[id_layer] = item_id + 1
+            b3d_face[id_layer] = item_id
 
             # Update Blender mesh
             _bmesh.to_mesh(face_layer.node.mesh)
@@ -556,11 +556,12 @@ class VerseMesh(vrsent.VerseNode):
         elems_iter = getattr(self.bmesh, elems_name)
         lay = elems_iter.layers.int.new(layer_name)
         lay.use_force_default = True
+        lay.default_value = -1
         # Set values in layer
         last_elem_id = None
         for elem in elems_iter:
             last_elem_id = elem.index
-            elem[lay] = elem.index + 1
+            elem[lay] = elem.index
 
         return last_elem_id
 
@@ -569,21 +570,21 @@ class VerseMesh(vrsent.VerseNode):
         Return ID of blender vertex at Verse server
         """
         layer = self.bmesh.verts.layers.int.get('VertIDs')
-        return bpy_vert[layer] - 1
+        return bpy_vert[layer]
 
     def get_verse_id_of_edge(self, bpy_edge):
         """
         Return ID of blender edge at Verse server
         """
         layer = self.bmesh.edges.layers.int.get('EdgeIDs')
-        return bpy_edge[layer] - 1
+        return bpy_edge[layer]
 
     def get_verse_id_of_face(self, bpy_face):
         """
         Return ID of blender face at Verse server
         """
         layer = self.bmesh.faces.layers.int.get('FaceIDs')
-        return bpy_face[layer] - 1
+        return bpy_face[layer]
 
     def __send_vertex_updates(self):
         """
@@ -605,7 +606,7 @@ class VerseMesh(vrsent.VerseNode):
                 self.vertices.items[verse_id] = tuple(b3d_vert.co)
                 # Store verse vertex ID in bmesh layer
                 layer = self.bmesh.verts.layers.int.get('VertIDs')
-                b3d_vert[layer] = verse_id + 1
+                b3d_vert[layer] = verse_id
             # Position of vertex was changed?
             elif self.vertices.items[verse_id] != tuple(b3d_vert.co):
                 # This will send updated position of vertex
@@ -643,7 +644,7 @@ class VerseMesh(vrsent.VerseNode):
                 )
                 # Store edge ID in bmesh layer
                 layer = self.bmesh.edges.layers.int.get('EdgeIDs')
-                b3d_edge[layer] = verse_id + 1
+                b3d_edge[layer] = verse_id
             else:
                 # Was edge changed?
                 edge = (
@@ -700,7 +701,7 @@ class VerseMesh(vrsent.VerseNode):
                 self.quads.items[verse_id] = b3d_face_to_tuple(b3d_face)
                 # Store face ID in bmesh layer
                 layer = self.bmesh.faces.layers.int.get('FaceIDs')
-                b3d_face[layer] = verse_id + 1
+                b3d_face[layer] = verse_id
                 # Update id cache
                 self.quads.id_cache[verse_id] = b3d_face
             else:
@@ -787,10 +788,13 @@ class VerseMesh(vrsent.VerseNode):
         # Create layers for verse IDs
         vert_lay = self.bmesh.verts.layers.int.new('VertIDs')
         vert_lay.use_force_default = True
-        edge_lay = self.bmesh.edges.layers.int.new('EdgeIDs', False)
+        vert_lay.default_value = -1
+        edge_lay = self.bmesh.edges.layers.int.new('EdgeIDs')
         edge_lay.use_force_default = True
-        face_lay = self.bmesh.faces.layers.int.new('FaceIDs', False)
+        edge_lay.default_value = -1
+        face_lay = self.bmesh.faces.layers.int.new('FaceIDs')
         face_lay.use_force_default = True
+        face_lay.default_value = -1
         # Safe blender layers containing IDs to original mesh
         self.bmesh.to_mesh(self.mesh)
         self.bmesh.free()
@@ -871,7 +875,7 @@ class VerseMesh(vrsent.VerseNode):
 
             b3d_vert = self.vertices.b3d_vertex(vert_id)
             if b3d_vert is not None:
-                b3d_vert_id = b3d_vert[vert_id_layer] - 1
+                b3d_vert_id = b3d_vert[vert_id_layer]
             else:
                 b3d_vert_id = None
 
@@ -894,7 +898,7 @@ class VerseMesh(vrsent.VerseNode):
 
             b3d_edge = self.edges.b3d_edge(edge_id)
             if b3d_edge is not None:
-                b3d_edge_id = b3d_edge[edge_id_layer] - 1
+                b3d_edge_id = b3d_edge[edge_id_layer]
             else:
                 b3d_edge_id = None
 
@@ -934,7 +938,7 @@ class VerseMesh(vrsent.VerseNode):
 
             b3d_face = self.quads.find_b3d_face(face_id)
             if b3d_face is not None:
-                b3d_face_id = b3d_face[face_id_layer] - 1
+                b3d_face_id = b3d_face[face_id_layer]
             else:
                 b3d_face_id = None
 
