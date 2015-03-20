@@ -8,12 +8,16 @@ possible to share Mesh objects at Verse server now.
 
 ### Requirements ###
 
-This Add-on requires Blender 2.76 and Python module called Verse that could be
+This Add-on requires Blender 2.75 and Python module called Verse that could be
 found here:
 
 http://verse.github.com/verse/
 
 Verse project contains compiled Python module and only Linux OS is supported now.
+
+Note: Blender 2.75 was not realased yet. It is necessary to use following patch:
+
+https://developer.blender.org/T42865
 
 ### Installation ###
 
