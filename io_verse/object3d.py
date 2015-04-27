@@ -385,17 +385,17 @@ class VerseObject(vrsent.VerseNode):
 
         # Position
         if self.transform.pos.value is not None and \
-                        self.transform.pos.value != tuple(self.obj.location):
+                self.transform.pos.value != tuple(self.obj.location):
             self.transform.pos.value = tuple(self.obj.location)
 
         # Rotation
         if self.transform.rot.value is not None and \
-                        self.transform.rot.value != tuple(self.obj.matrix_local.to_quaternion().normalized()):
+                self.transform.rot.value != tuple(self.obj.matrix_local.to_quaternion().normalized()):
             self.transform.rot.value = tuple(self.obj.matrix_local.to_quaternion().normalized())
 
         # Scale
         if self.transform.scale.value is not None and \
-                        self.transform.scale.value != tuple(self.obj.scale):
+                self.transform.scale.value != tuple(self.obj.scale):
             self.transform.scale.value = tuple(self.obj.scale)
 
         # Bounding box
@@ -434,10 +434,16 @@ class VerseObject(vrsent.VerseNode):
         bgl.glGetFloatv(bgl.GL_COLOR, col_prev)
 
         pos = self.transform.pos.value
-        new_pos = location_3d_to_region_2d(
-            context.region,
-            context.space_data.region_3d,
-            pos)
+        if pos is not None:
+            new_pos = location_3d_to_region_2d(
+                context.region,
+                context.space_data.region_3d,
+                pos)
+        else:
+            # When position of object is not set atm, then draw
+            # icon with stipple lineg
+            new_pos = mathutils.Vector((0.0, 0.0, 0.0, 1.0))
+            bgl.glEnable(bgl.GL_LINE_STIPPLE)
 
         verts = (
             (0.20000000298023224, 0.0),
@@ -499,6 +505,7 @@ class VerseObject(vrsent.VerseNode):
 
         bgl.glPopMatrix()
 
+        bgl.glDisable(bgl.GL_LINE_STIPPLE)
         bgl.glLineWidth(line_width_prev)
         bgl.glColor4f(col_prev[0], col_prev[1], col_prev[2], col_prev[3])
 
