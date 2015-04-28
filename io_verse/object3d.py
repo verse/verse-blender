@@ -494,8 +494,9 @@ class VerseObject(vrsent.VerseNode):
             bgl.glVertex2f(100.0 * vert[0], 100.0 * vert[1])
         bgl.glEnd()
 
-        # When object is locked by someone else, then draw cross over icon
-        if self.locked is True and self.locked_by_me is False:
+        # When object is locked by someone else or it can not be selected, then draw cross over icon
+        if self.locked is True and self.locked_by_me is False or \
+                self.can_be_selected is False:
             bgl.glBegin(bgl.GL_LINES)
             bgl.glVertex2f(100.0 * verts[3][0], 100.0 * verts[3][1])
             bgl.glVertex2f(100.0 * verts[18][0], 100.0 * verts[18][1])
