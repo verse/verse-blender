@@ -86,6 +86,24 @@ class VerseVertices(vrsent.VerseLayer):
         else:
             return b3d_vert
 
+    def get_bmesh(self):
+        """
+        This method tries to update reference on bmesh
+        """
+
+        if self.node.bmesh is None:
+            self.node.bmesh = bmesh.new()
+            self.node.bmesh.from_mesh(self.node.mesh)
+            self.node.bm_from_edit_mesh = False
+        else:
+            try:
+                self.node.bmesh.verts
+            except ReferenceError:
+                self.node.bmesh = bmesh.new()
+                self.node.bmesh.from_mesh(self.node.mesh)
+                self.node.clear_ID_cache()
+        return self.node.bmesh
+
     @classmethod
     def cb_receive_layer_set_value(cls, session, node_id, layer_id, item_id, value):
         """
@@ -96,24 +114,7 @@ class VerseVertices(vrsent.VerseLayer):
         # Update mesh only in situation, when it was changed by someone else
         if vert_layer.node.locked_by_me is False:
 
-            edge_layer = vert_layer.node.edges
-            face_layer = vert_layer.node.quads
-
-            if vert_layer.node.bmesh is None:
-                vert_layer.node.bmesh = bmesh.new()
-                vert_layer.node.bmesh.from_mesh(vert_layer.node.mesh)
-                vert_layer.node.bm_from_edit_mesh = False
-            else:
-                try:
-                    vert_layer.node.bmesh.verts
-                except ReferenceError:
-                    vert_layer.node.bmesh = bmesh.new()
-                    vert_layer.node.bmesh.from_mesh(vert_layer.node.mesh)
-                    vert_layer.id_cache = {}
-                    edge_layer.id_cache = {}
-                    face_layer.id_cache = {}
-
-            _bmesh = vert_layer.node.bmesh
+            _bmesh = vert_layer.get_bmesh()
 
             b3d_vert = vert_layer.b3d_vertex(item_id)
 
@@ -148,28 +149,11 @@ class VerseVertices(vrsent.VerseLayer):
         # Update mesh only in situation, when it was changed by someone else
         if vert_layer.node.locked_by_me is False:
 
-            edge_layer = vert_layer.node.edges
-            face_layer = vert_layer.node.quads
+            _bmesh = vert_layer.get_bmesh()
 
-            if vert_layer.node.bmesh is None:
-                vert_layer.node.bmesh = bmesh.new()
-                vert_layer.node.bmesh.from_mesh(vert_layer.node.mesh)
-                vert_layer.node.bm_from_edit_mesh = False
-            else:
-                try:
-                    vert_layer.node.bmesh.verts
-                except ReferenceError:
-                    vert_layer.node.bmesh = bmesh.new()
-                    vert_layer.node.bmesh.from_mesh(vert_layer.node.mesh)
-                    vert_layer.id_cache = {}
-                    edge_layer.id_cache = {}
-                    face_layer.id_cache = {}
-
-            # Try to delete vertex
-            _bmesh = vert_layer.node.bmesh
-
-            # Try to delete vertex
             b3d_vert = vert_layer.b3d_vertex(item_id)
+
+            # Try to delete vertex
             if b3d_vert is not None:
                 bmesh.ops.delete(_bmesh, geom=[b3d_vert], context=1)
                 vert_layer.id_cache.pop(item_id)
@@ -720,6 +704,14 @@ class VerseMesh(vrsent.VerseNode):
             if face_id in self.quads.id_cache:
                 self.quads.id_cache.pop(face_id)
 
+    def clear_ID_cache(self):
+        """
+        This method clear cache with references on vertices, edges and faces
+        """
+        self.vertices.id_cache = {}
+        self.edges.id_cache = {}
+        self.quads.id_cache = {}
+
     def update_references(self):
         """
         This method tries to update references at bmesh, when  old bmesh was removed
@@ -746,9 +738,7 @@ class VerseMesh(vrsent.VerseNode):
                     self.bmesh = bmesh.new()
                     self.bmesh.from_mesh(self.mesh)
                     self.bm_from_edit_mesh = False
-                self.vertices.id_cache = {}
-                self.edges.id_cache = {}
-                self.quads.id_cache = {}
+                self.clear_ID_cache()
 
     def send_updates(self):
         """
@@ -761,18 +751,14 @@ class VerseMesh(vrsent.VerseNode):
             if self.bm_from_edit_mesh is False:
                 self.bmesh = bmesh.from_edit_mesh(self.mesh)
                 self.bm_from_edit_mesh = True
-                self.vertices.id_cache = {}
-                self.edges.id_cache = {}
-                self.quads.id_cache = {}
+                self.clear_ID_cache()
             else:
                 # Check if bmesh is still fresh
                 try:
                     self.bmesh.verts
                 except ReferenceError:
                     self.bmesh = bmesh.from_edit_mesh(self.mesh)
-                    self.vertices.id_cache = {}
-                    self.edges.id_cache = {}
-                    self.quads.id_cache = {}
+                    self.clear_ID_cache()
         self.__send_vertex_updates()
         self.__send_edge_updates()
         self.__send_face_updates()
