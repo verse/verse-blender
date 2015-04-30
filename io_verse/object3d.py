@@ -441,7 +441,7 @@ class VerseObject(vrsent.VerseNode):
                 pos)
         else:
             # When position of object is not set atm, then draw
-            # icon with stipple lineg
+            # icon with stipple line
             new_pos = mathutils.Vector((0.0, 0.0, 0.0, 1.0))
             bgl.glEnable(bgl.GL_LINE_STIPPLE)
 
