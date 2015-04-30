@@ -73,7 +73,7 @@ class VerseVertices(vrsent.VerseLayer):
                 # find it using loop over all vertices
                 id_layer = _bmesh.verts.layers.int.get('VertIDs')
                 for b3d_vert in _bmesh.verts:
-                    verse_id = b3d_vert[id_layer] - 1
+                    verse_id = b3d_vert[id_layer]
                     if verse_id != -1:
                         self.id_cache[item_id] = b3d_vert
                         if verse_id == item_id:
@@ -214,7 +214,7 @@ class VerseEdges(vrsent.VerseLayer):
                 # find it using loop over all edges
                 id_layer = _bmesh.edges.layers.int.get('EdgeIDs')
                 for b3d_edge in _bmesh.edges:
-                    verse_id = b3d_edge[id_layer] - 1
+                    verse_id = b3d_edge[id_layer]
                     if verse_id != -1:
                         self.id_cache[item_id] = b3d_edge
                         if verse_id == item_id:
@@ -370,7 +370,7 @@ class VerseFaces(vrsent.VerseLayer):
                 # find it using loop over all faces
                 id_layer = _bmesh.faces.layers.int.get('FaceIDs')
                 for b3d_face in _bmesh.faces:
-                    verse_id = b3d_face[id_layer] - 1
+                    verse_id = b3d_face[id_layer]
                     if verse_id != -1:
                         self.id_cache[item_id] = b3d_face
                         if verse_id == item_id:
