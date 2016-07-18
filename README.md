@@ -8,16 +8,13 @@ possible to share Mesh objects at Verse server now.
 
 ### Requirements ###
 
-This Add-on requires Blender 2.75 and Python module called Verse that could be
-found here:
+This Add-on requires Blender compiled from source code with following patch: https://developer.blender.org/T42865 and Python module called Verse that could be found here:
 
 http://verse.github.com/verse/
 
 Verse project contains compiled Python module and only Linux OS is supported now.
 
-Note: Blender 2.75 was not realased yet. It is necessary to use following patch:
-
-https://developer.blender.org/T42865
+> Note: This Add-on is very WIP and it is not intended for production.
 
 ### Installation ###
 
@@ -30,7 +27,8 @@ Typically ~/.config/blender/2.68a/scripts/addons/
 
 You can also download current version using git:
 
-    git clone git@github.com:verse/verse-blender.git
+    git clone git@github.com:verse/verse-blender.git # (requires SSH)
+    # git clone https://github.com/verse/verse-blender.git # (only HTTPS)
     cd verse-blender
     git submodule update --init --recursive
     git submodule foreach --recursive git checkout master
